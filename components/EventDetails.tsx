@@ -4,18 +4,18 @@ const events = [
     icon: "💍",
     time: "4:00 PM",
     venue: "The Forum Hotel",
-    address: "Charlottesville, VA",
+    address: "540 Massie Rd, Charlottesville, VA 22903",
     notes: "Doors open at 3:30 PM. The ceremony will be held outdoors — we recommend flat shoes for the grass.",
-    mapUrl: "https://maps.google.com/?q=The+Forum+Hotel+Charlottesville+VA",
+    mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {
     type: "Reception",
     icon: "🥂",
     time: "6:00 PM",
     venue: "The Forum Hotel",
-    address: "Charlottesville, VA",
+    address: "540 Massie Rd, Charlottesville, VA 22903",
     notes: "Dinner, dancing, and celebrating until midnight. Black tie optional.",
-    mapUrl: "https://maps.google.com/?q=The+Forum+Hotel+Charlottesville+VA",
+    mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
 ];
 
