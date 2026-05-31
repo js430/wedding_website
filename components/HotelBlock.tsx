@@ -144,6 +144,7 @@ export default function HotelBlock() {
               name="arrivalDate"
               required
               type="date"
+              defaultValue="2027-03-27"
               className="w-full border border-rose-soft/60 bg-white/60 px-4 py-2.5 font-sans text-sm text-bark focus:outline-none focus:border-rose-deep"
             />
           </div>
@@ -155,6 +156,7 @@ export default function HotelBlock() {
               name="departureDate"
               required
               type="date"
+              defaultValue="2027-03-28"
               className="w-full border border-rose-soft/60 bg-white/60 px-4 py-2.5 font-sans text-sm text-bark focus:outline-none focus:border-rose-deep"
             />
           </div>
