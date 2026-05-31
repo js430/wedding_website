@@ -1,23 +1,18 @@
 const milestones = [
   {
-    year: "2019",
+    year: "October 2018",
     title: "How We Met",
-    body: "A chance encounter at a mutual friend's dinner party led to an evening of laughter, great conversation, and an undeniable spark neither of us could ignore.",
+    body: "At UVA, the Chinese Student Association and the Greek life worlds of Lambda Phi Epsilon and Alpha Kappa Delta Phi had a way of bringing the same people together. For Jeffrey and Katie, it only took a few of those moments to realize they were meant to keep finding each other.",
   },
   {
-    year: "2021",
-    title: "First Adventure Together",
-    body: "A spontaneous road trip through the Blue Ridge Mountains — the weekend we both knew this was something truly special.",
-  },
-  {
-    year: "2024",
+    year: "August 2025",
     title: "The Proposal",
-    body: "Under the stars at Cheekwood Gardens, Jeffrey got down on one knee and asked the question that would change everything. Katie said yes before he could finish the sentence.",
+    body: "On an early August morning in Brooklyn, the city was still quiet — just the soft light of dawn breaking over the Lower Manhattan skyline, reflected in the waters of the Hudson. Jeffrey had planned every detail: the early hour, the view, the moment. As Katie took in the skyline, he got down on one knee. With the greatest backdrop New York had to offer and every word from his heart, he asked the question he'd been waiting to ask. She said yes before he could finish.",
   },
   {
-    year: "2027",
+    year: "March 2027",
     title: "The Wedding",
-    body: "Surrounded by the people we love most, we begin the greatest adventure of our lives.",
+    body: "Back at the University of Virginia, where two paths first crossed, Jeffrey and Katie will celebrate the life they've built together. The place that brought them together will be the place they begin forever.",
   },
 ];
 
