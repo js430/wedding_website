@@ -81,7 +81,7 @@ export default function EventDetails() {
             <p className="font-sans text-bark/60 text-sm mb-4">
               Please avoid white. We encourage guests to embrace our wedding palette:
             </p>
-            <div className="flex justify-center gap-2 mt-3">
+            <div className="bg-white rounded p-3 flex justify-center gap-3 mt-3">
               {[
                 { color: "#FEE8EC", label: "Blush" },
                 { color: "#FFB3C4", label: "Pink" },
@@ -91,10 +91,10 @@ export default function EventDetails() {
               ].map(({ color, label }) => (
                 <div key={color} className="flex flex-col items-center gap-1">
                   <div
-                    className="w-10 h-10 border border-bark/20"
+                    className="w-10 h-10 border border-gray-200"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="font-sans text-bark/50 text-xs">{label}</span>
+                  <span className="font-sans text-gray-500 text-xs">{label}</span>
                 </div>
               ))}
             </div>
