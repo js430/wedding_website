@@ -20,7 +20,7 @@ const events = [
   {
     type: "After Party",
     icon: "🎉",
-    time: "Late Night",
+    time: "12:00 AM or later",
     venue: "The Corner",
     address: "University Ave, Charlottesville, VA",
     notes: "The night isn't over — join us at The Corner, right in the heart of UVA, where it all began.",
