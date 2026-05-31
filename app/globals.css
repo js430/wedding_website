@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&display=swap');
+
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-lato: 'Lato', system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #fff8f0;
+  color: #4a3728;
+  font-family: var(--font-lato);
+}
+
+@layer components {
+  .section-title {
+    @apply font-serif text-4xl md:text-5xl text-bark text-center mb-4;
+  }
+  .section-divider {
+    @apply flex items-center justify-center gap-3 mb-10;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    @apply block h-px w-16 bg-gold;
+  }
+  .btn-primary {
+    @apply bg-rose-deep text-ivory px-8 py-3 font-sans tracking-widest text-sm uppercase transition-all duration-200 hover:bg-bark;
+  }
+  .btn-outline {
+    @apply border border-rose-deep text-rose-deep px-8 py-3 font-sans tracking-widest text-sm uppercase transition-all duration-200 hover:bg-rose-deep hover:text-ivory;
+  }
+}
