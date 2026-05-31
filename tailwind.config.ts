@@ -10,11 +10,11 @@ const config: Config = {
     extend: {
       colors: {
         rose: {
-          blush: "#f9e8e8",
-          soft: "#e5989b",
-          deep: "#b5838d",
+          blush: "#fdecea",
+          soft: "#e05252",
+          deep: "#991b1b",
         },
-        gold: "#c9a96e",
+        gold: "#c9a838",
         ivory: "#fff8f0",
         bark: "#4a3728",
       },

@@ -12,10 +12,10 @@ const milestones = [
   {
     year: "2024",
     title: "The Proposal",
-    body: "Under the stars at Cheekwood Gardens, Jeffrey got down on one knee and asked the question that would change everything. Amanda said yes before he could finish the sentence.",
+    body: "Under the stars at Cheekwood Gardens, Jeffrey got down on one knee and asked the question that would change everything. Katie said yes before he could finish the sentence.",
   },
   {
-    year: "2025",
+    year: "2027",
     title: "The Wedding",
     body: "Surrounded by the people we love most, we begin the greatest adventure of our lives.",
   },

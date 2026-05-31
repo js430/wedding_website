@@ -57,7 +57,7 @@ export default function RSVP() {
           <span className="text-gold text-xl">✦</span>
         </div>
         <p className="text-center font-sans text-bark/60 text-sm mb-10 -mt-4">
-          Kindly reply by August 1, 2025
+          Kindly reply by February 27, 2027
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -5,7 +5,7 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden"
       style={{
         background:
-          "linear-gradient(160deg, #f9e8e8 0%, #fff8f0 50%, #fdf3e3 100%)",
+          "linear-gradient(160deg, #fdecea 0%, #fff8f0 50%, #fef9e7 100%)",
       }}
     >
       {/* Decorative rings */}
@@ -24,19 +24,19 @@ export default function Hero() {
         <span className="block text-3xl md:text-4xl text-rose-deep my-2 font-serif italic">
           &amp;
         </span>
-        Amanda
+        Katie
       </h1>
 
       <div className="flex items-center gap-4 mb-8">
         <span className="block h-px w-12 bg-gold" />
         <p className="font-sans text-sm tracking-[0.3em] uppercase text-bark/60">
-          September 27, 2025
+          Saturday, March 27, 2027
         </p>
         <span className="block h-px w-12 bg-gold" />
       </div>
 
       <p className="font-sans text-bark/60 tracking-widest text-xs uppercase mb-10">
-        Nashville, Tennessee
+        Charlottesville, Virginia
       </p>
 
       <a href="#rsvp" className="btn-primary">

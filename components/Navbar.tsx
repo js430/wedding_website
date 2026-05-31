@@ -30,7 +30,7 @@ export default function Navbar() {
           href="#top"
           className="font-serif text-xl text-bark tracking-wide"
         >
-          J &amp; A
+          J &amp; K
         </a>
 
         {/* Desktop */}

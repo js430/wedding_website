@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Our Wedding",
-  description: "Join us as we celebrate our special day",
+  title: "Jeffrey & Katie — March 27, 2027",
+  description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
   openGraph: {
-    title: "Our Wedding",
-    description: "Join us as we celebrate our special day",
+    title: "Jeffrey & Katie — March 27, 2027",
+    description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
     type: "website",
   },
 };
