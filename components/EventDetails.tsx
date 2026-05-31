@@ -2,19 +2,28 @@ const events = [
   {
     type: "Ceremony",
     icon: "💍",
-    time: "4:00 PM",
+    time: "5:00 PM",
     venue: "The Forum Hotel",
     address: "540 Massie Rd, Charlottesville, VA 22903",
-    notes: "Doors open at 3:30 PM. The ceremony will be held outdoors — we recommend flat shoes for the grass.",
+    notes: "Doors open at 4:00 PM. The ceremony will be held outdoors — we recommend flat shoes for the grass.",
+    mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
+  },
+  {
+    type: "Cocktail Hour",
+    icon: "🍸",
+    time: "Following the Ceremony",
+    venue: "The Forum Hotel",
+    address: "540 Massie Rd, Charlottesville, VA 22903",
+    notes: "Join us for drinks and light bites as we celebrate the newlyweds.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {
     type: "Reception",
     icon: "🥂",
-    time: "6:00 PM",
+    time: "7:00 PM or later",
     venue: "The Forum Hotel",
     address: "540 Massie Rd, Charlottesville, VA 22903",
-    notes: "Dinner, dancing, and celebrating until midnight. Black tie optional.",
+    notes: "Dinner, dancing, and celebrating into the night. Black tie optional.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {
@@ -44,7 +53,7 @@ export default function EventDetails() {
           <span className="text-gold text-xl">✦</span>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {events.map((e) => (
             <div
               key={e.type}
