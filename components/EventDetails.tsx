@@ -17,6 +17,15 @@ const events = [
     notes: "Dinner, dancing, and celebrating until midnight. Black tie optional.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
+  {
+    type: "After Party",
+    icon: "🎉",
+    time: "Late Night",
+    venue: "The Corner",
+    address: "University Ave, Charlottesville, VA",
+    notes: "The night isn't over — join us at The Corner, right in the heart of UVA, where it all began.",
+    mapUrl: "https://maps.google.com/?q=The+Corner+University+Ave+Charlottesville+VA",
+  },
 ];
 
 export default function EventDetails() {
@@ -35,7 +44,7 @@ export default function EventDetails() {
           <span className="text-gold text-xl">✦</span>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {events.map((e) => (
             <div
               key={e.type}
