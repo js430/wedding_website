@@ -23,7 +23,7 @@ const milestones = [
 
 export default function OurStory() {
   return (
-    <section id="story" className="py-24 px-6 bg-ivory">
+    <section id="story" className="py-24 px-6 bg-rose-blush">
       <div className="max-w-3xl mx-auto">
         <h2 className="section-title">Our Story</h2>
         <div className="section-divider">

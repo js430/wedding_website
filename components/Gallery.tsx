@@ -9,7 +9,7 @@ const photos = [
 
 export default function Gallery() {
   return (
-    <section id="gallery" className="py-24 px-6 bg-ivory">
+    <section id="gallery" className="py-24 px-6 bg-rose-soft/20">
       <div className="max-w-5xl mx-auto">
         <h2 className="section-title">Gallery</h2>
         <div className="section-divider">

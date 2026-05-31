@@ -10,13 +10,17 @@ const config: Config = {
     extend: {
       colors: {
         rose: {
-          blush: "#fdecea",
-          soft: "#e05252",
-          deep: "#991b1b",
+          blush: "#FEE8EC",
+          soft: "#FFB3C4",
+          deep: "#CC1428",
+        },
+        crimson: {
+          dark: "#8B0010",
+          darkest: "#1E0008",
         },
         gold: "#c9a838",
-        ivory: "#fff8f0",
-        bark: "#4a3728",
+        ivory: "#FEE8EC",
+        bark: "#1E0008",
       },
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],

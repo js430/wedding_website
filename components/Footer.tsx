@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="py-12 px-6 bg-bark text-ivory/70 text-center">
-      <p className="font-serif italic text-2xl text-ivory mb-2">
+    <footer className="py-12 px-6 bg-crimson-darkest text-rose-blush/70 text-center">
+      <p className="font-serif italic text-2xl text-rose-blush mb-2">
         Jeffrey &amp; Katie
       </p>
       <p className="font-sans text-xs tracking-widest uppercase mb-6">

@@ -26,7 +26,7 @@ export default function EventDetails() {
       className="py-24 px-6"
       style={{
         background:
-          "linear-gradient(180deg, #fff8f0 0%, #fdecea 50%, #fff8f0 100%)",
+          "linear-gradient(180deg, #FEE8EC 0%, #FFB3C4 50%, #FEE8EC 100%)",
       }}
     >
       <div className="max-w-4xl mx-auto">

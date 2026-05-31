@@ -5,7 +5,7 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden"
       style={{
         background:
-          "linear-gradient(160deg, #fdecea 0%, #fff8f0 50%, #fef9e7 100%)",
+          "linear-gradient(160deg, #FEE8EC 0%, #FFB3C4 40%, #FEE8EC 100%)",
       }}
     >
       {/* Decorative rings */}
