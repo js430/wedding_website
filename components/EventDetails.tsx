@@ -72,19 +72,23 @@ export default function EventDetails() {
             <p className="font-sans text-bark/60 text-sm mb-4">
               Please avoid white. We encourage guests to embrace our wedding palette:
             </p>
-            <div className="flex justify-center gap-2 mb-3">
-              {["#FEE8EC", "#FFB3C4", "#CC1428", "#8B0010", "#1E0008"].map((color) => (
-                <div
-                  key={color}
-                  className="w-7 h-7 rounded-full border border-bark/10"
-                  style={{ backgroundColor: color }}
-                  title={color}
-                />
+            <div className="flex justify-center gap-2 mt-3">
+              {[
+                { color: "#FEE8EC", label: "Blush" },
+                { color: "#FFB3C4", label: "Pink" },
+                { color: "#CC1428", label: "Crimson" },
+                { color: "#8B0010", label: "Burgundy" },
+                { color: "#1E0008", label: "Maroon" },
+              ].map(({ color, label }) => (
+                <div key={color} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-10 h-10 border border-bark/20"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="font-sans text-bark/50 text-xs">{label}</span>
+                </div>
               ))}
             </div>
-            <p className="font-sans text-bark/50 text-xs">
-              Blush, pink, crimson, burgundy, and deep maroon
-            </p>
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50">
             <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
