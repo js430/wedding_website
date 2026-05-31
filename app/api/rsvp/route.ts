@@ -1,16 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Client } from "@notionhq/client";
+
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  const { name, email, attending, plusOne, plusOneName, dietary, message } = body;
 
-  // Log the RSVP — swap this out for a database, email service, or Google Sheets API
-  console.log("[RSVP]", new Date().toISOString(), body);
+  if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
+    console.warn("[RSVP] NOTION_TOKEN or NOTION_DATABASE_ID not set — logging only");
+    console.log("[RSVP]", new Date().toISOString(), body);
+    return NextResponse.json({ ok: true });
+  }
 
-  // Example: send to a webhook (e.g. Discord, Slack, Make.com, Zapier)
-  // const webhook = process.env.RSVP_WEBHOOK_URL;
-  // if (webhook) {
-  //   await fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  // }
+  await notion.pages.create({
+    parent: { database_id: process.env.NOTION_DATABASE_ID },
+    properties: {
+      Name: {
+        title: [{ text: { content: name ?? "" } }],
+      },
+      Email: {
+        email: email ?? null,
+      },
+      Attending: {
+        select: { name: attending === "yes" ? "Yes" : "No" },
+      },
+      "+1": {
+        select: { name: plusOne === "yes" ? "Yes" : "No" },
+      },
+      "Guest Name": {
+        rich_text: [{ text: { content: plusOneName ?? "" } }],
+      },
+      "Dietary Restrictions": {
+        rich_text: [{ text: { content: dietary ?? "" } }],
+      },
+      Message: {
+        rich_text: [{ text: { content: message ?? "" } }],
+      },
+      "Submitted At": {
+        date: { start: new Date().toISOString() },
+      },
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }
