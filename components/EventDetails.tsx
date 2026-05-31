@@ -1,5 +1,3 @@
-import HotelBlock from "./HotelBlock";
-
 const events = [
   {
     type: "Ceremony",
@@ -126,8 +124,15 @@ export default function EventDetails() {
               ))}
             </div>
           </div>
-          <div className="p-6 border border-gold/30 bg-ivory/50">
-            <HotelBlock />
+          <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
+            <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
+            <p className="font-serif text-xl text-bark mb-2">The Forum Hotel</p>
+            <p className="font-sans text-bark/60 text-sm mb-4">
+              540 Massie Rd, Charlottesville, VA 22903
+            </p>
+            <a href="#rsvp" className="btn-outline inline-block">
+              Request a Room ↓
+            </a>
           </div>
         </div>
       </div>
