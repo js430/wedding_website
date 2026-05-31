@@ -1,3 +1,5 @@
+import HotelBlock from "./HotelBlock";
+
 const events = [
   {
     type: "Ceremony",
@@ -99,8 +101,8 @@ export default function EventDetails() {
         </div>
 
         {/* Dress code & hotel */}
-        <div className="mt-12 grid md:grid-cols-2 gap-6 text-center">
-          <div className="p-6 border border-gold/30 bg-ivory/50">
+        <div className="mt-12 grid md:grid-cols-2 gap-6">
+          <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
             <p className="font-sans text-bark/60 text-sm mb-4">
@@ -125,11 +127,7 @@ export default function EventDetails() {
             </div>
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50">
-            <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
-            <p className="font-serif text-xl text-bark mb-2">The Forum Hotel</p>
-            <p className="font-sans text-bark/60 text-sm">
-              Use code <strong>JEFFKATIE27</strong> for a discounted rate. Block expires Feb 27.
-            </p>
+            <HotelBlock />
           </div>
         </div>
       </div>
