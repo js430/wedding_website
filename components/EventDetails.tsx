@@ -14,7 +14,7 @@ const events = [
     time: "Following the Ceremony",
     venue: "The Forum Hotel",
     address: "540 Massie Rd, Charlottesville, VA 22903",
-    notes: "Join us for drinks and light bites as we celebrate the newlyweds.",
+    notes: "Join us on the outdoor patio for drinks and light bites as we celebrate the newlyweds.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {
