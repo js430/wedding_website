@@ -7,6 +7,7 @@ type Status = "idle" | "submitting" | "success" | "error";
 export default function RSVP() {
   const [status, setStatus] = useState<Status>("idle");
   const [attending, setAttending] = useState<"yes" | "no" | "">("");
+  const [plusOne, setPlusOne] = useState<"yes" | "no" | "">("");
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,7 +18,8 @@ export default function RSVP() {
       name: (form.elements.namedItem("name") as HTMLInputElement).value,
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
       attending,
-      guests: (form.elements.namedItem("guests") as HTMLSelectElement)?.value ?? "0",
+      plusOne,
+      plusOneName: (form.elements.namedItem("plusOneName") as HTMLInputElement)?.value ?? "",
       dietary: (form.elements.namedItem("dietary") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
     };
@@ -96,7 +98,10 @@ export default function RSVP() {
                 <button
                   key={v}
                   type="button"
-                  onClick={() => setAttending(v)}
+                  onClick={() => {
+                    setAttending(v);
+                    if (v === "no") setPlusOne("");
+                  }}
                   className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
                     attending === v
                       ? "bg-rose-deep text-ivory border-rose-deep"
@@ -112,20 +117,40 @@ export default function RSVP() {
           {attending === "yes" && (
             <>
               <div>
-                <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
-                  Number of Guests (including yourself)
+                <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
+                  Bringing a +1?
                 </label>
-                <select
-                  name="guests"
-                  className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark focus:outline-none focus:border-rose-deep"
-                >
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
+                <div className="flex gap-4">
+                  {(["yes", "no"] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setPlusOne(v)}
+                      className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
+                        plusOne === v
+                          ? "bg-rose-deep text-ivory border-rose-deep"
+                          : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+                      }`}
+                    >
+                      {v === "yes" ? "Yes" : "No"}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
+
+              {plusOne === "yes" && (
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                    Guest Name
+                  </label>
+                  <input
+                    name="plusOneName"
+                    type="text"
+                    placeholder="Guest's full name"
+                    className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
