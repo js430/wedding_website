@@ -68,9 +68,22 @@ export default function EventDetails() {
         <div className="mt-12 grid md:grid-cols-2 gap-6 text-center">
           <div className="p-6 border border-gold/30 bg-ivory/50">
             <p className="font-serif italic text-gold text-sm mb-2">Dress Code</p>
-            <p className="font-serif text-xl text-bark mb-2">Black Tie Optional</p>
-            <p className="font-sans text-bark/60 text-sm">
-              Formal attire encouraged. Please avoid white.
+            <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
+            <p className="font-sans text-bark/60 text-sm mb-4">
+              Please avoid white. We encourage guests to embrace our wedding palette:
+            </p>
+            <div className="flex justify-center gap-2 mb-3">
+              {["#FEE8EC", "#FFB3C4", "#CC1428", "#8B0010", "#1E0008"].map((color) => (
+                <div
+                  key={color}
+                  className="w-7 h-7 rounded-full border border-bark/10"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+            <p className="font-sans text-bark/50 text-xs">
+              Blush, pink, crimson, burgundy, and deep maroon
             </p>
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50">
