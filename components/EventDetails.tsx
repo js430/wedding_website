@@ -37,6 +37,37 @@ const events = [
   },
 ];
 
+type Event = (typeof events)[number];
+
+function EventCard({ event: e, optional }: { event: Event; optional?: boolean }) {
+  return (
+    <div className="bg-ivory/80 backdrop-blur border border-rose-soft/30 p-8 text-center relative">
+      {optional && (
+        <span className="absolute top-3 right-3 font-sans text-xs tracking-widest uppercase text-gold border border-gold/40 px-2 py-0.5">
+          Optional
+        </span>
+      )}
+      <div className="text-4xl mb-4">{e.icon}</div>
+      <h3 className="font-serif text-2xl text-bark mb-1">{e.type}</h3>
+      <p className="font-sans text-rose-deep text-sm tracking-widest uppercase mb-5">
+        March 27, 2027 · {e.time}
+      </p>
+      <div className="h-px bg-gold/40 mb-5" />
+      <p className="font-serif text-lg text-bark mb-1">{e.venue}</p>
+      <p className="font-sans text-bark/60 text-sm mb-5">{e.address}</p>
+      <p className="font-sans text-bark/70 text-sm leading-relaxed mb-6">{e.notes}</p>
+      <a
+        href={e.mapUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-outline inline-block"
+      >
+        View Map
+      </a>
+    </div>
+  );
+}
+
 export default function EventDetails() {
   return (
     <section
@@ -53,33 +84,18 @@ export default function EventDetails() {
           <span className="text-gold text-xl">✦</span>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {events.map((e) => (
-            <div
-              key={e.type}
-              className="bg-ivory/80 backdrop-blur border border-rose-soft/30 p-8 text-center"
-            >
-              <div className="text-4xl mb-4">{e.icon}</div>
-              <h3 className="font-serif text-2xl text-bark mb-1">{e.type}</h3>
-              <p className="font-sans text-rose-deep text-sm tracking-widest uppercase mb-5">
-                March 27, 2027 · {e.time}
-              </p>
-              <div className="h-px bg-gold/40 mb-5" />
-              <p className="font-serif text-lg text-bark mb-1">{e.venue}</p>
-              <p className="font-sans text-bark/60 text-sm mb-5">{e.address}</p>
-              <p className="font-sans text-bark/70 text-sm leading-relaxed mb-6">
-                {e.notes}
-              </p>
-              <a
-                href={e.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-outline inline-block"
-              >
-                View Map
-              </a>
-            </div>
+        {/* Main 3 events */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {events.slice(0, 3).map((e) => (
+            <EventCard key={e.type} event={e} />
           ))}
+        </div>
+
+        {/* After party — centered, optional */}
+        <div className="flex justify-center mt-8">
+          <div className="w-full md:w-1/3">
+            <EventCard event={events[3]} optional />
+          </div>
         </div>
 
         {/* Dress code & hotel */}
