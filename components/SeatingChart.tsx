@@ -342,12 +342,13 @@ export default function SeatingChart() {
   // ── Persist ─────────────────────────────────────────────────────────────
   async function persist(guestId: string, tableId: string | null, seatNumber: number | null) {
     setSaving(true);
-    const guest = guests.find((g) => g.id === guestId);
+    const guest     = guests.find((g) => g.id === guestId);
+    const tableName = tableId ? (tables.find((t) => t.id === tableId)?.name ?? "") : null;
     try {
       await fetch("/api/seating/assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guestId, guestName: guest?.name ?? "", tableId, seatNumber }),
+        body: JSON.stringify({ guestId, guestName: guest?.name ?? "", tableId, tableName, seatNumber }),
       });
     } catch (e) { console.error("Save failed", e); }
     setSaving(false);
