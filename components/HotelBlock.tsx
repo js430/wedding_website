@@ -59,8 +59,11 @@ export default function HotelBlock() {
     <div>
       <p className="font-serif italic text-gold text-sm mb-2 text-center">Hotel Block</p>
       <p className="font-serif text-xl text-bark mb-1 text-center">The Forum Hotel</p>
-      <p className="font-sans text-bark/60 text-sm text-center mb-5">
+      <p className="font-sans text-bark/60 text-sm text-center mb-1">
         Fill out the form below to request a room in our block.
+      </p>
+      <p className="font-sans text-bark/50 text-xs text-center mb-5">
+        Approx. <strong className="text-bark/70">$270</strong> + taxes &amp; fees per room
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-3">

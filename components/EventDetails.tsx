@@ -127,8 +127,11 @@ export default function EventDetails() {
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
             <p className="font-serif text-xl text-bark mb-2">The Forum Hotel</p>
-            <p className="font-sans text-bark/60 text-sm mb-4">
+            <p className="font-sans text-bark/60 text-sm mb-1">
               540 Massie Rd, Charlottesville, VA 22903
+            </p>
+            <p className="font-sans text-bark/50 text-xs mb-4">
+              Approx. <strong className="text-bark/70">$270</strong> + taxes &amp; fees per room
             </p>
             <a href="#rsvp" className="btn-outline inline-block">
               Request a Room ↓
