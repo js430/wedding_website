@@ -23,7 +23,7 @@ const events = [
     time: "7:00 PM or later",
     venue: "The Forum Hotel",
     address: "540 Massie Rd, Charlottesville, VA 22903",
-    notes: "Dinner, dancing, and celebrating into the night. Black tie optional.",
+    notes: "Dinner, dancing, and celebrating into the night.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {
