@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
+import { encrypt } from "@/lib/encrypt";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const resend  = new Resend(process.env.RESEND_API_KEY);
@@ -104,34 +105,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  // ── Mark items as claimed in Registry DB (checkbox only — no name) ────────
+  // ── Mark items as claimed in Notion — name+email stored encrypted ──────────
   if (process.env.NOTION_REGISTRY_DATABASE_ID) {
+    const encryptedValue = encrypt(`${guestName} (${email})`);
     await Promise.all(
       items.map((item) =>
         notion.pages.update({
           page_id: item.id,
           properties: {
-            Claimed: { checkbox: true },
-          },
-        })
-      )
-    );
-  }
-
-  // ── Log full claim details to a SEPARATE Claims DB ─────────────────────────
-  // This database is intentionally kept separate so the couple doesn't
-  // accidentally see who bought what. Don't open it until after the wedding!
-  if (process.env.NOTION_REGISTRY_CLAIMS_DATABASE_ID) {
-    await Promise.all(
-      items.map((item) =>
-        notion.pages.create({
-          parent: { database_id: process.env.NOTION_REGISTRY_CLAIMS_DATABASE_ID! },
-          properties: {
-            Name:      { title:     [{ text: { content: item.name } }] },
-            GuestName: { rich_text: [{ text: { content: guestName } }] },
-            Email:     { email },
-            ItemId:    { rich_text: [{ text: { content: item.id } }] },
-            ClaimedAt: { date: { start: new Date().toISOString() } },
+            Claimed:   { checkbox: true },
+            ClaimedBy: { rich_text: [{ text: { content: encryptedValue } }] },
           },
         })
       )
