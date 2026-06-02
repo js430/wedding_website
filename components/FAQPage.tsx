@@ -14,7 +14,7 @@ const faqs = [
       },
       {
         q: "Can I bring a plus one?",
-        a: "Plus ones are extended on a per-invitation basis. If your invitation includes a plus one, you'll see the option on the RSVP form.",
+        a: "Every invitation includes a +1 — you'll see the option on the RSVP form. If you'd like to bring additional guests beyond your +1, please reach out to Katie and/or Jeffrey directly first.",
       },
       {
         q: "Can I change my RSVP after submitting?",
