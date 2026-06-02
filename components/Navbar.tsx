@@ -1,18 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 const links = [
   { label: "Our Story", href: "#story" },
-  { label: "Details", href: "#details" },
-  { label: "Gallery", href: "#gallery" },
-  { label: "Registry", href: "/registry" },
-  { label: "RSVP", href: "#rsvp" },
+  { label: "Details",   href: "#details" },
+  { label: "Gallery",   href: "#gallery" },
+  { label: "Registry",  href: "/registry" },
+  { label: "RSVP",      href: "#rsvp" },
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
+  const pathname = usePathname();
+  const onHome   = pathname === "/";
+
+  // Anchor links only work on the homepage — prefix with / when elsewhere
+  function resolveHref(href: string) {
+    if (href.startsWith("#") && !onHome) return `/${href}`;
+    return href;
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -28,7 +37,7 @@ export default function Navbar() {
     >
       <div className="max-w-5xl mx-auto px-6 flex items-center justify-between">
         <a
-          href="#top"
+          href={resolveHref("#top")}
           className="font-serif text-xl text-bark tracking-wide"
         >
           J &amp; K
@@ -39,7 +48,7 @@ export default function Navbar() {
           {links.map((l) => (
             <li key={l.href}>
               <a
-                href={l.href}
+                href={resolveHref(l.href)}
                 className="font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep transition-colors"
               >
                 {l.label}
@@ -71,7 +80,7 @@ export default function Navbar() {
             {links.map((l) => (
               <li key={l.href}>
                 <a
-                  href={l.href}
+                  href={resolveHref(l.href)}
                   onClick={() => setMenuOpen(false)}
                   className="font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep transition-colors"
                 >
