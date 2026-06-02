@@ -99,11 +99,11 @@ const faqs = [
       },
       {
         q: "Will there be a shuttle or transportation?",
-        a: "Details on transportation will be shared closer to the date. We recommend rideshare apps (Uber/Lyft) for getting to and from the venue.",
+        a: "No shuttle is needed — The Forum Hotel is the venue itself, so you're already there! If you're staying off-site, Uber and Lyft are readily available in Charlottesville.",
       },
       {
         q: "I have a question not answered here — who do I contact?",
-        a: "Reach out to us directly and we'll be happy to help!",
+        a: "Feel free to reach out to either of us:\n\nJeffrey Shi — (757) 634-4911 or jeffreyshi430@gmail.com\nKatie Shen — (571) 208-4478 or katie.shen2016@gmail.com",
       },
     ],
   },

@@ -125,6 +125,14 @@ export default function RegistryPage() {
   const [email,    setEmail]    = useState("");
   const [status,   setStatus]   = useState<Status>("idle");
 
+  // Cash fund state
+  const [cashName,   setCashName]   = useState("");
+  const [cashEmail,  setCashEmail]  = useState("");
+  const [cashAmount, setCashAmount] = useState("");
+  const [cashMethod, setCashMethod] = useState<"venmo"|"paypal"|"zelle"|"cash"|"">("");
+  const [cashNote,   setCashNote]   = useState("");
+  const [cashStatus, setCashStatus] = useState<Status>("idle");
+
   useEffect(() => {
     fetch("/api/registry")
       .then((r) => r.json())
@@ -164,7 +172,7 @@ export default function RegistryPage() {
       // Mark claimed locally
       setItems((prev) =>
         prev.map((i) =>
-          selected.has(i.id) ? { ...i, claimed: true, claimedBy: name } : i
+          selected.has(i.id) ? { ...i, claimed: true } : i
         )
       );
       setSelected(new Set());
@@ -173,6 +181,30 @@ export default function RegistryPage() {
       setStatus("error");
     }
   }
+
+  async function handleCashSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!cashEmail || !cashName || !cashMethod) return;
+    setCashStatus("submitting");
+    try {
+      const res = await fetch("/api/registry/cash", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ guestName: cashName, email: cashEmail, amount: cashAmount, method: cashMethod, note: cashNote }),
+      });
+      if (!res.ok) throw new Error();
+      setCashStatus("success");
+    } catch {
+      setCashStatus("error");
+    }
+  }
+
+  const METHODS = [
+    { id: "venmo",  label: "Venmo" },
+    { id: "paypal", label: "PayPal" },
+    { id: "zelle",  label: "Zelle" },
+    { id: "cash",   label: "Cash on the day of" },
+  ] as const;
 
   return (
     <>
@@ -231,6 +263,91 @@ export default function RegistryPage() {
               ))}
             </div>
           )}
+          {/* Cash fund */}
+          <div className="mt-20 border-t border-rose-soft/40 pt-16">
+            <h3 className="font-serif text-3xl text-bark text-center mb-2">Cash Fund</h3>
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <span className="block h-px w-12 bg-gold" />
+              <span className="text-gold">✦</span>
+              <span className="block h-px w-12 bg-gold" />
+            </div>
+            <p className="text-center font-sans text-bark/60 text-sm mb-10 max-w-md mx-auto">
+              If you'd prefer to contribute to our honeymoon fund, fill out the form
+              below and we'll send you payment details by email.
+            </p>
+
+            {cashStatus === "success" ? (
+              <div className="max-w-md mx-auto text-center py-10 bg-white/60 border border-rose-soft/30">
+                <p className="text-4xl mb-4">💛</p>
+                <p className="font-serif text-2xl text-bark mb-2">Thank You!</p>
+                <p className="font-sans text-bark/60 text-sm">Check your inbox for payment details.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleCashSubmit} className="max-w-md mx-auto bg-white/60 border border-rose-soft/30 p-8 space-y-5">
+                {/* Name + email */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Name *</label>
+                    <input required type="text" value={cashName} onChange={e => setCashName(e.target.value)}
+                      placeholder="Jane Smith"
+                      className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
+                  </div>
+                  <div>
+                    <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Email *</label>
+                    <input required type="email" value={cashEmail} onChange={e => setCashEmail(e.target.value)}
+                      placeholder="jane@email.com"
+                      className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Amount <span className="normal-case tracking-normal">(optional)</span></label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bark/40 font-sans text-sm">$</span>
+                    <input type="number" min="1" value={cashAmount} onChange={e => setCashAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full border border-rose-soft/60 bg-white/80 pl-7 pr-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
+                  </div>
+                </div>
+
+                {/* Payment method */}
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">Payment Method *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {METHODS.map(m => (
+                      <button key={m.id} type="button" onClick={() => setCashMethod(m.id)}
+                        className={`py-2.5 border font-sans text-sm tracking-wide transition-all ${
+                          cashMethod === m.id
+                            ? "bg-rose-deep text-white border-rose-deep"
+                            : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+                        }`}>
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div>
+                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Leave a note <span className="normal-case tracking-normal">(optional)</span></label>
+                  <textarea rows={2} value={cashNote} onChange={e => setCashNote(e.target.value)}
+                    placeholder="A kind word..."
+                    className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none" />
+                </div>
+
+                {cashStatus === "error" && (
+                  <p className="text-red-500 text-xs text-center font-sans">Something went wrong. Please try again.</p>
+                )}
+
+                <button type="submit" disabled={!cashName || !cashEmail || !cashMethod || cashStatus === "submitting"}
+                  className="w-full btn-primary disabled:opacity-50">
+                  {cashStatus === "submitting" ? "Sending…" : "Send Payment Details"}
+                </button>
+              </form>
+            )}
+          </div>
+
         </div>
       </main>
 
