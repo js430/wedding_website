@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+import { Client } from "@notionhq/client";
+
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
+
+export async function GET() {
+  if (!process.env.NOTION_REGISTRY_DATABASE_ID) {
+    return NextResponse.json({ items: [] });
+  }
+
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_REGISTRY_DATABASE_ID,
+    sorts: [{ property: "Category", direction: "ascending" }],
+  });
+
+  const items = response.results.map((page: any) => {
+    const p = page.properties;
+    return {
+      id:          page.id,
+      name:        p.Name?.title?.[0]?.plain_text          ?? "",
+      description: p.Description?.rich_text?.[0]?.plain_text ?? "",
+      price:       p.Price?.number                          ?? null,
+      link:        p.Link?.url                              ?? "",
+      imageUrl:    p.ImageURL?.url                          ?? "",
+      category:    p.Category?.select?.name                 ?? "Other",
+      claimed:     p.Claimed?.checkbox                      ?? false,
+      claimedBy:   p.ClaimedBy?.rich_text?.[0]?.plain_text  ?? "",
+    };
+  });
+
+  return NextResponse.json({ items });
+}
