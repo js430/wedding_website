@@ -128,7 +128,7 @@ export default function RegistryPage() {
   useEffect(() => {
     fetch("/api/registry")
       .then((r) => r.json())
-      .then(({ items }) => { setItems(items); setLoading(false); })
+      .then((data) => { setItems(data.items ?? []); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
