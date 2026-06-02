@@ -79,7 +79,7 @@ function ItemCard({
         <div className="flex items-center gap-3 mt-auto pt-3 border-t border-rose-soft/20">
           {item.link && (
             <a
-              href={item.link}
+              href={item.link.match(/^https?:\/\//) ? item.link : `https://${item.link}`}
               target="_blank"
               rel="noopener noreferrer"
               className="font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors"
