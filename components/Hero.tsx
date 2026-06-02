@@ -1,3 +1,5 @@
+import CountdownTimer from "./CountdownTimer";
+
 export default function Hero() {
   return (
     <section
@@ -38,6 +40,8 @@ export default function Hero() {
       <p className="font-sans text-bark/60 tracking-widest text-xs uppercase mb-10">
         Charlottesville, Virginia
       </p>
+
+      <CountdownTimer />
 
       <a href="#rsvp" className="btn-primary">
         RSVP Now
