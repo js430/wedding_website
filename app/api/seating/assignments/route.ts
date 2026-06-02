@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 
+export const dynamic = "force-dynamic";
+
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const SEAT_DB  = () => process.env.NOTION_SEATING_DATABASE_ID!;
 const RSVP_DB  = () => process.env.NOTION_DATABASE_ID!;
