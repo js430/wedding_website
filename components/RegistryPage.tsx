@@ -13,7 +13,6 @@ interface RegistryItem {
   imageUrl:    string;
   category:    string;
   claimed:     boolean;
-  claimedBy:   string;
 }
 
 type Status = "idle" | "submitting" | "success" | "error";

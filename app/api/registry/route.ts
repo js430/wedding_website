@@ -24,7 +24,6 @@ export async function GET() {
       imageUrl:    p.ImageURL?.url                          ?? "",
       category:    p.Category?.select?.name                 ?? "Other",
       claimed:     p.Claimed?.checkbox                      ?? false,
-      claimedBy:   p.ClaimedBy?.rich_text?.[0]?.plain_text  ?? "",
     };
   });
 
