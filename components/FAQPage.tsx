@@ -60,7 +60,7 @@ const faqs = [
       },
       {
         q: "Is there a hotel room block?",
-        a: "Yes! We have a room block at The Forum Hotel (the venue). Use code JEFFKATIE27 when booking. The block expires February 27, 2027. You can also request a room through the RSVP section of this site.",
+        a: "Yes! We have a room block at The Forum Hotel (the venue). To reserve a room, use the hotel block form in the RSVP section of this site. The block expires February 27, 2027.",
       },
     ],
   },
