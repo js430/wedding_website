@@ -86,7 +86,7 @@ const faqs = [
       },
       {
         q: "Do you have a cash fund option?",
-        a: "We appreciate the thought — please reach out to us directly if you'd like to contribute to our honeymoon fund.",
+        a: "Yes! Scroll to the bottom of our Registry page to find the Cash Fund section, where you can choose your preferred payment method (Venmo, PayPal, Zelle, or cash on the day of) and have the details sent straight to your email.",
       },
     ],
   },
