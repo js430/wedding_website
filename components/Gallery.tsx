@@ -17,8 +17,7 @@ export default function Gallery() {
         </div>
 
         <p className="text-center font-sans text-bark/60 text-sm mb-10 -mt-4">
-          Photos coming soon — add yours in{" "}
-          <code className="text-rose-deep text-xs">public/gallery/</code>
+          Photos coming soon.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
