@@ -1,10 +1,14 @@
+import Image from "next/image";
+
 const photos = [
-  { alt: "Engagement photo 1", bg: "#f9e8e8" },
-  { alt: "Engagement photo 2", bg: "#fdf3e3" },
-  { alt: "Engagement photo 3", bg: "#e5989b33" },
-  { alt: "Engagement photo 4", bg: "#c9a96e22" },
-  { alt: "Engagement photo 5", bg: "#f9e8e8" },
-  { alt: "Engagement photo 6", bg: "#fdf3e3" },
+  {
+    src: "/photo-walking.jpg",
+    alt: "Jeffrey and Katie walking together",
+  },
+  {
+    src: "/photo-proposal.jpg",
+    alt: "The proposal — Brooklyn Bridge",
+  },
 ];
 
 export default function Gallery() {
@@ -16,36 +20,25 @@ export default function Gallery() {
           <span className="text-gold text-xl">✦</span>
         </div>
 
-        <p className="text-center font-sans text-bark/60 text-sm mb-10 -mt-4">
-          Photos coming soon.
-        </p>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {photos.map((p, i) => (
-            <div
-              key={i}
-              className="aspect-square overflow-hidden"
-              style={{ backgroundColor: p.bg }}
-            >
-              {/* Replace this div with an <Image> once you have photos */}
-              <div className="w-full h-full flex items-center justify-center">
-                <svg
-                  className="w-10 h-10 text-bark/20"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+        {photos.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {photos.map((p, i) => (
+              <div key={i} className="aspect-square overflow-hidden relative">
+                <Image
+                  src={p.src}
+                  alt={p.alt}
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 50vw, 33vw"
+                />
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center font-sans text-bark/60 text-sm">
+            Photos coming soon.
+          </p>
+        )}
       </div>
     </section>
   );
