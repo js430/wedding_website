@@ -7,10 +7,11 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const resend  = new Resend(process.env.RESEND_API_KEY);
 
 interface ClaimItem {
-  id:    string;
-  name:  string;
-  price: number | null;
-  link:  string;
+  id:      string;
+  name:    string;
+  price:   number | null;
+  link:    string;
+  variant: string;
 }
 
 function buildEmail(guestName: string, items: ClaimItem[]): string {
@@ -22,6 +23,7 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
           <p style="margin:0;font-family:Georgia,serif;font-size:16px;color:#1E0008;">
             ${item.name}
           </p>
+          ${item.variant ? `<p style="margin:2px 0 0;font-family:sans-serif;font-size:12px;color:#8B0010;">Preferred: ${item.variant}</p>` : ""}
           ${item.price ? `<p style="margin:4px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;">$${item.price.toFixed(2)}</p>` : ""}
         </td>
         <td style="padding:12px 0 12px 16px;border-bottom:1px solid #FFB3C4;text-align:right;white-space:nowrap;">

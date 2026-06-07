@@ -13,6 +13,7 @@ interface RegistryItem {
   imageUrl:    string;
   category:    string;
   claimed:     boolean;
+  variant:     string; // e.g. "Black/White set, Large size"
 }
 
 type Status = "idle" | "submitting" | "success" | "error";
@@ -27,7 +28,8 @@ function ItemCard({
   item: RegistryItem;
   selected: boolean;
   onToggle: () => void;
-}) {
+})
+ {
   return (
     <div
       className={`flex flex-col border transition-all duration-150 ${
@@ -71,8 +73,13 @@ function ItemCard({
           </p>
         )}
         {item.description && (
-          <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 flex-1">
+          <p className="font-sans text-bark/60 text-sm leading-relaxed mb-2 flex-1">
             {item.description}
+          </p>
+        )}
+        {item.variant && (
+          <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
+            <span className="text-rose-deep font-medium">Preferred:</span> {item.variant}
           </p>
         )}
 
@@ -159,7 +166,7 @@ export default function RegistryPage() {
 
     const chosenItems = items
       .filter((i) => selected.has(i.id))
-      .map(({ id, name, price, link }) => ({ id, name, price, link }));
+      .map(({ id, name, price, link, variant }) => ({ id, name, price, link, variant }));
 
     try {
       const res = await fetch("/api/registry/claim", {
