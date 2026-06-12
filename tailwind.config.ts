@@ -25,6 +25,7 @@ const config: Config = {
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],
+        script: ["Tangerine", "cursive"],
       },
       backgroundImage: {
         "floral-pattern": "url('/floral-bg.svg')",

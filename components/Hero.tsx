@@ -24,9 +24,9 @@ export default function Hero() {
         Together Forever
       </p>
 
-      <h1 className="font-serif text-6xl md:text-8xl text-bark mb-6 leading-none">
+      <h1 className="font-script text-8xl md:text-[10rem] text-bark mb-6 leading-none">
         <span className="hero-enter block [animation-delay:150ms]">Jeffrey</span>
-        <span className="hero-enter block text-3xl md:text-4xl text-rose-deep my-2 font-serif italic [animation-delay:350ms]">
+        <span className="hero-enter block font-script text-5xl md:text-7xl text-rose-deep my-1 [animation-delay:350ms]">
           &amp;
         </span>
         <span className="hero-enter block [animation-delay:550ms]">Katie</span>

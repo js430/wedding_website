@@ -52,9 +52,9 @@ export default function Intro() {
       <svg viewBox="0 0 800 180" className="w-full max-w-2xl px-6" aria-hidden="true">
         <text
           x="400"
-          y="110"
+          y="115"
           textAnchor="middle"
-          fontSize="78"
+          fontSize="96"
           className="intro-script-text"
         >
           Jeffrey &amp; Katie
