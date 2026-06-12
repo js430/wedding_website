@@ -2,12 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&family=Tangerine:wght@400;700&display=swap');
-
-:root {
-  --font-playfair: 'Playfair Display', Georgia, serif;
-  --font-lato: 'Lato', system-ui, sans-serif;
-}
+/* Fonts are loaded via next/font in app/layout.tsx — preloaded and
+   self-hosted, so scripts render correctly from the first frame. */
 
 html {
   scroll-behavior: smooth;
@@ -155,7 +151,7 @@ body {
 
   /* Intro splash — script names trace in gold, then fill */
   .intro-script-text {
-    font-family: 'Tangerine', cursive;
+    font-family: var(--font-tangerine), 'Segoe Script', cursive;
     fill: transparent;
     stroke: #c9a838;
     stroke-width: 1;

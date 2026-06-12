@@ -1,5 +1,24 @@
 import type { Metadata } from "next";
+import { Playfair_Display, Lato, Tangerine } from "next/font/google";
 import "./globals.css";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-playfair",
+});
+
+const lato = Lato({
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  variable: "--font-lato",
+});
+
+const tangerine = Tangerine({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-tangerine",
+});
 
 export const metadata: Metadata = {
   title: "Jeffrey & Katie — March 27, 2027",
@@ -17,7 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${playfair.variable} ${lato.variable} ${tangerine.variable}`}
+    >
       <body>{children}</body>
     </html>
   );
