@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap');
 
 :root {
   --font-playfair: 'Playfair Display', Georgia, serif;
@@ -43,9 +43,33 @@ body {
   100% { background-position: -200% center; }
 }
 
+@keyframes drawStroke {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes fillGold {
+  to { fill: #c9a838; }
+}
+
 @layer components {
+  /* Section headings — gold foil with a slow living sheen */
   .section-title {
-    @apply font-serif text-4xl md:text-5xl text-bark text-center mb-4;
+    @apply font-serif text-4xl md:text-5xl text-center mb-4;
+    background: linear-gradient(
+      105deg,
+      #6f541a 0%,
+      #a08125 20%,
+      #e8d48a 38%,
+      #a08125 50%,
+      #6f541a 66%,
+      #c9a838 84%,
+      #7d621c 100%
+    );
+    background-size: 180% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 14s linear infinite;
   }
 
   /* Ornamental divider — lines fade toward the edges */
@@ -127,6 +151,23 @@ body {
   /* Card hover lift */
   .lift {
     @apply transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-rose-deep/10;
+  }
+
+  /* Intro splash — script names trace in gold, then fill */
+  .intro-script-text {
+    font-family: 'Great Vibes', cursive;
+    fill: transparent;
+    stroke: #c9a838;
+    stroke-width: 1;
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation:
+      drawStroke 2.4s ease-out forwards,
+      fillGold 1s ease 2s forwards;
+  }
+  .intro-sub {
+    opacity: 0;
+    animation: fadeUp 1s ease 2.3s forwards;
   }
 }
 
