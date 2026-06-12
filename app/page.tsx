@@ -1,5 +1,5 @@
 import Intro from "@/components/Intro";
-import Marquee from "@/components/Marquee";
+import Ornament from "@/components/Ornament";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import OurStory from "@/components/OurStory";
@@ -16,10 +16,10 @@ export default function Home() {
       <main>
         <Hero />
         <OurStory />
-        <Marquee />
+        <Ornament />
         <EventDetails />
         <Gallery />
-        <Marquee />
+        <Ornament />
         <RSVP />
       </main>
       <Footer />
