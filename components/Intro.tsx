@@ -49,12 +49,12 @@ export default function Intro() {
         phase === "fading" ? "opacity-0" : "opacity-100"
       }`}
     >
-      <svg viewBox="0 0 700 180" className="w-full max-w-2xl px-6" aria-hidden="true">
+      <svg viewBox="0 0 800 180" className="w-full max-w-2xl px-6" aria-hidden="true">
         <text
-          x="350"
-          y="105"
+          x="400"
+          y="110"
           textAnchor="middle"
-          fontSize="76"
+          fontSize="78"
           className="intro-script-text"
         >
           Jeffrey &amp; Katie
