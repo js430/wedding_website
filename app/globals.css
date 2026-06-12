@@ -108,9 +108,9 @@ body {
     transform-origin: left;
   }
 
-  /* Gold shimmer text */
+  /* Gold shimmer text — deep antique gold base so it reads on blush/pink */
   .shimmer-text {
-    background: linear-gradient(90deg, #c9a838 0%, #eedd9a 30%, #c9a838 55%, #eedd9a 80%, #c9a838 100%);
+    background: linear-gradient(90deg, #7d621c 0%, #c9a838 30%, #7d621c 55%, #c9a838 80%, #7d621c 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
