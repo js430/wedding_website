@@ -276,7 +276,7 @@ function UnassignedPanel({ guests }: { guests: Guest[] }) {
         <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-0.5">Unassigned</p>
         <p className="font-serif text-3xl text-bark leading-none">{guests.length}</p>
       </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2" data-lenis-prevent>
         {guests.map((g) => (
           <DraggableGuest key={g.id} guest={g} />
         ))}
@@ -463,7 +463,7 @@ export default function SeatingChart() {
         <div className="flex flex-1 overflow-hidden">
           <UnassignedPanel guests={unassigned} />
 
-          <div className="flex-1 overflow-auto p-6">
+          <div className="flex-1 overflow-auto p-6" data-lenis-prevent>
             {tables.length === 0 ? (
               <div className="h-full flex items-center justify-center">
                 <p className="font-sans text-bark/30 text-sm">

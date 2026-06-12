@@ -1,7 +1,20 @@
+"use client";
+
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import CountdownTimer from "./CountdownTimer";
 import Petals from "./Petals";
+import Sparkles from "./Sparkles";
+import Magnetic from "./Magnetic";
 
 export default function Hero() {
+  const reduced = useReducedMotion();
+
+  // Cinematic exit — content drifts down, shrinks, and fades as you scroll
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 700], [0, 190]);
+  const opacity = useTransform(scrollY, [0, 520], [1, 0]);
+  const scale = useTransform(scrollY, [0, 700], [1, 0.94]);
+
   return (
     <section
       id="top"
@@ -12,6 +25,7 @@ export default function Hero() {
       }}
     >
       <Petals />
+      <Sparkles />
 
       {/* Decorative rings — slow breathing pulse */}
       <div className="absolute top-24 left-10 w-40 h-40 rounded-full border border-gold/20 pointer-events-none [animation:breathe_9s_ease-in-out_infinite]" />
@@ -19,40 +33,47 @@ export default function Hero() {
       <div className="absolute bottom-20 right-8 w-48 h-48 rounded-full border border-rose-soft/30 pointer-events-none [animation:breathe_10s_ease-in-out_1.5s_infinite]" />
       <div className="absolute bottom-12 right-2 w-72 h-72 rounded-full border border-rose-soft/15 pointer-events-none [animation:breathe_14s_ease-in-out_infinite]" />
 
-      {/* Tagline — gold shimmer */}
-      <p className="hero-enter shimmer-text font-serif italic text-lg mb-4 tracking-widest">
-        Together Forever
-      </p>
-
-      <h1 className="font-script text-8xl md:text-[10rem] text-bark mb-6 leading-none">
-        <span className="hero-enter block [animation-delay:150ms]">Jeffrey</span>
-        <span className="hero-enter block font-script text-5xl md:text-7xl text-rose-deep my-1 [animation-delay:350ms]">
-          &amp;
-        </span>
-        <span className="hero-enter block [animation-delay:550ms]">Katie</span>
-      </h1>
-
-      <div className="hero-enter flex items-center gap-4 mb-8 [animation-delay:750ms]">
-        <span className="block h-px w-12 bg-gradient-to-r from-transparent to-gold" />
-        <p className="font-sans text-sm tracking-[0.3em] uppercase text-bark/60">
-          Saturday, March 27, 2027
+      <motion.div
+        className="relative flex flex-col items-center"
+        style={reduced ? undefined : { y, opacity, scale }}
+      >
+        {/* Tagline — gold shimmer */}
+        <p className="hero-enter shimmer-text font-serif italic text-lg mb-4 tracking-widest">
+          Together Forever
         </p>
-        <span className="block h-px w-12 bg-gradient-to-l from-transparent to-gold" />
-      </div>
 
-      <p className="hero-enter font-sans text-bark/60 tracking-widest text-xs uppercase mb-10 [animation-delay:900ms]">
-        Charlottesville, Virginia
-      </p>
+        <h1 className="font-script text-8xl md:text-[10rem] text-bark mb-6 leading-none">
+          <span className="hero-enter block [animation-delay:150ms]">Jeffrey</span>
+          <span className="hero-enter block font-script text-5xl md:text-7xl text-rose-deep my-1 [animation-delay:350ms]">
+            &amp;
+          </span>
+          <span className="hero-enter block [animation-delay:550ms]">Katie</span>
+        </h1>
 
-      <div className="hero-enter [animation-delay:1050ms]">
-        <CountdownTimer />
-      </div>
+        <div className="hero-enter flex items-center gap-4 mb-8 [animation-delay:750ms]">
+          <span className="block h-px w-12 bg-gradient-to-r from-transparent to-gold" />
+          <p className="font-sans text-sm tracking-[0.3em] uppercase text-bark/60">
+            Saturday, March 27, 2027
+          </p>
+          <span className="block h-px w-12 bg-gradient-to-l from-transparent to-gold" />
+        </div>
 
-      <div className="hero-enter [animation-delay:1200ms]">
-        <a href="#rsvp" className="btn-primary">
-          RSVP Now
-        </a>
-      </div>
+        <p className="hero-enter font-sans text-bark/60 tracking-widest text-xs uppercase mb-10 [animation-delay:900ms]">
+          Charlottesville, Virginia
+        </p>
+
+        <div className="hero-enter [animation-delay:1050ms]">
+          <CountdownTimer />
+        </div>
+
+        <div className="hero-enter [animation-delay:1200ms]">
+          <Magnetic>
+            <a href="#rsvp" className="btn-primary">
+              RSVP Now
+            </a>
+          </Magnetic>
+        </div>
+      </motion.div>
 
       {/* Scroll cue */}
       <div className="hero-enter absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-bark/30 [animation-delay:1800ms]">

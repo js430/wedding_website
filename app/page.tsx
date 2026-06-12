@@ -1,4 +1,5 @@
 import Intro from "@/components/Intro";
+import Marquee from "@/components/Marquee";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import OurStory from "@/components/OurStory";
@@ -15,8 +16,10 @@ export default function Home() {
       <main>
         <Hero />
         <OurStory />
+        <Marquee />
         <EventDetails />
         <Gallery />
+        <Marquee />
         <RSVP />
       </main>
       <Footer />

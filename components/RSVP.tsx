@@ -34,6 +34,19 @@ export default function RSVP() {
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("success");
+
+      // Celebrate a yes with palette-colored confetti
+      if (attending === "yes") {
+        try {
+          const confetti = (await import("canvas-confetti")).default;
+          const colors = ["#CC1428", "#FFB3C4", "#c9a838", "#8B0010", "#FEE8EC"];
+          confetti({ particleCount: 130, spread: 80, origin: { y: 0.65 }, colors, ticks: 220 });
+          setTimeout(() => confetti({ particleCount: 70, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, colors }), 250);
+          setTimeout(() => confetti({ particleCount: 70, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, colors }), 450);
+        } catch {
+          // celebration is optional
+        }
+      }
     } catch {
       setStatus("error");
     }

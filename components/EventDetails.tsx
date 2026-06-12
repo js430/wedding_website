@@ -1,4 +1,5 @@
 import Reveal from "./Reveal";
+import Tilt from "./Tilt";
 
 const events = [
   {
@@ -92,7 +93,9 @@ export default function EventDetails() {
         <div className="grid md:grid-cols-3 gap-8">
           {events.slice(0, 3).map((e, i) => (
             <Reveal key={e.type} delay={i * 150} className="h-full">
-              <EventCard event={e} />
+              <Tilt className="h-full">
+                <EventCard event={e} />
+              </Tilt>
             </Reveal>
           ))}
         </div>
@@ -101,7 +104,9 @@ export default function EventDetails() {
         <div className="flex justify-center mt-8">
           <div className="w-full md:w-1/3">
             <Reveal delay={200}>
-              <EventCard event={events[3]} optional />
+              <Tilt>
+                <EventCard event={events[3]} optional />
+              </Tilt>
             </Reveal>
           </div>
         </div>
