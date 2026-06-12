@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import HotelBlock from "./HotelBlock";
+import Reveal from "./Reveal";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -41,13 +42,15 @@ export default function RSVP() {
   return (
     <section id="rsvp" className="py-24 px-6 bg-rose-blush">
       <div className="max-w-5xl mx-auto">
-        <h2 className="section-title">RSVP & Hotel</h2>
-        <div className="section-divider">
-          <span className="text-gold text-xl">✦</span>
-        </div>
-        <p className="text-center font-sans text-bark/60 text-sm mb-12 -mt-4">
-          Kindly reply by February 27, 2027
-        </p>
+        <Reveal>
+          <h2 className="section-title">RSVP & Hotel</h2>
+          <div className="section-divider">
+            <span className="text-gold text-xl">✦</span>
+          </div>
+          <p className="text-center font-sans text-bark/60 text-sm mb-12 -mt-4">
+            Kindly reply by February 27, 2027
+          </p>
+        </Reveal>
 
         <div className="grid md:grid-cols-2 gap-10 md:divide-x md:divide-rose-soft/30">
           {/* RSVP Form */}

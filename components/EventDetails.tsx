@@ -1,3 +1,5 @@
+import Reveal from "./Reveal";
+
 const events = [
   {
     type: "Ceremony",
@@ -41,7 +43,7 @@ type Event = (typeof events)[number];
 
 function EventCard({ event: e, optional }: { event: Event; optional?: boolean }) {
   return (
-    <div className="bg-ivory/80 backdrop-blur border border-rose-soft/30 p-8 text-center relative">
+    <div className="lift bg-ivory/80 backdrop-blur border border-rose-soft/30 hover:border-rose-soft/60 p-8 text-center relative h-full">
       {optional && (
         <span className="absolute top-3 right-3 font-sans text-xs tracking-widest uppercase text-gold border border-gold/40 px-2 py-0.5">
           Optional
@@ -79,27 +81,33 @@ export default function EventDetails() {
       }}
     >
       <div className="max-w-4xl mx-auto">
-        <h2 className="section-title">Wedding Details</h2>
-        <div className="section-divider">
-          <span className="text-gold text-xl">✦</span>
-        </div>
+        <Reveal>
+          <h2 className="section-title">Wedding Details</h2>
+          <div className="section-divider">
+            <span className="text-gold text-xl">✦</span>
+          </div>
+        </Reveal>
 
         {/* Main 3 events */}
         <div className="grid md:grid-cols-3 gap-8">
-          {events.slice(0, 3).map((e) => (
-            <EventCard key={e.type} event={e} />
+          {events.slice(0, 3).map((e, i) => (
+            <Reveal key={e.type} delay={i * 150} className="h-full">
+              <EventCard event={e} />
+            </Reveal>
           ))}
         </div>
 
         {/* After party — centered, optional */}
         <div className="flex justify-center mt-8">
           <div className="w-full md:w-1/3">
-            <EventCard event={events[3]} optional />
+            <Reveal delay={200}>
+              <EventCard event={events[3]} optional />
+            </Reveal>
           </div>
         </div>
 
         {/* Dress code & hotel */}
-        <div className="mt-12 grid md:grid-cols-2 gap-6">
+        <Reveal delay={100} className="mt-12 grid md:grid-cols-2 gap-6">
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
@@ -137,7 +145,7 @@ export default function EventDetails() {
               Request a Room ↓
             </a>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -1,3 +1,5 @@
+import Reveal from "./Reveal";
+
 const milestones = [
   {
     year: "October 2018",
@@ -20,10 +22,12 @@ export default function OurStory() {
   return (
     <section id="story" className="py-24 px-6 bg-rose-blush">
       <div className="max-w-3xl mx-auto">
-        <h2 className="section-title">Our Story</h2>
-        <div className="section-divider">
-          <span className="text-gold text-xl">✦</span>
-        </div>
+        <Reveal>
+          <h2 className="section-title">Our Story</h2>
+          <div className="section-divider">
+            <span className="text-gold text-xl">✦</span>
+          </div>
+        </Reveal>
 
         <div className="relative">
           {/* Vertical line */}
@@ -31,15 +35,17 @@ export default function OurStory() {
 
           <ol className="space-y-12">
             {milestones.map((m, i) => (
-              <li key={i} className="md:pl-20 relative">
-                {/* Dot */}
-                <div className="hidden md:flex absolute left-5 top-1 w-6 h-6 rounded-full border-2 border-rose-deep bg-ivory items-center justify-center">
+              <li key={i} className="md:pl-20 relative group">
+                {/* Dot — outside Reveal so the entrance transform doesn't shift it */}
+                <div className="hidden md:flex absolute left-5 top-1 w-6 h-6 rounded-full border-2 border-rose-deep bg-ivory items-center justify-center transition-transform duration-300 group-hover:scale-125">
                   <div className="w-2 h-2 rounded-full bg-rose-deep" />
                 </div>
 
-                <span className="font-serif italic text-gold text-sm">{m.year}</span>
-                <h3 className="font-serif text-2xl text-bark mt-1 mb-2">{m.title}</h3>
-                <p className="font-sans text-bark/70 leading-relaxed">{m.body}</p>
+                <Reveal delay={i * 150}>
+                  <span className="font-serif italic text-gold text-sm">{m.year}</span>
+                  <h3 className="font-serif text-2xl text-bark mt-1 mb-2">{m.title}</h3>
+                  <p className="font-sans text-bark/70 leading-relaxed">{m.body}</p>
+                </Reveal>
               </li>
             ))}
           </ol>

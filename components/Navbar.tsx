@@ -48,10 +48,7 @@ export default function Navbar() {
         <ul className="hidden md:flex gap-8">
           {links.map((l) => (
             <li key={l.href}>
-              <a
-                href={resolveHref(l.href)}
-                className="font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep transition-colors"
-              >
+              <a href={resolveHref(l.href)} className="nav-link">
                 {l.label}
               </a>
             </li>
