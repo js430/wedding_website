@@ -5,13 +5,13 @@ const PETALS = Array.from({ length: 14 }, (_, i) => ({
   left:     (i * 7.3 + 2) % 100,           // spread across the width
   delay:    (i * 1.9) % 16,                // staggered starts
   duration: 13 + (i % 5) * 2.5,            // varied fall speeds
-  size:     9 + (i % 4) * 3,
+  size:     11 + (i % 4) * 4,
   color:
     i % 5 === 0
-      ? "rgba(201, 168, 56, 0.4)"          // gold
+      ? "rgba(160, 130, 30, 0.7)"          // deep gold
       : i % 3 === 0
-      ? "rgba(204, 20, 40, 0.25)"          // crimson
-      : "rgba(255, 179, 196, 0.55)",       // soft pink
+      ? "rgba(139, 0, 16, 0.6)"            // burgundy
+      : "rgba(204, 20, 40, 0.55)",         // crimson
 }));
 
 export default function Petals() {
