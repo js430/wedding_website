@@ -6,6 +6,7 @@ import OurStory from "@/components/OurStory";
 import JourneyMap from "@/components/JourneyMap";
 import EventDetails from "@/components/EventDetails";
 import Gallery from "@/components/Gallery";
+import RingsSection from "@/components/RingsSection";
 import RSVP from "@/components/RSVP";
 import Footer from "@/components/Footer";
 
@@ -21,6 +22,7 @@ export default function Home() {
         <Ornament />
         <EventDetails />
         <Gallery />
+        <RingsSection />
         <Ornament />
         <RSVP />
       </main>
