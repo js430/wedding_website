@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 
 /**
  * Envelope intro: a wax-sealed envelope rises in, the seal cracks,
- * the flap lifts, and the invitation card slides out — then the
- * overlay melts away into the site. Once per session, click to skip,
- * disabled for reduced-motion users.
+ * the flap lifts, and the invitation card slides out. Plays on every
+ * visit and holds until the guest presses Enter. Clicking during the
+ * animation fast-forwards to the opened state. Reduced-motion users
+ * go straight to the site.
  */
 
 const ORDER = ["closed", "sealCrack", "flapOpen", "cardOut", "fade", "done"] as const;
@@ -17,33 +18,31 @@ const TIMELINE: [Phase, number][] = [
   ["sealCrack", 1200],
   ["flapOpen", 1900],
   ["cardOut", 2800],
-  ["fade", 4600],
-  ["done", 5500],
 ];
 
 export default function Intro() {
   const [phase, setPhase] = useState<Phase>("closed");
 
+  // Only ever move forward — a stale timer can't rewind a fast-forward
+  const advance = (p: Phase) =>
+    setPhase((prev) => (ORDER.indexOf(p) > ORDER.indexOf(prev) ? p : prev));
+
   useEffect(() => {
-    if (
-      sessionStorage.getItem("intro_seen") ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setPhase("done");
       return;
     }
-    const timers = TIMELINE.map(([p, t]) =>
-      setTimeout(() => {
-        if (p === "done") sessionStorage.setItem("intro_seen", "1");
-        setPhase(p);
-      }, t)
-    );
+    const timers = TIMELINE.map(([p, t]) => setTimeout(() => advance(p), t));
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  function skip() {
-    sessionStorage.setItem("intro_seen", "1");
-    setPhase("done");
+  function fastForward() {
+    advance("cardOut");
+  }
+
+  function enter() {
+    advance("fade");
+    setTimeout(() => advance("done"), 950);
   }
 
   if (phase === "done") return null;
@@ -55,10 +54,9 @@ export default function Intro() {
 
   return (
     <motion.div
-      onClick={skip}
+      onClick={fastForward}
       role="presentation"
-      aria-label="Skip intro"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest cursor-pointer overflow-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest overflow-hidden"
       animate={{ opacity: phase === "fade" ? 0 : 1 }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
     >
@@ -151,9 +149,28 @@ export default function Intro() {
         </div>
       </motion.div>
 
-      <p className="absolute bottom-8 left-1/2 -translate-x-1/2 font-sans text-[10px] tracking-[0.3em] uppercase text-rose-blush/35">
-        Click anywhere to skip
-      </p>
+      {/* Enter button — appears once the card is out */}
+      <div className="absolute inset-x-0 bottom-14 flex justify-center">
+        {cardUp ? (
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              enter();
+            }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="border border-gold/60 text-gold font-sans text-sm tracking-[0.35em] uppercase px-12 py-3.5 transition-colors duration-300 hover:bg-gold hover:text-crimson-darkest"
+          >
+            Enter
+          </motion.button>
+        ) : (
+          <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-rose-blush/35">
+            Click to skip ahead
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }
