@@ -22,7 +22,7 @@ export default function RingsSection() {
           <span className="text-gold text-xl">✦</span>
         </div>
         <p className="text-center font-sans text-bark/60 text-sm -mt-4">
-          A promise in gold — go ahead, give them a spin.
+          A promise in platinum — go ahead, give them a spin.
         </p>
         <Rings3D />
         <p className="text-center font-sans text-bark/40 text-xs tracking-[0.3em] uppercase -mt-4">
