@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import HotelBlock from "./HotelBlock";
 import Reveal from "./Reveal";
+import SparkleTitle from "./SparkleTitle";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -56,7 +57,7 @@ export default function RSVP() {
     <section id="rsvp" className="py-24 px-6 bg-rose-blush">
       <div className="max-w-5xl mx-auto">
         <Reveal>
-          <h2 className="section-title">RSVP & Hotel</h2>
+          <SparkleTitle text="RSVP & Hotel" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

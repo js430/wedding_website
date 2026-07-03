@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Reveal from "./Reveal";
+import SparkleTitle from "./SparkleTitle";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -67,7 +68,7 @@ export default function Gallery() {
     <section id="gallery" className="py-24 px-6 bg-rose-soft/20">
       <div className="max-w-5xl mx-auto">
         <Reveal>
-          <h2 className="section-title">Gallery</h2>
+          <SparkleTitle text="Gallery" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

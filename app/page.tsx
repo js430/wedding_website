@@ -3,6 +3,7 @@ import Ornament from "@/components/Ornament";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import OurStory from "@/components/OurStory";
+import JourneyMap from "@/components/JourneyMap";
 import EventDetails from "@/components/EventDetails";
 import Gallery from "@/components/Gallery";
 import RSVP from "@/components/RSVP";
@@ -16,6 +17,7 @@ export default function Home() {
       <main>
         <Hero />
         <OurStory />
+        <JourneyMap />
         <Ornament />
         <EventDetails />
         <Gallery />

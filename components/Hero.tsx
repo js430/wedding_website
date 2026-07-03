@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import CountdownTimer from "./CountdownTimer";
-import Petals from "./Petals";
+import PetalsField from "./PetalsField";
 import Sparkles from "./Sparkles";
 import Magnetic from "./Magnetic";
 
@@ -24,7 +24,7 @@ export default function Hero() {
           "linear-gradient(160deg, #FEE8EC 0%, #FFB3C4 40%, #FEE8EC 100%)",
       }}
     >
-      <Petals />
+      <PetalsField />
       <Sparkles />
 
       {/* Decorative rings — slow breathing pulse */}

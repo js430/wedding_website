@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import SparkleTitle from "./SparkleTitle";
 
 const faqs = [
   {
@@ -144,7 +145,7 @@ export default function FAQPage() {
       <Navbar />
       <main className="min-h-screen bg-rose-blush pt-24 pb-20 px-6">
         <div className="max-w-2xl mx-auto">
-          <h2 className="section-title mt-8">FAQ</h2>
+          <SparkleTitle text="FAQ" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

@@ -1,4 +1,5 @@
 import Reveal from "./Reveal";
+import SparkleTitle from "./SparkleTitle";
 import Tilt from "./Tilt";
 
 const events = [
@@ -83,7 +84,7 @@ export default function EventDetails() {
     >
       <div className="max-w-4xl mx-auto">
         <Reveal>
-          <h2 className="section-title">Wedding Details</h2>
+          <SparkleTitle text="Wedding Details" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

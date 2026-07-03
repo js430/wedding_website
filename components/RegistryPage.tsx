@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import SparkleTitle from "./SparkleTitle";
 
 interface RegistryItem {
   id:          string;
@@ -221,7 +222,7 @@ export default function RegistryPage() {
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
-          <h2 className="section-title mt-8">Registry</h2>
+          <SparkleTitle text="Registry" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

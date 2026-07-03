@@ -1,4 +1,5 @@
 import Reveal from "./Reveal";
+import SparkleTitle from "./SparkleTitle";
 
 const milestones = [
   {
@@ -23,7 +24,7 @@ export default function OurStory() {
     <section id="story" className="py-24 px-6 bg-rose-blush">
       <div className="max-w-3xl mx-auto">
         <Reveal>
-          <h2 className="section-title">Our Story</h2>
+          <SparkleTitle text="Our Story" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>
