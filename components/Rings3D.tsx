@@ -20,8 +20,8 @@ interface SpinState {
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 /* ── Marquise outline ─────────────────────────────────────────────────────
-   Lens shape from two circular arcs meeting at sharp tips, 2:1 ratio.
-   Shared by the stone geometry and the prong placement. */
+   Lens from two circular arcs meeting at sharp tips, 2:1 ratio. Shared
+   by the stone geometry and prong placement. */
 const LENS_B = 0.5;
 const LENS_R = (1 + LENS_B * LENS_B) / (2 * LENS_B);
 const LENS_D = Math.sqrt(LENS_R * LENS_R - 1);
@@ -38,60 +38,131 @@ function sampleLens(t: number): [number, number] {
   return [LENS_R * Math.sin(th), -(LENS_R * Math.cos(th) - LENS_D)];
 }
 
-/* ── Jewelry-studio environment ───────────────────────────────────────────
-   Alternating HDR softbox strips and darkness. Facets flash as they
-   sweep the light/dark boundaries — the source of real sparkle. */
-function JewelEnv() {
+/* ── Studio environment, rendered twice ───────────────────────────────────
+   The jewelry-render trick: metals reflect a SOFT studio (creamy
+   platinum gradients), while stones reflect a RAZOR-SHARP one (hard
+   light/dark boundaries → facet flashes). One light rig, two PMREM
+   bakes at different blur levels, assigned per material. */
+function buildStudio(): THREE.Scene {
+  const env = new THREE.Scene();
+  const panel = (intensity: number) => {
+    const mat = new THREE.MeshBasicMaterial();
+    mat.color.setScalar(intensity);
+    return mat;
+  };
+
+  const R = 9;
+  const COUNT = 16;
+  for (let i = 0; i < COUNT; i++) {
+    const a = (i / COUNT) * Math.PI * 2;
+    const intensity =
+      i % 2 === 0 ? (i % 4 === 0 ? 9 : 4.5) : i % 3 === 0 ? 0.4 : 0.08;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 8), panel(intensity));
+    m.position.set(Math.sin(a) * R, 0, Math.cos(a) * R);
+    m.rotation.y = a + Math.PI;
+    env.add(m);
+  }
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), panel(6.5));
+  top.position.set(0, 8, 0);
+  top.rotation.x = Math.PI / 2;
+  env.add(top);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), panel(0.7));
+  floor.position.set(0, -8, 0);
+  floor.rotation.x = -Math.PI / 2;
+  env.add(floor);
+  return env;
+}
+
+interface StudioMats {
+  polished: THREE.MeshPhysicalMaterial;
+  satin: THREE.MeshPhysicalMaterial;
+  pave: THREE.MeshPhysicalMaterial;
+  gem: THREE.MeshPhysicalMaterial;
+}
+
+/** Bakes both environments, wires the scene + materials, renders rig. */
+function useStudio(): StudioMats {
   const { gl, scene } = useThree();
-  useEffect(() => {
-    const env = new THREE.Scene();
-    const strip = (intensity: number) => {
-      const mat = new THREE.MeshBasicMaterial();
-      mat.color.setScalar(intensity);
-      return mat;
-    };
 
-    const R = 9;
-    const COUNT = 12;
-    for (let i = 0; i < COUNT; i++) {
-      const a = (i / COUNT) * Math.PI * 2;
-      const intensity = i % 2 === 0 ? (i % 4 === 0 ? 10 : 5.5) : 0.15;
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 8), strip(intensity));
-      m.position.set(Math.sin(a) * R, 0, Math.cos(a) * R);
-      m.rotation.y = a + Math.PI;
-      env.add(m);
-    }
-    const top = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), strip(7));
-    top.position.set(0, 8, 0);
-    top.rotation.x = Math.PI / 2;
-    env.add(top);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), strip(0.6));
-    floor.position.set(0, -8, 0);
-    floor.rotation.x = -Math.PI / 2;
-    env.add(floor);
-
+  const { sharp, soft, mats } = useMemo(() => {
     const pmrem = new THREE.PMREMGenerator(gl);
-    const envTex = pmrem.fromScene(env, 0.02).texture;
-    scene.environment = envTex;
-
-    return () => {
-      scene.environment = null;
-      envTex.dispose();
-      pmrem.dispose();
-      env.traverse((o) => {
+    const studioA = buildStudio();
+    const sharp = pmrem.fromScene(studioA, 0.005).texture;
+    const studioB = buildStudio();
+    const soft = pmrem.fromScene(studioB, 0.6).texture;
+    pmrem.dispose();
+    [studioA, studioB].forEach((s) =>
+      s.traverse((o) => {
         if (o instanceof THREE.Mesh) {
           o.geometry.dispose();
           (o.material as THREE.Material).dispose();
         }
-      });
+      })
+    );
+
+    const polished = new THREE.MeshPhysicalMaterial({
+      color: 0xf4f3f1,
+      metalness: 1,
+      roughness: 0.12,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.15,
+      envMap: soft,
+      envMapIntensity: 1.5,
+    });
+    const satin = new THREE.MeshPhysicalMaterial({
+      color: 0xeceae7,
+      metalness: 1,
+      roughness: 0.28,
+      envMap: soft,
+      envMapIntensity: 1.3,
+    });
+    // Micro-brilliants: hard facets + sharp env = glitter without the
+    // cost of transmission on ~270 stones
+    const pave = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 0.02,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
+      envMap: sharp,
+      envMapIntensity: 3.6,
+      specularIntensity: 1.3,
+    });
+    const gem = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 0,
+      transmission: 1,
+      thickness: 2.2,
+      ior: 2.42,
+      dispersion: 4.5,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
+      specularIntensity: 1,
+      envMap: sharp,
+      envMapIntensity: 3.2,
+      side: THREE.DoubleSide,
+    });
+
+    return { sharp, soft, mats: { polished, satin, pave, gem } };
+  }, [gl]);
+
+  useEffect(() => {
+    scene.environment = sharp; // default for anything unassigned
+    return () => {
+      scene.environment = null;
+      sharp.dispose();
+      soft.dispose();
+      Object.values(mats).forEach((m) => m.dispose());
     };
-  }, [gl, scene]);
-  return null;
+  }, [scene, sharp, soft, mats]);
+
+  return mats;
 }
 
 /* ── Marquise brilliant geometry ──────────────────────────────────────────
    Table → star/bezel crown tiers → girdle band → lower girdle facets →
-   pavilion mains → keel ridge. Half-step offsets between tiers give the
+   pavilion mains → keel ridge, with half-step tier offsets for the
    alternating kite/triangle facets of a brilliant cut. */
 function useMarquiseGeometry() {
   return useMemo(() => {
@@ -157,51 +228,25 @@ function useMarquiseGeometry() {
   }, []);
 }
 
-/* ── Shared jewelry materials ─────────────────────────────────────────── */
-function useJewelryMats() {
-  const mats = useMemo(() => {
-    const polished = new THREE.MeshPhysicalMaterial({
-      color: 0xeae9e7,
-      metalness: 1,
-      roughness: 0.06,
-      clearcoat: 0.6,
-      clearcoatRoughness: 0.1,
-      envMapIntensity: 1.4,
-    });
-    const satin = new THREE.MeshPhysicalMaterial({
-      color: 0xe5e4e2,
-      metalness: 1,
-      roughness: 0.16,
-      envMapIntensity: 1.2,
-    });
-    // Micro-pavé: tiny stones don't need transmission — hard facets +
-    // hot env reflections read as diamond glitter at this size
-    const pave = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      metalness: 0,
-      roughness: 0.03,
-      clearcoat: 1,
-      clearcoatRoughness: 0,
-      envMapIntensity: 3.2,
-      specularIntensity: 1.2,
-    });
-    const paveGeo = new THREE.OctahedronGeometry(1, 0);
-    return { polished, satin, pave, paveGeo };
+/* ── Micro round-brilliant for pavé: lathe profile (culet → girdle →
+   crown → table), non-indexed for hard facets. */
+function usePaveGeometry() {
+  const geo = useMemo(() => {
+    const profile = [
+      new THREE.Vector2(0.001, -0.62),
+      new THREE.Vector2(1.0, 0),
+      new THREE.Vector2(0.58, 0.3),
+      new THREE.Vector2(0.001, 0.3),
+    ];
+    const g = new THREE.LatheGeometry(profile, 16).toNonIndexed();
+    g.computeVertexNormals();
+    return g;
   }, []);
-
-  useEffect(
-    () => () => {
-      mats.polished.dispose();
-      mats.satin.dispose();
-      mats.pave.dispose();
-      mats.paveGeo.dispose();
-    },
-    [mats]
-  );
-  return mats;
+  useEffect(() => () => geo.dispose(), [geo]);
+  return geo;
 }
 
-/* ── Micro-pavé rows on a torus band (single instanced draw call) ─────── */
+/* ── Micro-pavé rows on a torus band — one instanced draw call ────────── */
 function PaveBand({
   rows,
   perRow,
@@ -211,7 +256,7 @@ function PaveBand({
   geo,
   mat,
 }: {
-  rows: number[]; // tube angles (0 = outer equator)
+  rows: number[];
   perRow: number;
   bandR?: number;
   tubeR: number;
@@ -228,19 +273,19 @@ function PaveBand({
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const up = new THREE.Vector3(0, 1, 0);
-    const s = new THREE.Vector3(stoneScale, stoneScale * 1.2, stoneScale);
+    const s = new THREE.Vector3(stoneScale, stoneScale, stoneScale);
     let idx = 0;
     rows.forEach((phi, r) => {
       const cosP = Math.cos(phi);
       const sinP = Math.sin(phi);
       for (let i = 0; i < perRow; i++) {
         const a = ((i + (r % 2) * 0.5) / perRow) * Math.PI * 2;
-        // seated into the tube so roughly half the stone sits proud
-        const radial = bandR + tubeR * 0.94 * cosP;
+        // girdle sits at the metal surface — crown proud, pavilion sunk
+        const radial = bandR + tubeR * 0.97 * cosP;
         const p = new THREE.Vector3(
           radial * Math.cos(a),
           radial * Math.sin(a),
-          tubeR * 0.94 * sinP
+          tubeR * 0.97 * sinP
         );
         const normal = new THREE.Vector3(
           cosP * Math.cos(a),
@@ -261,45 +306,40 @@ function PaveBand({
 /* ── Six-claw prong head + basket, in stone-local coordinates ─────────── */
 function ProngHead({ metal }: { metal: THREE.Material }) {
   const { tubes, tips } = useMemo(() => {
-    // one claw at each tip, four on the shoulders
     const params = [0, 0.5, 0.15, 0.35, 0.65, 0.85];
     const tubes: THREE.TubeGeometry[] = [];
     const tips: THREE.Vector3[] = [];
     params.forEach((t) => {
       const [gx, gz] = sampleLens(t);
       const p0 = new THREE.Vector3(gx * 1.02, -0.55, gz * 1.02);
-      const p1 = new THREE.Vector3(gx * 1.2, 0.0, gz * 1.2);
-      const p2 = new THREE.Vector3(gx * 0.88, 0.38, gz * 0.88);
+      const p1 = new THREE.Vector3(gx * 1.16, 0.0, gz * 1.16);
+      const p2 = new THREE.Vector3(gx * 0.88, 0.36, gz * 0.88);
       tubes.push(
-        new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p0, p1, p2]), 12, 0.07, 8)
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p0, p1, p2]), 12, 0.055, 8)
       );
       tips.push(p2);
     });
     return { tubes, tips };
   }, []);
 
-  useEffect(
-    () => () => tubes.forEach((g) => g.dispose()),
-    [tubes]
-  );
+  useEffect(() => () => tubes.forEach((g) => g.dispose()), [tubes]);
 
   return (
     <>
       {tubes.map((g, i) => (
         <mesh key={i} geometry={g} material={metal} />
       ))}
-      {/* rounded claw tips curling over the crown */}
       {tips.map((p, i) => (
         <mesh key={`tip-${i}`} material={metal} position={p}>
-          <sphereGeometry args={[0.075, 12, 12]} />
+          <sphereGeometry args={[0.062, 12, 12]} />
         </mesh>
       ))}
       {/* basket wires under the girdle */}
       <mesh material={metal} position={[0, -0.26, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1.18, 0.6, 1]}>
-        <torusGeometry args={[0.78, 0.05, 10, 48]} />
+        <torusGeometry args={[0.78, 0.045, 10, 48]} />
       </mesh>
       <mesh material={metal} position={[0, -0.5, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[0.9, 0.48, 1]}>
-        <torusGeometry args={[0.78, 0.045, 10, 48]} />
+        <torusGeometry args={[0.78, 0.04, 10, 48]} />
       </mesh>
     </>
   );
@@ -344,16 +384,16 @@ function GemSparkles() {
   const tex = useMemo(makeGlintTexture, []);
   const data = useMemo(
     () =>
-      Array.from({ length: 10 }, () => ({
+      Array.from({ length: 13 }, () => ({
         // stone length runs along local Z at the head position
-        pos: [rand(-0.1, 0.1), 1.32 + rand(-0.02, 0.1), rand(-0.22, 0.22)] as [
+        pos: [rand(-0.16, 0.16), 1.5 + rand(-0.06, 0.12), rand(-0.38, 0.38)] as [
           number,
           number,
           number
         ],
         speed: rand(1.6, 3.8),
         phase: rand(0, Math.PI * 2),
-        size: rand(0.07, 0.16),
+        size: rand(0.09, 0.2),
       })),
     []
   );
@@ -394,14 +434,14 @@ function GemSparkles() {
   );
 }
 
-/* ── The rings ────────────────────────────────────────────────────────────
-   Equal-size interlocked platinum bands. Hers: polished, micro-pavé
-   rows, cathedral six-prong head holding the marquise lengthwise along
-   the finger axis. His: satin with two pavé rows. */
+/* ── The rings ──────────────────────────────────────────────────────────
+   Statement-scale marquise (stone length ≈ 80% of band radius, like
+   the reference) raised cathedral-style on a six-claw head. */
 function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
   const group = useRef<THREE.Group>(null);
   const marquise = useMarquiseGeometry();
-  const { polished, satin, pave, paveGeo } = useJewelryMats();
+  const paveGeo = usePaveGeometry();
+  const { polished, satin, pave, gem } = useStudio();
 
   useFrame(() => {
     const g = group.current;
@@ -416,17 +456,17 @@ function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
   });
 
   return (
-    <group ref={group} rotation={[0.35, -0.6, 0.08]}>
-      {/* His band — satin platinum with two micro-pavé rows */}
+    <group ref={group} position={[0, -0.12, 0]} rotation={[0.35, -0.6, 0.08]}>
+      {/* His band — satin platinum, two micro-pavé rows */}
       <group position={[-0.45, 0, 0]}>
         <mesh material={satin}>
           <torusGeometry args={[1.0, 0.11, 48, 96]} />
         </mesh>
         <PaveBand
-          rows={[-0.35, 0.35]}
-          perRow={36}
+          rows={[-0.32, 0.32]}
+          perRow={48}
           tubeR={0.11}
-          stoneScale={0.032}
+          stoneScale={0.036}
           geo={paveGeo}
           mat={pave}
         />
@@ -439,32 +479,17 @@ function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
         </mesh>
         <PaveBand
           rows={[-0.45, 0, 0.45]}
-          perRow={40}
+          perRow={60}
           tubeR={0.1}
-          stoneScale={0.026}
+          stoneScale={0.034}
           geo={paveGeo}
           mat={pave}
         />
 
-        {/* Cathedral head: stone raised above the band, length along the
-            finger axis (local Z), six claws + basket */}
-        <group position={[0, 1.32, 0]} rotation={[0, Math.PI / 2, 0]} scale={0.24}>
-          <mesh geometry={marquise}>
-            <meshPhysicalMaterial
-              color="#ffffff"
-              metalness={0}
-              roughness={0}
-              transmission={1}
-              thickness={1.6}
-              ior={2.42}
-              dispersion={4}
-              clearcoat={1}
-              clearcoatRoughness={0}
-              specularIntensity={1}
-              envMapIntensity={3}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+        {/* Cathedral head — statement stone, length along the finger
+            axis (local Z), six claws + basket */}
+        <group position={[0, 1.47, 0]} rotation={[0, Math.PI / 2, 0]} scale={0.42}>
+          <mesh geometry={marquise} material={gem} />
           <ProngHead metal={polished} />
         </group>
 
@@ -513,14 +538,16 @@ export default function Rings3D() {
       }}
     >
       <Canvas
-        camera={{ position: [0, 0, 5.2], fov: 45 }}
+        camera={{ position: [0, 0, 5.9], fov: 45 }}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
+        onCreated={({ gl }) => {
+          gl.toneMappingExposure = 1.15;
+        }}
       >
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[5, 6, 4]} intensity={1.4} />
-        <pointLight position={[-5, -2, 4]} intensity={0.5} color="#fff1e0" />
-        <JewelEnv />
+        <ambientLight intensity={0.3} />
+        <directionalLight position={[5, 6, 4]} intensity={1.2} />
+        <pointLight position={[-5, -2, 4]} intensity={0.45} color="#fff1e0" />
         <Rings spin={spin} />
       </Canvas>
     </div>
