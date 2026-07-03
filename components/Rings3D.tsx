@@ -1,7 +1,13 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, MutableRefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  MutableRefObject,
+} from "react";
 import * as THREE from "three";
 
 interface SpinState {
@@ -13,17 +19,32 @@ interface SpinState {
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
-/**
- * Jewelry-studio environment: alternating bright softbox strips and
- * darkness in a ring around the scene. Real-life diamond sparkle comes
- * from facets sweeping across hard light/dark boundaries as the stone
- * moves — a uniform room can't produce it.
- */
+/* ── Marquise outline ─────────────────────────────────────────────────────
+   Lens shape from two circular arcs meeting at sharp tips, 2:1 ratio.
+   Shared by the stone geometry and the prong placement. */
+const LENS_B = 0.5;
+const LENS_R = (1 + LENS_B * LENS_B) / (2 * LENS_B);
+const LENS_D = Math.sqrt(LENS_R * LENS_R - 1);
+const LENS_TH = Math.asin(1 / LENS_R);
+
+function sampleLens(t: number): [number, number] {
+  if (t < 0.5) {
+    const s = t / 0.5;
+    const th = -LENS_TH + s * 2 * LENS_TH;
+    return [LENS_R * Math.sin(th), LENS_R * Math.cos(th) - LENS_D];
+  }
+  const s = (t - 0.5) / 0.5;
+  const th = LENS_TH - s * 2 * LENS_TH;
+  return [LENS_R * Math.sin(th), -(LENS_R * Math.cos(th) - LENS_D)];
+}
+
+/* ── Jewelry-studio environment ───────────────────────────────────────────
+   Alternating HDR softbox strips and darkness. Facets flash as they
+   sweep the light/dark boundaries — the source of real sparkle. */
 function JewelEnv() {
   const { gl, scene } = useThree();
   useEffect(() => {
     const env = new THREE.Scene();
-
     const strip = (intensity: number) => {
       const mat = new THREE.MeshBasicMaterial();
       mat.color.setScalar(intensity);
@@ -34,19 +55,16 @@ function JewelEnv() {
     const COUNT = 12;
     for (let i = 0; i < COUNT; i++) {
       const a = (i / COUNT) * Math.PI * 2;
-      // bright / dark / medium rotation for contrast boundaries
       const intensity = i % 2 === 0 ? (i % 4 === 0 ? 10 : 5.5) : 0.15;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 8), strip(intensity));
       m.position.set(Math.sin(a) * R, 0, Math.cos(a) * R);
-      m.rotation.y = a + Math.PI; // face the origin
+      m.rotation.y = a + Math.PI;
       env.add(m);
     }
-    // Overhead softbox
     const top = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), strip(7));
     top.position.set(0, 8, 0);
     top.rotation.x = Math.PI / 2;
     env.add(top);
-    // Dim floor bounce
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), strip(0.6));
     floor.position.set(0, -8, 0);
     floor.rotation.x = -Math.PI / 2;
@@ -71,73 +89,45 @@ function JewelEnv() {
   return null;
 }
 
-/**
- * Marquise brilliant cut. Facet tiers, top to bottom:
- *   table (flat) → star/bezel facets → upper girdle facets → girdle
- *   band → lower girdle facets → pavilion mains → keel line.
- * Adjacent tiers are sampled a half-step offset apart so the strips
- * triangulate into alternating kite/triangle facets like a real
- * brilliant. The pavilion ends in a keel (ridge) along the length —
- * marquise stones don't taper to a single point.
- */
+/* ── Marquise brilliant geometry ──────────────────────────────────────────
+   Table → star/bezel crown tiers → girdle band → lower girdle facets →
+   pavilion mains → keel ridge. Half-step offsets between tiers give the
+   alternating kite/triangle facets of a brilliant cut. */
 function useMarquiseGeometry() {
   return useMemo(() => {
-    const b = 0.5; // half-width — 2:1 marquise
-    const R = (1 + b * b) / (2 * b);
-    const d = Math.sqrt(R * R - 1);
-    const thetaM = Math.asin(1 / R);
-
-    // Point on the lens perimeter, t in [0,1)
-    const sample = (t: number): [number, number] => {
-      if (t < 0.5) {
-        const s = t / 0.5;
-        const th = -thetaM + s * 2 * thetaM;
-        return [R * Math.sin(th), R * Math.cos(th) - d];
-      }
-      const s = (t - 0.5) / 0.5;
-      const th = thetaM - s * 2 * thetaM;
-      return [R * Math.sin(th), -(R * Math.cos(th) - d)];
-    };
-
     const N = 32;
     const ring = (scale: number, y: number, offset: number) =>
       Array.from({ length: N }, (_, i) => {
-        const [x, z] = sample(((i + offset) % N) / N);
+        const [x, z] = sampleLens(((i + offset) % N) / N);
         return new THREE.Vector3(x * scale, y, z * scale);
       });
 
-    // Tiers
-    const gT = 0.035; // half girdle thickness
-    const tableR = ring(0.52, 0.3, 0); // table edge
-    const bezelR = ring(0.8, 0.19, 0.5); // crown mid tier (offset!)
+    const gT = 0.035;
+    const tableR = ring(0.52, 0.3, 0);
+    const bezelR = ring(0.8, 0.19, 0.5);
     const girdleTopR = ring(1.0, gT, 0);
     const girdleBotR = ring(1.0, -gT, 0);
-    const pavMidR = ring(0.55, -0.5, 0.5); // pavilion tier (offset!)
+    const pavMidR = ring(0.55, -0.5, 0.5);
     const keelY = -0.82;
     const keelHalf = 0.42;
     const tableC = new THREE.Vector3(0, 0.3, 0);
 
     const tris: THREE.Vector3[] = [];
-    const quadStrip = (a: THREE.Vector3[], bRing: THREE.Vector3[]) => {
+    const quadStrip = (a: THREE.Vector3[], b: THREE.Vector3[]) => {
       for (let i = 0; i < N; i++) {
         const j = (i + 1) % N;
-        tris.push(a[i], bRing[i], a[j]);
-        tris.push(a[j], bRing[i], bRing[j]);
+        tris.push(a[i], b[i], a[j]);
+        tris.push(a[j], b[i], b[j]);
       }
     };
 
-    // Table fan (flat top)
     for (let i = 0; i < N; i++) {
       tris.push(tableR[i], tableR[(i + 1) % N], tableC);
     }
-    // Crown: star facets, bezel facets, upper girdle facets
     quadStrip(tableR, bezelR);
     quadStrip(bezelR, girdleTopR);
-    // Girdle band
     quadStrip(girdleTopR, girdleBotR);
-    // Pavilion: lower girdle facets
     quadStrip(girdleBotR, pavMidR);
-    // Pavilion mains → keel ridge along the length axis
     for (let i = 0; i < N; i++) {
       const j = (i + 1) % N;
       const kA = new THREE.Vector3(
@@ -162,12 +152,160 @@ function useMarquiseGeometry() {
     });
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geo.computeVertexNormals(); // non-indexed → hard facet normals
+    geo.computeVertexNormals();
     return geo;
   }, []);
 }
 
-/** Camera-glint texture: bright core with a four-ray star. */
+/* ── Shared jewelry materials ─────────────────────────────────────────── */
+function useJewelryMats() {
+  const mats = useMemo(() => {
+    const polished = new THREE.MeshPhysicalMaterial({
+      color: 0xeae9e7,
+      metalness: 1,
+      roughness: 0.06,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.1,
+      envMapIntensity: 1.4,
+    });
+    const satin = new THREE.MeshPhysicalMaterial({
+      color: 0xe5e4e2,
+      metalness: 1,
+      roughness: 0.16,
+      envMapIntensity: 1.2,
+    });
+    // Micro-pavé: tiny stones don't need transmission — hard facets +
+    // hot env reflections read as diamond glitter at this size
+    const pave = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 0.03,
+      clearcoat: 1,
+      clearcoatRoughness: 0,
+      envMapIntensity: 3.2,
+      specularIntensity: 1.2,
+    });
+    const paveGeo = new THREE.OctahedronGeometry(1, 0);
+    return { polished, satin, pave, paveGeo };
+  }, []);
+
+  useEffect(
+    () => () => {
+      mats.polished.dispose();
+      mats.satin.dispose();
+      mats.pave.dispose();
+      mats.paveGeo.dispose();
+    },
+    [mats]
+  );
+  return mats;
+}
+
+/* ── Micro-pavé rows on a torus band (single instanced draw call) ─────── */
+function PaveBand({
+  rows,
+  perRow,
+  bandR = 1.0,
+  tubeR,
+  stoneScale,
+  geo,
+  mat,
+}: {
+  rows: number[]; // tube angles (0 = outer equator)
+  perRow: number;
+  bandR?: number;
+  tubeR: number;
+  stoneScale: number;
+  geo: THREE.BufferGeometry;
+  mat: THREE.Material;
+}) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const count = rows.length * perRow;
+
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const s = new THREE.Vector3(stoneScale, stoneScale * 1.2, stoneScale);
+    let idx = 0;
+    rows.forEach((phi, r) => {
+      const cosP = Math.cos(phi);
+      const sinP = Math.sin(phi);
+      for (let i = 0; i < perRow; i++) {
+        const a = ((i + (r % 2) * 0.5) / perRow) * Math.PI * 2;
+        // seated into the tube so roughly half the stone sits proud
+        const radial = bandR + tubeR * 0.94 * cosP;
+        const p = new THREE.Vector3(
+          radial * Math.cos(a),
+          radial * Math.sin(a),
+          tubeR * 0.94 * sinP
+        );
+        const normal = new THREE.Vector3(
+          cosP * Math.cos(a),
+          cosP * Math.sin(a),
+          sinP
+        ).normalize();
+        q.setFromUnitVectors(up, normal);
+        m.compose(p, q, s);
+        mesh.setMatrixAt(idx++, m);
+      }
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  }, [rows, perRow, bandR, tubeR, stoneScale]);
+
+  return <instancedMesh ref={ref} args={[geo, mat, count]} />;
+}
+
+/* ── Six-claw prong head + basket, in stone-local coordinates ─────────── */
+function ProngHead({ metal }: { metal: THREE.Material }) {
+  const { tubes, tips } = useMemo(() => {
+    // one claw at each tip, four on the shoulders
+    const params = [0, 0.5, 0.15, 0.35, 0.65, 0.85];
+    const tubes: THREE.TubeGeometry[] = [];
+    const tips: THREE.Vector3[] = [];
+    params.forEach((t) => {
+      const [gx, gz] = sampleLens(t);
+      const p0 = new THREE.Vector3(gx * 1.02, -0.55, gz * 1.02);
+      const p1 = new THREE.Vector3(gx * 1.2, 0.0, gz * 1.2);
+      const p2 = new THREE.Vector3(gx * 0.88, 0.38, gz * 0.88);
+      tubes.push(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3([p0, p1, p2]), 12, 0.07, 8)
+      );
+      tips.push(p2);
+    });
+    return { tubes, tips };
+  }, []);
+
+  useEffect(
+    () => () => tubes.forEach((g) => g.dispose()),
+    [tubes]
+  );
+
+  return (
+    <>
+      {tubes.map((g, i) => (
+        <mesh key={i} geometry={g} material={metal} />
+      ))}
+      {/* rounded claw tips curling over the crown */}
+      {tips.map((p, i) => (
+        <mesh key={`tip-${i}`} material={metal} position={p}>
+          <sphereGeometry args={[0.075, 12, 12]} />
+        </mesh>
+      ))}
+      {/* basket wires under the girdle */}
+      <mesh material={metal} position={[0, -0.26, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1.18, 0.6, 1]}>
+        <torusGeometry args={[0.78, 0.05, 10, 48]} />
+      </mesh>
+      <mesh material={metal} position={[0, -0.5, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[0.9, 0.48, 1]}>
+        <torusGeometry args={[0.78, 0.045, 10, 48]} />
+      </mesh>
+    </>
+  );
+}
+
+/* ── Camera-glint texture for scintillation sprites ───────────────────── */
 function makeGlintTexture(): THREE.Texture {
   const size = 64;
   const canvas = document.createElement("canvas");
@@ -201,13 +339,14 @@ function makeGlintTexture(): THREE.Texture {
   return new THREE.CanvasTexture(canvas);
 }
 
-/** Twinkling glints riding on the stone — the "camera sparkle". */
+/** Twinkling glints riding the center stone. */
 function GemSparkles() {
   const tex = useMemo(makeGlintTexture, []);
   const data = useMemo(
     () =>
       Array.from({ length: 10 }, () => ({
-        pos: [rand(-0.26, 0.26), 1.16 + rand(-0.01, 0.13), rand(-0.11, 0.11)] as [
+        // stone length runs along local Z at the head position
+        pos: [rand(-0.1, 0.1), 1.32 + rand(-0.02, 0.1), rand(-0.22, 0.22)] as [
           number,
           number,
           number
@@ -226,7 +365,7 @@ function GemSparkles() {
       const sp = refs.current[i];
       if (!sp) return;
       const k = Math.max(0, Math.sin(t * s.speed + s.phase));
-      const v = Math.pow(k, 8); // sharp on/off — a flash, not a fade
+      const v = Math.pow(k, 8);
       sp.scale.setScalar(s.size * (0.3 + v));
       (sp.material as THREE.SpriteMaterial).opacity = v;
     });
@@ -255,58 +394,14 @@ function GemSparkles() {
   );
 }
 
-/** Pavé stones circling a band — tiny gems sharing one geometry/material. */
-function PaveStones() {
-  const geo = useMemo(() => new THREE.OctahedronGeometry(1, 0), []);
-  const mat = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
-        metalness: 0,
-        roughness: 0,
-        transmission: 1,
-        thickness: 0.5,
-        ior: 2.42,
-        dispersion: 3,
-        clearcoat: 1,
-        envMapIntensity: 2.5,
-        side: THREE.DoubleSide,
-      }),
-    []
-  );
-  useEffect(
-    () => () => {
-      geo.dispose();
-      mat.dispose();
-    },
-    [geo, mat]
-  );
-
-  const COUNT = 18;
-  return (
-    <>
-      {Array.from({ length: COUNT }, (_, i) => {
-        const a = (i / COUNT) * Math.PI * 2;
-        return (
-          <mesh
-            key={i}
-            geometry={geo}
-            material={mat}
-            // seated into the tube so roughly half the stone sits proud
-            position={[Math.cos(a) * 1.09, Math.sin(a) * 1.09, 0]}
-            rotation={[0, 0, a - Math.PI / 2]}
-            scale={[0.05, 0.065, 0.05]}
-          />
-        );
-      })}
-    </>
-  );
-}
-
-/** Two interlocked platinum bands; hers carries the marquise diamond. */
+/* ── The rings ────────────────────────────────────────────────────────────
+   Equal-size interlocked platinum bands. Hers: polished, micro-pavé
+   rows, cathedral six-prong head holding the marquise lengthwise along
+   the finger axis. His: satin with two pavé rows. */
 function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
   const group = useRef<THREE.Group>(null);
   const marquise = useMarquiseGeometry();
+  const { polished, satin, pave, paveGeo } = useJewelryMats();
 
   useFrame(() => {
     const g = group.current;
@@ -322,48 +417,57 @@ function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
 
   return (
     <group ref={group} rotation={[0.35, -0.6, 0.08]}>
-      {/* His band — satin platinum, pavé diamonds around the outside */}
+      {/* His band — satin platinum with two micro-pavé rows */}
       <group position={[-0.45, 0, 0]}>
-        <mesh>
-          <torusGeometry args={[1.0, 0.12, 48, 96]} />
-          <meshStandardMaterial
-            color="#E5E4E2"
-            metalness={1}
-            roughness={0.24}
-            envMapIntensity={1.2}
-          />
+        <mesh material={satin}>
+          <torusGeometry args={[1.0, 0.11, 48, 96]} />
         </mesh>
-        <PaveStones />
+        <PaveBand
+          rows={[-0.35, 0.35]}
+          perRow={36}
+          tubeR={0.11}
+          stoneScale={0.032}
+          geo={paveGeo}
+          mat={pave}
+        />
       </group>
 
-      {/* Her band — polished platinum, threaded through his */}
+      {/* Her band — polished platinum, three micro-pavé rows, threaded */}
       <group position={[0.45, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <mesh>
-          <torusGeometry args={[1.0, 0.12, 48, 96]} />
-          <meshStandardMaterial
-            color="#EAE9E7"
-            metalness={1}
-            roughness={0.09}
-            envMapIntensity={1.3}
-          />
+        <mesh material={polished}>
+          <torusGeometry args={[1.0, 0.1, 48, 96]} />
         </mesh>
-        {/* Marquise diamond — keel seated into the band */}
-        <mesh geometry={marquise} position={[0, 1.16, 0]} scale={0.26}>
-          <meshPhysicalMaterial
-            color="#ffffff"
-            metalness={0}
-            roughness={0}
-            transmission={1}
-            thickness={1.6}
-            ior={2.42}
-            dispersion={4}
-            clearcoat={1}
-            clearcoatRoughness={0}
-            specularIntensity={1}
-            envMapIntensity={3}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
+        <PaveBand
+          rows={[-0.45, 0, 0.45]}
+          perRow={40}
+          tubeR={0.1}
+          stoneScale={0.026}
+          geo={paveGeo}
+          mat={pave}
+        />
+
+        {/* Cathedral head: stone raised above the band, length along the
+            finger axis (local Z), six claws + basket */}
+        <group position={[0, 1.32, 0]} rotation={[0, Math.PI / 2, 0]} scale={0.24}>
+          <mesh geometry={marquise}>
+            <meshPhysicalMaterial
+              color="#ffffff"
+              metalness={0}
+              roughness={0}
+              transmission={1}
+              thickness={1.6}
+              ior={2.42}
+              dispersion={4}
+              clearcoat={1}
+              clearcoatRoughness={0}
+              specularIntensity={1}
+              envMapIntensity={3}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <ProngHead metal={polished} />
+        </group>
+
         <GemSparkles />
       </group>
     </group>
