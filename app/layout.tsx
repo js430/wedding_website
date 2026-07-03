@@ -23,7 +23,14 @@ const tangerine = Tangerine({
   variable: "--font-tangerine",
 });
 
+// The palette is the design — keep dark-mode extensions (Dark Reader
+// etc.) from recoloring it, and declare the site light-only.
+export const viewport = {
+  colorScheme: "light" as const,
+};
+
 export const metadata: Metadata = {
+  other: { "darkreader-lock": "" },
   title: "Jeffrey & Katie — March 27, 2027",
   description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
   openGraph: {

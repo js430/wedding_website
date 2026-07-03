@@ -81,10 +81,12 @@ export default function Intro() {
       >
         <div className="relative w-[320px] h-[210px] md:w-[380px] md:h-[250px]">
           {/* Invitation card — rises out of the envelope */}
+          {/* Centered via left calc — motion's transform would overwrite
+              a -translate-x-1/2 class */}
           <motion.div
             animate={cardUp ? { y: -245 } : { y: 0 }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 -translate-x-1/2 top-4 w-[280px] md:w-[330px] h-[170px] md:h-[200px] z-10 flex flex-col items-center justify-center text-center px-4 border border-gold/50 shadow-2xl"
+            className="absolute left-[calc(50%-140px)] md:left-[calc(50%-165px)] top-4 w-[280px] md:w-[330px] h-[170px] md:h-[200px] z-10 flex flex-col items-center justify-center text-center px-4 border border-gold/50 shadow-2xl"
             style={{ backgroundColor: "#FFF9F3" }}
           >
             <p className="font-script text-5xl md:text-6xl text-crimson-dark leading-tight">
@@ -135,7 +137,7 @@ export default function Intro() {
                 : { scale: 1, rotate: 0, y: 0, opacity: 1 }
             }
             transition={{ duration: 0.55, ease: "easeIn" }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
+            className="absolute left-[calc(50%-2rem)] top-[calc(50%-2rem)] z-40 w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
             style={{
               background:
                 "radial-gradient(circle at 38% 32%, #c22033, #8B0010 60%, #5c0410)",
