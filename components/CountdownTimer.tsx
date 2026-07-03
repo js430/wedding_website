@@ -33,19 +33,19 @@ export default function CountdownTimer() {
   ];
 
   return (
-    <div className="flex items-center gap-4 md:gap-6 mb-10">
+    <div className="flex items-center gap-3 md:gap-6 mb-10">
       {units.map(({ label, value }, i) => (
-        <div key={label} className="flex items-center gap-4 md:gap-6">
+        <div key={label} className="flex items-center gap-3 md:gap-6">
           <div className="flex flex-col items-center">
             {/* Server-rendered time differs from hydration time by a tick —
                 suppress the text mismatch and let the client value win */}
             <span
               suppressHydrationWarning
-              className="font-serif text-3xl md:text-4xl text-bark leading-none tabular-nums"
+              className="font-serif text-2xl md:text-4xl text-bark leading-none tabular-nums"
             >
               {String(value).padStart(2, "0")}
             </span>
-            <span className="font-sans text-xs tracking-widest uppercase text-bark/40 mt-1">
+            <span className="font-sans text-[10px] md:text-xs tracking-widest uppercase text-bark/40 mt-1">
               {label}
             </span>
           </div>

@@ -89,7 +89,9 @@ export default function JourneyMap() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="shadow-xl shadow-rose-deep/10"
         >
-          <svg viewBox="0 0 800 460" className="w-full h-auto" role="img" aria-label="Map of our journey from Charlottesville to Brooklyn and back">
+          {/* Scrolls horizontally on phones so pin labels stay legible */}
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            <svg viewBox="0 0 800 460" className="w-full h-auto min-w-[640px] md:min-w-0" role="img" aria-label="Map of our journey from Charlottesville to Brooklyn and back">
             {/* Parchment */}
             <rect x="0" y="0" width="800" height="460" rx="6" fill="#FDF1EA" />
             <rect x="16" y="16" width="768" height="428" rx="3" fill="none" stroke="#c9a838" strokeOpacity="0.5" />
@@ -190,7 +192,11 @@ export default function JourneyMap() {
               style={{ transformOrigin: "245px 305px" }}
             />
           </svg>
+          </div>
         </motion.div>
+        <p className="md:hidden text-center font-sans text-xs text-bark/40 mt-3">
+          Swipe the map to explore →
+        </p>
       </div>
     </section>
   );

@@ -377,7 +377,7 @@ export default function RegistryPage() {
               <p className="font-sans text-rose-blush/70 text-sm shrink-0">
                 {selected.size} item{selected.size !== 1 ? "s" : ""} selected
               </p>
-              <div className="flex flex-1 gap-3 w-full">
+              <div className="flex flex-col sm:flex-row flex-1 gap-3 w-full">
                 <input
                   type="text"
                   value={name}
@@ -397,7 +397,7 @@ export default function RegistryPage() {
                 <button
                   type="submit"
                   disabled={status === "submitting" || !name || !email}
-                  className="shrink-0 bg-rose-deep text-white font-sans text-xs tracking-widest uppercase px-6 py-2.5 hover:bg-crimson-dark transition-colors disabled:opacity-50"
+                  className="shrink-0 w-full sm:w-auto bg-rose-deep text-white font-sans text-xs tracking-widest uppercase px-6 py-2.5 hover:bg-crimson-dark transition-colors disabled:opacity-50"
                 >
                   {status === "submitting" ? "Sending…" : "Send to Email"}
                 </button>
