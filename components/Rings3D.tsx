@@ -207,7 +207,7 @@ function GemSparkles() {
   const data = useMemo(
     () =>
       Array.from({ length: 10 }, () => ({
-        pos: [rand(-0.26, 0.26), 1.02 + rand(-0.01, 0.13), rand(-0.11, 0.11)] as [
+        pos: [rand(-0.26, 0.26), 1.16 + rand(-0.01, 0.13), rand(-0.11, 0.11)] as [
           number,
           number,
           number
@@ -255,6 +255,54 @@ function GemSparkles() {
   );
 }
 
+/** Pavé stones circling a band — tiny gems sharing one geometry/material. */
+function PaveStones() {
+  const geo = useMemo(() => new THREE.OctahedronGeometry(1, 0), []);
+  const mat = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        metalness: 0,
+        roughness: 0,
+        transmission: 1,
+        thickness: 0.5,
+        ior: 2.42,
+        dispersion: 3,
+        clearcoat: 1,
+        envMapIntensity: 2.5,
+        side: THREE.DoubleSide,
+      }),
+    []
+  );
+  useEffect(
+    () => () => {
+      geo.dispose();
+      mat.dispose();
+    },
+    [geo, mat]
+  );
+
+  const COUNT = 18;
+  return (
+    <>
+      {Array.from({ length: COUNT }, (_, i) => {
+        const a = (i / COUNT) * Math.PI * 2;
+        return (
+          <mesh
+            key={i}
+            geometry={geo}
+            material={mat}
+            // seated into the tube so roughly half the stone sits proud
+            position={[Math.cos(a) * 1.09, Math.sin(a) * 1.09, 0]}
+            rotation={[0, 0, a - Math.PI / 2]}
+            scale={[0.05, 0.065, 0.05]}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 /** Two interlocked platinum bands; hers carries the marquise diamond. */
 function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
   const group = useRef<THREE.Group>(null);
@@ -274,21 +322,24 @@ function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
 
   return (
     <group ref={group} rotation={[0.35, -0.6, 0.08]}>
-      {/* His band — satin platinum */}
-      <mesh position={[-0.45, 0, 0]}>
-        <torusGeometry args={[1.0, 0.14, 48, 96]} />
-        <meshStandardMaterial
-          color="#E5E4E2"
-          metalness={1}
-          roughness={0.24}
-          envMapIntensity={1.2}
-        />
-      </mesh>
+      {/* His band — satin platinum, pavé diamonds around the outside */}
+      <group position={[-0.45, 0, 0]}>
+        <mesh>
+          <torusGeometry args={[1.0, 0.12, 48, 96]} />
+          <meshStandardMaterial
+            color="#E5E4E2"
+            metalness={1}
+            roughness={0.24}
+            envMapIntensity={1.2}
+          />
+        </mesh>
+        <PaveStones />
+      </group>
 
       {/* Her band — polished platinum, threaded through his */}
       <group position={[0.45, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh>
-          <torusGeometry args={[0.85, 0.11, 48, 96]} />
+          <torusGeometry args={[1.0, 0.12, 48, 96]} />
           <meshStandardMaterial
             color="#EAE9E7"
             metalness={1}
@@ -297,7 +348,7 @@ function Rings({ spin }: { spin: MutableRefObject<SpinState> }) {
           />
         </mesh>
         {/* Marquise diamond — keel seated into the band */}
-        <mesh geometry={marquise} position={[0, 1.02, 0]} scale={0.26}>
+        <mesh geometry={marquise} position={[0, 1.16, 0]} scale={0.26}>
           <meshPhysicalMaterial
             color="#ffffff"
             metalness={0}
