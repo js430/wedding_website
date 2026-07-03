@@ -62,21 +62,6 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
 
-/* ── Custom cursor ring ─────────────────────────────────────────────────── */
-.cursor-ring {
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(201, 168, 56, 0.85);
-  border-radius: 9999px;
-  transform: translate(-50%, -50%) scale(1);
-  transition: transform 0.25s ease, background-color 0.25s ease;
-  will-change: transform;
-}
-.cursor-ring-active {
-  transform: translate(-50%, -50%) scale(1.6);
-  background-color: rgba(201, 168, 56, 0.12);
-}
-
 @layer components {
   /* Section headings — gold foil with a slow living sheen.
      leading + padding keep descenders inside the painted box,
