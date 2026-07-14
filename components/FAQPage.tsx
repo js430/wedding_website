@@ -63,6 +63,10 @@ const faqs = [
         q: "Is there a hotel room block?",
         a: "Yes! We have a room block at The Forum Hotel (the venue). To reserve a room, use the hotel block form in the RSVP section of this site. The block expires February 27, 2027.",
       },
+      {
+        q: "Where should we eat, stay, or explore while in town?",
+        a: "We made you a guide! Check out the Charlottesville Guide page (in the menu above) for our favorite restaurants, other hotel options, wineries, hikes, and more.",
+      },
     ],
   },
   {
