@@ -11,48 +11,62 @@ const mapUrl = (q: string) =>
 
 const hotels = [
   {
-    name: "Boar's Head Resort",
-    price: "$$$",
-    distance: "3.5 mi",
-    blurb:
-      "UVA's own resort — golf, spa, and pastoral grounds about ten minutes from the venue.",
-  },
-  {
     name: "Graduate Charlottesville",
     price: "$$",
     distance: "1.5 mi",
+    near: "On the Corner",
     blurb:
       "Right on the Corner with rooftop views toward the Rotunda; collegiate-chic rooms.",
+  },
+  {
+    name: "Courtyard by Marriott (West Main)",
+    price: "$$",
+    distance: "1.3 mi",
+    near: "Near the Corner",
+    blurb: "Modern Marriott on West Main, a short walk from the Corner and UVA.",
   },
   {
     name: "The Draftsman",
     price: "$$",
     distance: "1.8 mi",
+    near: "Near UVA",
     blurb: "Modern Autograph Collection hotel between UVA and the hospital district.",
-  },
-  {
-    name: "Omni Charlottesville",
-    price: "$$",
-    distance: "3 mi",
-    blurb: "Anchors the Downtown Mall — steps from restaurants, shops, and nightlife.",
-  },
-  {
-    name: "Quirk Hotel",
-    price: "$$$",
-    distance: "3 mi",
-    blurb: "Art-filled boutique hotel with a rooftop bar, a short walk to the Downtown Mall.",
   },
   {
     name: "Oakhurst Inn",
     price: "$$",
     distance: "1.7 mi",
+    near: "Near UVA",
     blurb: "Cozy boutique inn in restored 1920s houses right beside UVA.",
   },
   {
     name: "Hampton Inn & Suites at the University",
     price: "$",
     distance: "1.4 mi",
+    near: "Near Grounds",
     blurb: "Reliable and budget-friendly — the closest option to North Grounds.",
+  },
+  {
+    name: "Boar's Head Resort",
+    price: "$$$",
+    distance: "3.5 mi",
+    near: null,
+    blurb:
+      "UVA's own resort — golf, spa, and pastoral grounds about ten minutes from the venue.",
+  },
+  {
+    name: "Omni Charlottesville",
+    price: "$$",
+    distance: "3 mi",
+    near: null,
+    blurb: "Anchors the Downtown Mall — steps from restaurants, shops, and nightlife.",
+  },
+  {
+    name: "Quirk Hotel",
+    price: "$$$",
+    distance: "3 mi",
+    near: null,
+    blurb: "Art-filled boutique hotel with a rooftop bar, a short walk to the Downtown Mall.",
   },
 ];
 
@@ -109,6 +123,26 @@ const restaurants = [
         name: "The Local",
         tag: "Farm-to-table · $$",
         blurb: "Belmont staple sourcing from the surrounding countryside.",
+      },
+    ],
+  },
+  {
+    group: "Casual Dinner",
+    items: [
+      {
+        name: "Doma Korean Kitchen",
+        tag: "Korean · $$",
+        blurb: "Casual Korean comfort food — bibimbap, bulgogi, and Korean fried chicken.",
+      },
+      {
+        name: "Now & Zen",
+        tag: "Sushi · $$",
+        blurb: "Sushi and Japanese small plates in the Main Street Market.",
+      },
+      {
+        name: "Smyrna",
+        tag: "Mediterranean · $$",
+        blurb: "Mediterranean mezze, kebabs, and fresh-baked pita.",
       },
     ],
   },
@@ -199,6 +233,11 @@ const gettingAround = [
     title: "Free Trolley",
     body: "The free trolley runs between the Corner and the Downtown Mall every 15 minutes.",
   },
+  {
+    icon: "🚌",
+    title: "UVA Bus (UTS)",
+    body: "University Transit Service routes mainly serve students and staff, but they're free and handy for getting around Grounds. Track live arrivals in the TransLoc app.",
+  },
 ];
 
 /* ── Building blocks ────────────────────────────────────────────────────── */
@@ -226,15 +265,26 @@ function PlaceCard({
   meta,
   blurb,
   delay = 0,
+  highlight,
 }: {
   name: string;
   meta: string;
   blurb: string;
   delay?: number;
+  highlight?: string | null;
 }) {
   return (
     <Reveal delay={delay} className="h-full">
-      <div className="lift h-full bg-white/70 border border-rose-soft/30 hover:border-rose-soft/60 p-5 flex flex-col">
+      <div
+        className={`lift h-full bg-white/70 border p-5 flex flex-col ${
+          highlight ? "border-gold/60" : "border-rose-soft/30 hover:border-rose-soft/60"
+        }`}
+      >
+        {highlight && (
+          <span className="mb-2 w-fit font-sans text-[10px] tracking-widest uppercase text-gold border border-gold/50 px-2 py-0.5">
+            ✦ {highlight}
+          </span>
+        )}
         <div className="flex items-start justify-between gap-3 mb-1">
           <p className="font-serif text-lg text-bark leading-snug">{name}</p>
           <span className="shrink-0 font-sans text-[10px] tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 whitespace-nowrap">
@@ -296,7 +346,7 @@ export default function GuidePage() {
           <section id="stay" className="scroll-mt-24 mb-20">
             <SectionHeader
               title="Where to Stay"
-              subtitle="The room block at The Forum Hotel (via the RSVP page) is the easiest option — but if you'd like something different, these are all excellent."
+              subtitle="The room block at The Forum Hotel (via the RSVP page) is the easiest option. If you'd like something else, those marked ✦ are near UVA or the Corner — easy to reach, with a quick ride to the venue."
             />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {hotels.map((h, i) => (
@@ -305,6 +355,7 @@ export default function GuidePage() {
                   name={h.name}
                   meta={`${h.price} · ${h.distance}`}
                   blurb={h.blurb}
+                  highlight={h.near}
                   delay={(i % 3) * 100}
                 />
               ))}
@@ -361,7 +412,7 @@ export default function GuidePage() {
           {/* Getting Around */}
           <section id="around" className="scroll-mt-24">
             <SectionHeader title="Getting Around" />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {gettingAround.map((g, i) => (
                 <Reveal key={g.title} delay={i * 100} className="h-full">
                   <div className="h-full bg-white/50 border border-gold/30 p-5 text-center">
