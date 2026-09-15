@@ -17,6 +17,31 @@ const photos = [
     alt: "The proposal — Brooklyn Bridge",
     caption: "The question — Brooklyn, NY",
   },
+  {
+    src: "/photoshoot-1.jpg",
+    alt: "Jeffrey and Katie standing together in a meadow below the hills",
+    caption: "The long view",
+  },
+  {
+    src: "/photoshoot.jpg",
+    alt: "Katie in a field of zinnias, a flower tucked behind her ear",
+    caption: "Among the zinnias",
+  },
+  {
+    src: "/photoshoot-3.jpg",
+    alt: "Jeffrey and Katie sitting in the grass of a peach orchard",
+    caption: "An afternoon in the orchard",
+  },
+  {
+    src: "/photoshoot-2.jpg",
+    alt: "Katie resting in Jeffrey's lap between the rows of peach trees",
+    caption: "Between the rows",
+  },
+  {
+    src: "/photoshoot-4.jpg",
+    alt: "Jeffrey and Katie beneath the peach trees in late summer",
+    caption: "Late summer",
+  },
 ];
 
 export default function Gallery() {
