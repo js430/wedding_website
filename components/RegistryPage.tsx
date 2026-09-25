@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import { SHIPPING_LINES, SHIPPING_TEXT } from "@/lib/shipping";
 
 interface RegistryItem {
   id:          string;
@@ -132,6 +133,7 @@ export default function RegistryPage() {
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
   const [status,   setStatus]   = useState<Status>("idle");
+  const [copied,   setCopied]   = useState(false);
 
   // Cash fund state
   const [cashName,   setCashName]   = useState("");
@@ -362,14 +364,46 @@ export default function RegistryPage() {
       {/* Sticky claim bar */}
       <div
         className={`fixed bottom-0 left-0 right-0 bg-crimson-darkest border-t border-rose-soft/20 transition-all duration-300 ${
-          selected.size > 0 ? "translate-y-0" : "translate-y-full"
+          selected.size > 0 || status === "success" ? "translate-y-0" : "translate-y-full"
         }`}
       >
         {status === "success" ? (
-          <div className="max-w-5xl mx-auto px-6 py-4 text-center">
-            <p className="font-serif text-rose-blush text-lg">
+          <div className="max-w-5xl mx-auto px-6 py-5">
+            <p className="font-serif text-rose-blush text-lg text-center mb-4">
               💌 Check your inbox — your picks are on their way!
             </p>
+
+            {/* Shipping address — also repeated in the email */}
+            <div className="max-w-md mx-auto border border-rose-soft/30 bg-white/10 px-5 py-4">
+              <p className="font-sans text-xs tracking-widest uppercase text-rose-soft mb-2">
+                Ship gifts to
+              </p>
+              <address className="not-italic font-serif text-rose-blush text-lg leading-snug">
+                {SHIPPING_LINES.map((line) => (
+                  <span key={line} className="block">{line}</span>
+                ))}
+              </address>
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(SHIPPING_TEXT);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    } catch {
+                      /* clipboard blocked — the address is on screen to copy by hand */
+                    }
+                  }}
+                  className="font-sans text-xs tracking-widest uppercase text-rose-blush/70 border border-rose-soft/30 px-3 py-1.5 hover:text-rose-blush hover:border-rose-soft transition-colors"
+                >
+                  {copied ? "Copied ✓" : "Copy address"}
+                </button>
+                <p className="font-sans text-xs text-rose-blush/50 leading-snug">
+                  Use this at checkout as the delivery address.
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-4">

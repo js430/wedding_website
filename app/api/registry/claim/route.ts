@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { encrypt } from "@/lib/encrypt";
+import { SHIPPING_LINES } from "@/lib/shipping";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const resend  = new Resend(process.env.RESEND_API_KEY);
@@ -71,6 +72,24 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
 
                 <table width="100%" cellpadding="0" cellspacing="0">
                   ${itemRows}
+                </table>
+
+                <!-- Shipping address -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;background:#FEE8EC;border:1px solid #FFB3C4;">
+                  <tr>
+                    <td style="padding:20px 24px;">
+                      <p style="margin:0 0 10px;font-family:sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8B0010;">
+                        Ship gifts to
+                      </p>
+                      <p style="margin:0;font-family:Georgia,serif;font-size:16px;line-height:1.55;color:#1E0008;">
+                        ${SHIPPING_LINES.join('<br />')}
+                      </p>
+                      <p style="margin:12px 0 0;font-family:sans-serif;font-size:12px;line-height:1.5;color:#4a3728;">
+                        Enter this as the delivery address at checkout. Most retailers
+                        ask for it on the shipping step, before payment.
+                      </p>
+                    </td>
+                  </tr>
                 </table>
 
                 <p style="margin:28px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;text-align:center;">
