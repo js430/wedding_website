@@ -30,6 +30,7 @@ function ItemCard({
   // lowest price point.
   const [viewingId, setViewingId] = useState(lead.id);
   const shown = options.find((o) => o.id === (selectedId ?? viewingId)) ?? lead;
+  const shownImage = shown.imageUrl || lead.imageUrl;
   const selected = selectedId !== null;
 
   function chooseOption(id: string) {
@@ -48,13 +49,15 @@ function ItemCard({
           : "border-rose-soft/30 hover:border-rose-soft"
       } bg-white/70`}
     >
-      {/* Image */}
+      {/* Image — follows the chosen option, falling back to the lead row's
+          picture for options that have none of their own. */}
       <div className="aspect-square bg-rose-blush overflow-hidden">
-        {lead.imageUrl ? (
+        {shownImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={lead.imageUrl}
-            alt={lead.name}
+            key={shownImage}
+            src={shownImage}
+            alt={shown.option ? `${lead.name} — ${shown.option}` : lead.name}
             className="w-full h-full object-cover"
           />
         ) : (
