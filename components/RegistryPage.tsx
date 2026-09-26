@@ -4,50 +4,57 @@ import { useState, useEffect, FormEvent } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
-
-interface RegistryItem {
-  id:          string;
-  name:        string;
-  description: string;
-  price:       number | null;
-  link:        string;
-  imageUrl:    string;
-  category:    string;
-  claimed:     boolean;
-  variant:     string; // e.g. "Black/White set, Large size"
-}
+import { SHIPPING_LINES, SHIPPING_TEXT } from "@/lib/shipping";
+import { groupItems, optionLabel, type RegistryItem, type RegistryGroup } from "@/lib/registry";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 // ── Item card ─────────────────────────────────────────────────────────────────
 
 function ItemCard({
-  item,
-  selected,
-  onToggle,
+  group,
+  selectedId,
+  onSelect,
 }: {
-  item: RegistryItem;
-  selected: boolean;
-  onToggle: () => void;
-})
- {
+  group: RegistryGroup;
+  /** The option id currently in the guest's basket, if any. */
+  selectedId: string | null;
+  /** Select this option, or pass null to drop the gift from the basket. */
+  onSelect: (optionId: string | null) => void;
+}) {
+  const { lead, options, claimed } = group;
+  const hasOptions = options.length > 1;
+
+  // Which option the card is showing. Once the guest has selected one, that
+  // is the shown one; otherwise the cheapest, so the card leads with its
+  // lowest price point.
+  const [viewingId, setViewingId] = useState(lead.id);
+  const shown = options.find((o) => o.id === (selectedId ?? viewingId)) ?? lead;
+  const selected = selectedId !== null;
+
+  function chooseOption(id: string) {
+    setViewingId(id);
+    // Switching options while in the basket swaps the selection over.
+    if (selected) onSelect(id);
+  }
+
   return (
     <div
       className={`flex flex-col border transition-all duration-150 ${
         selected
           ? "border-rose-deep shadow-md"
-          : item.claimed
+          : claimed
           ? "border-rose-soft/20 opacity-60"
           : "border-rose-soft/30 hover:border-rose-soft"
       } bg-white/70`}
     >
       {/* Image */}
       <div className="aspect-square bg-rose-blush overflow-hidden">
-        {item.imageUrl ? (
+        {lead.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={item.imageUrl}
-            alt={item.name}
+            src={lead.imageUrl}
+            alt={lead.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -62,32 +69,67 @@ function ItemCard({
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-4">
-        {item.claimed && (
+        {claimed && (
           <span className="inline-block font-sans text-xs tracking-widest uppercase text-rose-deep border border-rose-deep/40 px-2 py-0.5 mb-2 w-fit">
             Reserved
           </span>
         )}
-        <p className="font-serif text-bark text-lg leading-snug mb-1">{item.name}</p>
-        {item.price !== null && (
+        <p className="font-serif text-bark text-lg leading-snug mb-1">{lead.name}</p>
+
+        {shown.price !== null && (
           <p className="font-sans text-rose-deep text-sm font-medium mb-2">
-            ${item.price.toFixed(2)}
+            ${shown.price.toFixed(2)}
+            {hasOptions && !selected && (
+              <span className="text-bark/40 font-normal"> · {options.length} options</span>
+            )}
           </p>
         )}
-        {item.description && (
+
+        {lead.description && (
           <p className="font-sans text-bark/60 text-sm leading-relaxed mb-2 flex-1">
-            {item.description}
+            {lead.description}
           </p>
         )}
-        {item.variant && (
+
+        {/* Price-point options */}
+        {hasOptions && !claimed && (
+          <div className="mb-3">
+            <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-1.5">
+              Choose one
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {options.map((o) => {
+                const active = o.id === shown.id;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => chooseOption(o.id)}
+                    aria-pressed={active}
+                    className={`font-sans text-xs px-2.5 py-1.5 border transition-all text-left ${
+                      active
+                        ? "border-rose-deep text-rose-deep bg-rose-blush/60"
+                        : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+                    }`}
+                  >
+                    {optionLabel(o)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {shown.variant && (
           <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
-            <span className="text-rose-deep font-medium">Preferred:</span> {item.variant}
+            <span className="text-rose-deep font-medium">Preferred:</span> {shown.variant}
           </p>
         )}
 
         <div className="flex items-center gap-3 mt-auto pt-3 border-t border-rose-soft/20">
-          {item.link && (
+          {shown.link && (
             <a
-              href={item.link.match(/^https?:\/\//) ? item.link : `https://${item.link}`}
+              href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
               target="_blank"
               rel="noopener noreferrer"
               className="font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors"
@@ -95,9 +137,9 @@ function ItemCard({
               View Item ↗
             </a>
           )}
-          {!item.claimed && (
+          {!claimed && (
             <button
-              onClick={onToggle}
+              onClick={() => onSelect(selected ? null : shown.id)}
               className={`ml-auto flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
                 selected
                   ? "bg-rose-deep text-white border-rose-deep"
@@ -132,6 +174,8 @@ export default function RegistryPage() {
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
   const [status,   setStatus]   = useState<Status>("idle");
+  const [copied,   setCopied]   = useState(false);
+  const [taken,    setTaken]    = useState<string[]>([]);
 
   // Cash fund state
   const [cashName,   setCashName]   = useState("");
@@ -150,12 +194,20 @@ export default function RegistryPage() {
 
   const categories = ["All", ...Array.from(new Set(items.map((i) => i.category))).sort()];
 
-  const filtered = filter === "All" ? items : items.filter((i) => i.category === filter);
+  const groups = groupItems(items);
+  const filtered =
+    filter === "All" ? groups : groups.filter((g) => g.lead.category === filter);
 
-  function toggle(id: string) {
+  /**
+   * Record the guest's chosen option for a gift. At most one option per group
+   * can be in the basket, so any sibling already selected is dropped first.
+   */
+  function selectOption(group: RegistryGroup, optionId: string | null) {
+    setTaken([]);
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      for (const o of group.options) next.delete(o.id);
+      if (optionId) next.add(optionId);
       return next;
     });
   }
@@ -175,12 +227,28 @@ export default function RegistryPage() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ guestName: name, email, items: chosenItems }),
       });
+      if (res.status === 409) {
+        // Someone claimed one of these while this page was open.
+        const data = await res.json().catch(() => ({}));
+        setTaken(data.items ?? []);
+        const fresh = await fetch("/api/registry").then((r) => r.json());
+        setItems(fresh.items ?? []);
+        setSelected(new Set());
+        setStatus("idle");
+        return;
+      }
       if (!res.ok) throw new Error();
 
-      // Mark claimed locally
+      // Mark claimed locally — a claimed option closes its whole gift, so
+      // close every sibling too, mirroring what the server just did.
+      const claimedGroups = new Set(
+        items.filter((i) => selected.has(i.id)).map((i) => i.group.trim() || i.id)
+      );
       setItems((prev) =>
         prev.map((i) =>
-          selected.has(i.id) ? { ...i, claimed: true } : i
+          selected.has(i.id) || claimedGroups.has(i.group.trim() || i.id)
+            ? { ...i, claimed: true }
+            : i
         )
       );
       setSelected(new Set());
@@ -261,12 +329,14 @@ export default function RegistryPage() {
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filtered.map((item) => (
+              {filtered.map((group) => (
                 <ItemCard
-                  key={item.id}
-                  item={item}
-                  selected={selected.has(item.id)}
-                  onToggle={() => toggle(item.id)}
+                  key={group.key}
+                  group={group}
+                  selectedId={
+                    group.options.find((o) => selected.has(o.id))?.id ?? null
+                  }
+                  onSelect={(optionId) => selectOption(group, optionId)}
                 />
               ))}
             </div>
@@ -362,14 +432,48 @@ export default function RegistryPage() {
       {/* Sticky claim bar */}
       <div
         className={`fixed bottom-0 left-0 right-0 bg-crimson-darkest border-t border-rose-soft/20 transition-all duration-300 ${
-          selected.size > 0 ? "translate-y-0" : "translate-y-full"
+          selected.size > 0 || status === "success" || taken.length > 0
+            ? "translate-y-0"
+            : "translate-y-full"
         }`}
       >
         {status === "success" ? (
-          <div className="max-w-5xl mx-auto px-6 py-4 text-center">
-            <p className="font-serif text-rose-blush text-lg">
+          <div className="max-w-5xl mx-auto px-6 py-5">
+            <p className="font-serif text-rose-blush text-lg text-center mb-4">
               💌 Check your inbox — your picks are on their way!
             </p>
+
+            {/* Shipping address — also repeated in the email */}
+            <div className="max-w-md mx-auto border border-rose-soft/30 bg-white/10 px-5 py-4">
+              <p className="font-sans text-xs tracking-widest uppercase text-rose-soft mb-2">
+                Ship gifts to
+              </p>
+              <address className="not-italic font-serif text-rose-blush text-lg leading-snug">
+                {SHIPPING_LINES.map((line) => (
+                  <span key={line} className="block">{line}</span>
+                ))}
+              </address>
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(SHIPPING_TEXT);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    } catch {
+                      /* clipboard blocked — the address is on screen to copy by hand */
+                    }
+                  }}
+                  className="font-sans text-xs tracking-widest uppercase text-rose-blush/70 border border-rose-soft/30 px-3 py-1.5 hover:text-rose-blush hover:border-rose-soft transition-colors"
+                >
+                  {copied ? "Copied ✓" : "Copy address"}
+                </button>
+                <p className="font-sans text-xs text-rose-blush/50 leading-snug">
+                  Use this at checkout as the delivery address.
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-4">
@@ -406,6 +510,12 @@ export default function RegistryPage() {
             {status === "error" && (
               <p className="text-red-400 text-xs font-sans mt-2 text-center">
                 Something went wrong. Please try again.
+              </p>
+            )}
+            {taken.length > 0 && (
+              <p className="text-rose-soft text-xs font-sans mt-2 text-center">
+                Just taken by another guest: {taken.join(", ")}. The registry has
+                been refreshed — please pick again.
               </p>
             )}
           </form>

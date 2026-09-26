@@ -28,6 +28,9 @@ export async function GET() {
         category:    p.Category?.select?.name                  ?? "Other",
         claimed:     p.Claimed?.checkbox                       ?? false,
         variant:     p.Variant?.rich_text?.[0]?.plain_text ?? "",
+        // Rows sharing a Group are price-point options of one gift; blank = standalone.
+        group:       p.Group?.rich_text?.[0]?.plain_text  ?? "",
+        option:      p.Option?.rich_text?.[0]?.plain_text ?? "",
       };
     });
 
