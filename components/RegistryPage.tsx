@@ -5,7 +5,10 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
 import { SHIPPING_LINES, SHIPPING_TEXT } from "@/lib/shipping";
-import { groupItems, optionLabel, type RegistryItem, type RegistryGroup } from "@/lib/registry";
+import {
+  groupItems, optionLabel, sortGroups, groupInRange, PRICE_RANGES,
+  type RegistryItem, type RegistryGroup, type SortMode,
+} from "@/lib/registry";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -173,6 +176,8 @@ export default function RegistryPage() {
   const [items,    setItems]    = useState<RegistryItem[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [filter,   setFilter]   = useState("All");
+  const [rangeId,  setRangeId]  = useState<string | null>(null);
+  const [sort,     setSort]     = useState<SortMode>("featured");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
@@ -198,8 +203,21 @@ export default function RegistryPage() {
   const categories = ["All", ...Array.from(new Set(items.map((i) => i.category))).sort()];
 
   const groups = groupItems(items);
-  const filtered =
-    filter === "All" ? groups : groups.filter((g) => g.lead.category === filter);
+  const range   = PRICE_RANGES.find((r) => r.id === rangeId) ?? null;
+
+  const filtered = sortGroups(
+    groups
+      .filter((g) => filter === "All" || g.lead.category === filter)
+      .filter((g) => !range || groupInRange(g, range)),
+    sort
+  );
+
+  const filtersActive = filter !== "All" || range !== null;
+
+  function clearFilters() {
+    setFilter("All");
+    setRangeId(null);
+  }
 
   /**
    * Record the guest's chosen option for a gift. At most one option per group
@@ -304,7 +322,7 @@ export default function RegistryPage() {
 
           {/* Category filters */}
           {categories.length > 1 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-10">
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -321,6 +339,72 @@ export default function RegistryPage() {
             </div>
           )}
 
+          {/* Price range + sort */}
+          <div className="flex flex-col sm:flex-row flex-wrap gap-x-8 gap-y-3 justify-center items-center mb-3">
+            <div className="flex flex-wrap gap-2 justify-center items-center">
+              <span className="font-sans text-xs tracking-widest uppercase text-bark/40 mr-1">
+                Price
+              </span>
+              <button
+                onClick={() => setRangeId(null)}
+                className={`font-sans text-xs px-3 py-1.5 border transition-all ${
+                  rangeId === null
+                    ? "bg-rose-deep text-white border-rose-deep"
+                    : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+                }`}
+              >
+                Any
+              </button>
+              {PRICE_RANGES.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setRangeId(rangeId === r.id ? null : r.id)}
+                  className={`font-sans text-xs px-3 py-1.5 border transition-all ${
+                    rangeId === r.id
+                      ? "bg-rose-deep text-white border-rose-deep"
+                      : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="registry-sort"
+                className="font-sans text-xs tracking-widest uppercase text-bark/40"
+              >
+                Sort
+              </label>
+              <select
+                id="registry-sort"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortMode)}
+                className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep"
+              >
+                <option value="featured">Featured</option>
+                <option value="price-asc">Price: low to high</option>
+                <option value="price-desc">Price: high to low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Result count */}
+          <div className="text-center mb-10">
+            <p className="font-sans text-xs text-bark/40">
+              {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
+              {filtersActive && (
+                <button
+                  onClick={clearFilters}
+                  className="ml-2 underline underline-offset-2 hover:text-rose-deep transition-colors"
+                >
+                  Clear filters
+                </button>
+              )}
+            </p>
+          </div>
+
           {/* Items grid */}
           {loading ? (
             <p className="text-center font-serif italic text-bark/50 py-20">
@@ -328,7 +412,9 @@ export default function RegistryPage() {
             </p>
           ) : filtered.length === 0 ? (
             <p className="text-center font-sans text-bark/40 py-20">
-              No items in this category yet.
+              {filtersActive
+                ? "No gifts match these filters."
+                : "No items in this category yet."}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
