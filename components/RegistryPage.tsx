@@ -170,6 +170,50 @@ function ItemCard({
   );
 }
 
+// ── Filter controls ───────────────────────────────────────────────────────────
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`font-sans text-xs px-3 py-1.5 border transition-all ${
+        active
+          ? "bg-rose-deep text-white border-rose-deep"
+          : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FilterRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-2">
+      <span className="font-sans text-xs tracking-widest uppercase text-bark/40 sm:w-20 sm:text-right shrink-0">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
 // ── Main registry page ────────────────────────────────────────────────────────
 
 export default function RegistryPage() {
@@ -320,89 +364,66 @@ export default function RegistryPage() {
             you the purchase links — no account needed.
           </p>
 
-          {/* Category filters */}
-          {categories.length > 1 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-4">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`font-sans text-xs tracking-widest uppercase px-4 py-2 border transition-all ${
-                    filter === cat
-                      ? "bg-rose-deep text-white border-rose-deep"
-                      : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                  }`}
+          {/* Filters — category, price, sort */}
+          <div className="max-w-3xl mx-auto mb-10 bg-white/50 border border-rose-soft/30 px-5 py-4">
+            <div className="space-y-3">
+              {categories.length > 1 && (
+                <FilterRow label="Category">
+                  {categories.map((cat) => (
+                    <FilterChip
+                      key={cat}
+                      active={filter === cat}
+                      onClick={() => setFilter(cat)}
+                    >
+                      {cat}
+                    </FilterChip>
+                  ))}
+                </FilterRow>
+              )}
+
+              <FilterRow label="Price">
+                <FilterChip active={rangeId === null} onClick={() => setRangeId(null)}>
+                  Any
+                </FilterChip>
+                {PRICE_RANGES.map((r) => (
+                  <FilterChip
+                    key={r.id}
+                    active={rangeId === r.id}
+                    onClick={() => setRangeId(rangeId === r.id ? null : r.id)}
+                  >
+                    {r.label}
+                  </FilterChip>
+                ))}
+              </FilterRow>
+
+              <FilterRow label="Sort">
+                <select
+                  id="registry-sort"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortMode)}
+                  className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep"
                 >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Price range + sort */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-x-8 gap-y-3 justify-center items-center mb-3">
-            <div className="flex flex-wrap gap-2 justify-center items-center">
-              <span className="font-sans text-xs tracking-widest uppercase text-bark/40 mr-1">
-                Price
-              </span>
-              <button
-                onClick={() => setRangeId(null)}
-                className={`font-sans text-xs px-3 py-1.5 border transition-all ${
-                  rangeId === null
-                    ? "bg-rose-deep text-white border-rose-deep"
-                    : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                }`}
-              >
-                Any
-              </button>
-              {PRICE_RANGES.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setRangeId(rangeId === r.id ? null : r.id)}
-                  className={`font-sans text-xs px-3 py-1.5 border transition-all ${
-                    rangeId === r.id
-                      ? "bg-rose-deep text-white border-rose-deep"
-                      : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
+                  <option value="featured">Featured</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                </select>
+              </FilterRow>
             </div>
 
-            <div className="flex items-center gap-2">
-              <label
-                htmlFor="registry-sort"
-                className="font-sans text-xs tracking-widest uppercase text-bark/40"
-              >
-                Sort
-              </label>
-              <select
-                id="registry-sort"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortMode)}
-                className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep"
-              >
-                <option value="featured">Featured</option>
-                <option value="price-asc">Price: low to high</option>
-                <option value="price-desc">Price: high to low</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Result count */}
-          <div className="text-center mb-10">
-            <p className="font-sans text-xs text-bark/40">
-              {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
+            {/* Result count */}
+            <div className="flex justify-center items-center gap-2 mt-4 pt-3 border-t border-rose-soft/20">
+              <p className="font-sans text-xs text-bark/40">
+                {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
+              </p>
               {filtersActive && (
                 <button
                   onClick={clearFilters}
-                  className="ml-2 underline underline-offset-2 hover:text-rose-deep transition-colors"
+                  className="font-sans text-xs text-bark/40 underline underline-offset-2 hover:text-rose-deep transition-colors"
                 >
                   Clear filters
                 </button>
               )}
-            </p>
+            </div>
           </div>
 
           {/* Items grid */}
