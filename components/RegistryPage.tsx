@@ -5,7 +5,10 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
 import { SHIPPING_LINES, SHIPPING_TEXT } from "@/lib/shipping";
-import { groupItems, optionLabel, type RegistryItem, type RegistryGroup } from "@/lib/registry";
+import {
+  groupItems, optionLabel, sortGroups, groupInRange, PRICE_RANGES,
+  type RegistryItem, type RegistryGroup, type SortMode,
+} from "@/lib/registry";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -77,22 +80,27 @@ function ItemCard({
             Reserved
           </span>
         )}
-        <p className="font-serif text-bark text-lg leading-snug mb-1">{lead.name}</p>
+        {/* Fixed-height header — reserves room for a two-line name and a
+            two-line description whether or not this card uses it, so the
+            option pickers line up across the row. */}
+        <p className="font-serif text-bark text-lg leading-snug mb-1 line-clamp-2 min-h-[3.1rem]">
+          {lead.name}
+        </p>
 
-        {shown.price !== null && (
-          <p className="font-sans text-rose-deep text-sm font-medium mb-2">
-            ${shown.price.toFixed(2)}
-            {hasOptions && !selected && (
-              <span className="text-bark/40 font-normal"> · {options.length} options</span>
-            )}
-          </p>
-        )}
+        <p className="font-sans text-rose-deep text-sm font-medium mb-2 min-h-[1.25rem]">
+          {shown.price !== null && (
+            <>
+              ${shown.price.toFixed(2)}
+              {hasOptions && !selected && (
+                <span className="text-bark/40 font-normal"> · {options.length} options</span>
+              )}
+            </>
+          )}
+        </p>
 
-        {lead.description && (
-          <p className="font-sans text-bark/60 text-sm leading-relaxed mb-2 flex-1">
-            {lead.description}
-          </p>
-        )}
+        <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 line-clamp-2 min-h-[2.85rem]">
+          {lead.description}
+        </p>
 
         {/* Price-point options */}
         {hasOptions && !claimed && (
@@ -123,13 +131,14 @@ function ItemCard({
           </div>
         )}
 
-        {shown.variant && (
-          <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
-            <span className="text-rose-deep font-medium">Preferred:</span> {shown.variant}
-          </p>
-        )}
+        <div className="mt-auto">
+          {shown.variant && (
+            <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
+              <span className="text-rose-deep font-medium">Preferred:</span> {shown.variant}
+            </p>
+          )}
 
-        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-rose-soft/20">
+          <div className="flex items-center gap-3 pt-3 border-t border-rose-soft/20">
           {shown.link && (
             <a
               href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
@@ -161,8 +170,53 @@ function ItemCard({
               {selected ? "Selected" : "Select"}
             </button>
           )}
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Filter controls ───────────────────────────────────────────────────────────
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`font-sans text-xs px-3 py-1.5 border transition-all ${
+        active
+          ? "bg-rose-deep text-white border-rose-deep"
+          : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FilterRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-2">
+      <span className="font-sans text-xs tracking-widest uppercase text-bark/40 sm:w-20 sm:text-right shrink-0">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }
@@ -173,6 +227,8 @@ export default function RegistryPage() {
   const [items,    setItems]    = useState<RegistryItem[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [filter,   setFilter]   = useState("All");
+  const [rangeId,  setRangeId]  = useState<string | null>(null);
+  const [sort,     setSort]     = useState<SortMode>("featured");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
@@ -198,8 +254,21 @@ export default function RegistryPage() {
   const categories = ["All", ...Array.from(new Set(items.map((i) => i.category))).sort()];
 
   const groups = groupItems(items);
-  const filtered =
-    filter === "All" ? groups : groups.filter((g) => g.lead.category === filter);
+  const range   = PRICE_RANGES.find((r) => r.id === rangeId) ?? null;
+
+  const filtered = sortGroups(
+    groups
+      .filter((g) => filter === "All" || g.lead.category === filter)
+      .filter((g) => !range || groupInRange(g, range)),
+    sort
+  );
+
+  const filtersActive = filter !== "All" || range !== null;
+
+  function clearFilters() {
+    setFilter("All");
+    setRangeId(null);
+  }
 
   /**
    * Record the guest's chosen option for a gift. At most one option per group
@@ -302,24 +371,67 @@ export default function RegistryPage() {
             you the purchase links — no account needed.
           </p>
 
-          {/* Category filters */}
-          {categories.length > 1 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-10">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`font-sans text-xs tracking-widest uppercase px-4 py-2 border transition-all ${
-                    filter === cat
-                      ? "bg-rose-deep text-white border-rose-deep"
-                      : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                  }`}
+          {/* Filters — category, price, sort */}
+          <div className="max-w-3xl mx-auto mb-10 bg-white/50 border border-rose-soft/30 px-5 py-4">
+            <div className="space-y-3">
+              {categories.length > 1 && (
+                <FilterRow label="Category">
+                  {categories.map((cat) => (
+                    <FilterChip
+                      key={cat}
+                      active={filter === cat}
+                      onClick={() => setFilter(cat)}
+                    >
+                      {cat}
+                    </FilterChip>
+                  ))}
+                </FilterRow>
+              )}
+
+              <FilterRow label="Price">
+                <FilterChip active={rangeId === null} onClick={() => setRangeId(null)}>
+                  Any
+                </FilterChip>
+                {PRICE_RANGES.map((r) => (
+                  <FilterChip
+                    key={r.id}
+                    active={rangeId === r.id}
+                    onClick={() => setRangeId(rangeId === r.id ? null : r.id)}
+                  >
+                    {r.label}
+                  </FilterChip>
+                ))}
+              </FilterRow>
+
+              <FilterRow label="Sort">
+                <select
+                  id="registry-sort"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortMode)}
+                  className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep"
                 >
-                  {cat}
-                </button>
-              ))}
+                  <option value="featured">Featured</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                </select>
+              </FilterRow>
             </div>
-          )}
+
+            {/* Result count */}
+            <div className="flex justify-center items-center gap-2 mt-4 pt-3 border-t border-rose-soft/20">
+              <p className="font-sans text-xs text-bark/40">
+                {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
+              </p>
+              {filtersActive && (
+                <button
+                  onClick={clearFilters}
+                  className="font-sans text-xs text-bark/40 underline underline-offset-2 hover:text-rose-deep transition-colors"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Items grid */}
           {loading ? (
@@ -328,7 +440,9 @@ export default function RegistryPage() {
             </p>
           ) : filtered.length === 0 ? (
             <p className="text-center font-sans text-bark/40 py-20">
-              No items in this category yet.
+              {filtersActive
+                ? "No gifts match these filters."
+                : "No items in this category yet."}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
