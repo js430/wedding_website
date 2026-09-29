@@ -80,22 +80,27 @@ function ItemCard({
             Reserved
           </span>
         )}
-        <p className="font-serif text-bark text-lg leading-snug mb-1">{lead.name}</p>
+        {/* Fixed-height header — reserves room for a two-line name and a
+            two-line description whether or not this card uses it, so the
+            option pickers line up across the row. */}
+        <p className="font-serif text-bark text-lg leading-snug mb-1 line-clamp-2 min-h-[3.1rem]">
+          {lead.name}
+        </p>
 
-        {shown.price !== null && (
-          <p className="font-sans text-rose-deep text-sm font-medium mb-2">
-            ${shown.price.toFixed(2)}
-            {hasOptions && !selected && (
-              <span className="text-bark/40 font-normal"> · {options.length} options</span>
-            )}
-          </p>
-        )}
+        <p className="font-sans text-rose-deep text-sm font-medium mb-2 min-h-[1.25rem]">
+          {shown.price !== null && (
+            <>
+              ${shown.price.toFixed(2)}
+              {hasOptions && !selected && (
+                <span className="text-bark/40 font-normal"> · {options.length} options</span>
+              )}
+            </>
+          )}
+        </p>
 
-        {lead.description && (
-          <p className="font-sans text-bark/60 text-sm leading-relaxed mb-2 flex-1">
-            {lead.description}
-          </p>
-        )}
+        <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 line-clamp-2 min-h-[2.85rem]">
+          {lead.description}
+        </p>
 
         {/* Price-point options */}
         {hasOptions && !claimed && (
@@ -126,13 +131,14 @@ function ItemCard({
           </div>
         )}
 
-        {shown.variant && (
-          <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
-            <span className="text-rose-deep font-medium">Preferred:</span> {shown.variant}
-          </p>
-        )}
+        <div className="mt-auto">
+          {shown.variant && (
+            <p className="font-sans text-xs text-bark/80 bg-rose-blush border border-rose-soft/40 px-2 py-1 mb-3 w-fit">
+              <span className="text-rose-deep font-medium">Preferred:</span> {shown.variant}
+            </p>
+          )}
 
-        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-rose-soft/20">
+          <div className="flex items-center gap-3 pt-3 border-t border-rose-soft/20">
           {shown.link && (
             <a
               href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
@@ -164,6 +170,7 @@ function ItemCard({
               {selected ? "Selected" : "Select"}
             </button>
           )}
+          </div>
         </div>
       </div>
     </div>
