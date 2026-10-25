@@ -1,6 +1,7 @@
 import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
 import Tilt from "./Tilt";
+import { HOTEL_BOOKING_URL } from "./HotelBlock";
 
 const events = [
   {
@@ -147,8 +148,13 @@ export default function EventDetails() {
             <p className="font-sans text-bark/50 text-xs mb-4">
               Approx. <strong className="text-bark/70">$270</strong> + taxes &amp; fees per room
             </p>
-            <a href="#rsvp" className="btn-outline inline-block">
-              Request a Room ↓
+            <a
+              href={HOTEL_BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-outline inline-block"
+            >
+              Book a Room ↗
             </a>
           </div>
         </Reveal>

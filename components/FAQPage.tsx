@@ -61,7 +61,7 @@ const faqs = [
       },
       {
         q: "Is there a hotel room block?",
-        a: "Yes! We have a room block at The Forum Hotel (the venue). To reserve a room, use the hotel block form in the RSVP section of this site. The block expires February 27, 2027.",
+        a: "Yes! We have a room block at The Forum Hotel (the venue). Book directly with the hotel using the Book a Room link in the RSVP section of this site. The block expires February 27, 2027.",
       },
       {
         q: "Where should we eat, stay, or explore while in town?",
