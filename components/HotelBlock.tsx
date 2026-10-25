@@ -63,9 +63,9 @@ export default function HotelBlock() {
       </p>
 
       <p className="font-sans text-bark/50 text-xs mt-5 leading-relaxed">
-        Rooms in our block are held until{" "}
-        <strong className="text-bark/70">{HOTEL_BLOCK_DEADLINE}</strong>, or until
-        they sell out — whichever comes first.
+        There&apos;s a room for every guest — just book by{" "}
+        <strong className="text-bark/70">{HOTEL_BLOCK_DEADLINE}</strong> to get
+        our block rate.
       </p>
     </div>
   );
