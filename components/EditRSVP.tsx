@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import ResendEditLink from "./ResendEditLink";
 
 interface Rsvp {
   name:        string;
@@ -101,10 +102,12 @@ export default function EditRSVP() {
       <div className="text-center py-20">
         <SparkleTitle text="RSVP" className="mt-8" />
         <p className="font-sans text-bark/60 text-sm mt-6 leading-relaxed">
-          This link isn&apos;t valid — it may have been copied incompletely.
-          Please use the link in your confirmation email, or reply to it and
-          we&apos;ll update things for you.
+          This link isn&apos;t valid — it may have been copied incompletely, or
+          cut in half by an email app. We can send you a fresh one.
         </p>
+        <div className="mt-8 max-w-md mx-auto bg-white/60 border border-rose-soft/30 p-6">
+          <ResendEditLink />
+        </div>
       </div>
     );
 
