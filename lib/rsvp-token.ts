@@ -8,20 +8,25 @@ import { createHmac, timingSafeEqual } from "crypto";
  * server-side: the signature is the whole check.
  */
 
-/** Guests can change their answer up to this instant (UTC). */
-export const RSVP_EDIT_DEADLINE = new Date("2027-02-01T23:59:59Z");
+/**
+ * Guests can change their answer up to this instant.
+ * Stored in UTC: 2027-02-28T04:59:59Z is 11:59:59 PM on Feb 27 in
+ * America/New_York (EST, UTC-5), so the deadline lands at the end of the
+ * 27th in the wedding's own timezone rather than the viewer's.
+ */
+export const RSVP_EDIT_DEADLINE = new Date("2027-02-28T04:59:59Z");
 
 export function editingClosed(now: Date = new Date()): boolean {
   return now > RSVP_EDIT_DEADLINE;
 }
 
-/** "February 1, 2027" — for prose in emails and on the page. */
+/** "February 27, 2027" — for prose in emails and on the page. */
 export function formatDeadline(): string {
   return RSVP_EDIT_DEADLINE.toLocaleDateString("en-US", {
     month: "long",
     day:   "numeric",
     year:  "numeric",
-    timeZone: "UTC",
+    timeZone: "America/New_York",
   });
 }
 

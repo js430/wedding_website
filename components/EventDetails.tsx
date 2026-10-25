@@ -2,6 +2,7 @@ import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
 import Tilt from "./Tilt";
 import { HOTEL_BOOKING_URL, HOTEL_WEBSITE_URL } from "./HotelBlock";
+import { googleCalendarUrl } from "@/lib/event";
 
 const events = [
   {
@@ -139,6 +140,24 @@ export default function EventDetails() {
               ))}
             </div>
           </div>
+          <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
+            <p className="font-serif italic text-gold text-sm mb-2">Save the Date</p>
+            <p className="font-serif text-xl text-bark mb-3">Add it to your calendar</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <a href="/api/calendar" className="btn-outline inline-block">
+                Apple / Outlook (.ics)
+              </a>
+              <a
+                href={googleCalendarUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-outline inline-block"
+              >
+                Google Calendar ↗
+              </a>
+            </div>
+          </div>
+
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
             <p className="font-serif text-xl text-bark mb-2">

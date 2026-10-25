@@ -50,6 +50,13 @@ services:
         sync: false
       - key: SEATING_PASSWORD
         sync: false
+      # Guards the private /admin/analytics dashboard.
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # ── Private page-view counts ─────────────────────────────────────────
+      - key: NOTION_ANALYTICS_DATABASE_ID
+        sync: false
 
       # ── Cash gift details shown to guests ─────────────────────────────────
       - key: VENMO_HANDLE
