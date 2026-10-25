@@ -36,8 +36,6 @@ services:
         sync: false
       - key: NOTION_SEATING_DATABASE_ID
         sync: false
-      - key: NOTION_HOTEL_DATABASE_ID
-        sync: false
 
       # ── Email ─────────────────────────────────────────────────────────────
       - key: RESEND_API_KEY
