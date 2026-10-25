@@ -3,7 +3,11 @@ import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Constructed per request: `new Resend()` throws when the key is absent, which
+// would otherwise fail `next build` on any machine without the secret.
+function resendClient() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 // Update these in Railway env vars
 const PAYMENT_DETAILS: Record<string, string> = {
@@ -90,7 +94,7 @@ export async function POST(req: NextRequest) {
 
   const fromAddress = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
 
-  const { error } = await resend.emails.send({
+  const { error } = await resendClient().emails.send({
     from:    fromAddress,
     to:      email,
     subject: "Thank you for your gift — Jeffrey & Katie 💍",
