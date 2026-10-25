@@ -36,8 +36,6 @@ services:
         sync: false
       - key: NOTION_SEATING_DATABASE_ID
         sync: false
-      - key: NOTION_HOTEL_DATABASE_ID
-        sync: false
 
       # ── Email ─────────────────────────────────────────────────────────────
       - key: RESEND_API_KEY
@@ -51,6 +49,13 @@ services:
       - key: REGISTRY_CLAIM_KEY
         sync: false
       - key: SEATING_PASSWORD
+        sync: false
+      # Guards the private /admin/analytics dashboard.
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # ── Private page-view counts ─────────────────────────────────────────
+      - key: NOTION_ANALYTICS_DATABASE_ID
         sync: false
 
       # ── Cash gift details shown to guests ─────────────────────────────────

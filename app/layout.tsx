@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Lato, Tangerine } from "next/font/google";
 import SmoothScroll from "@/components/SmoothScroll";
+import PageView from "@/components/PageView";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -36,6 +37,19 @@ export const metadata: Metadata = {
     description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jeffrey & Katie — March 27, 2027",
+    description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
+  },
+  // Keep the wedding out of search results: the site carries the venue, the
+  // date and, nearer the day, guest names and table assignments.
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: { index: false, follow: false, noimageindex: true },
+  },
 };
 
 export default function RootLayout({
@@ -49,6 +63,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${lato.variable} ${tangerine.variable}`}
     >
       <body>
+        <PageView />
         <SmoothScroll />
         {children}
       </body>

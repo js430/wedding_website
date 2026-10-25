@@ -11,7 +11,7 @@ const faqs = [
     questions: [
       {
         q: "When is the RSVP deadline?",
-        a: "Please RSVP by February 27, 2027. If we don't hear from you by then, we'll assume you're unable to attend.",
+        a: "Please RSVP by January 27, 2027. If we don't hear from you by then, we'll assume you're unable to attend.",
       },
       {
         q: "Can I bring a plus one?",
@@ -19,7 +19,7 @@ const faqs = [
       },
       {
         q: "Can I change my RSVP after submitting?",
-        a: "Yes — just reach out to us directly and we'll update it for you.",
+        a: "Yes. Your confirmation email has an \"Edit my RSVP\" link you can use any time until February 27, 2027. Lost the email? Use the \"Email me my edit link\" option in the RSVP section and we'll send it again.",
       },
     ],
   },
