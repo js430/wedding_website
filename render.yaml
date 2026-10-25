@@ -1,0 +1,62 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Creates the web service with the right build/start commands and declares
+# every environment variable the app reads. Values marked `sync: false` are
+# NOT stored here: Render prompts for them on first apply and keeps them in
+# the dashboard, so no secret ever lands in this repo.
+
+services:
+  - type: web
+    name: wedding-website
+    runtime: node
+    plan: starter          # free instances sleep after ~15m idle; guests would hit cold starts
+    region: ohio
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+
+    envVars:
+      # Node version also comes from .nvmrc; pinned here so the two agree.
+      - key: NODE_VERSION
+        value: "20"
+
+      # Public site origin, used to build absolute links in outgoing email.
+      # Set this to the final custom domain once DNS is pointed at Render.
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+
+      # ── Notion (registry, RSVP, seating, hotel blocks) ────────────────────
+      - key: NOTION_TOKEN
+        sync: false
+      - key: NOTION_DATABASE_ID
+        sync: false
+      - key: NOTION_REGISTRY_DATABASE_ID
+        sync: false
+      - key: NOTION_SEATING_DATABASE_ID
+        sync: false
+      - key: NOTION_HOTEL_DATABASE_ID
+        sync: false
+
+      # ── Email ─────────────────────────────────────────────────────────────
+      - key: RESEND_API_KEY
+        sync: false
+      - key: REGISTRY_FROM_EMAIL
+        sync: false
+
+      # ── Secrets: registry claim encryption + RSVP edit-link signing ───────
+      # Changing REGISTRY_CLAIM_KEY invalidates every RSVP edit link already
+      # emailed and makes existing encrypted claim records unreadable.
+      - key: REGISTRY_CLAIM_KEY
+        sync: false
+      - key: SEATING_PASSWORD
+        sync: false
+
+      # ── Cash gift details shown to guests ─────────────────────────────────
+      - key: VENMO_HANDLE
+        sync: false
+      - key: ZELLE_EMAIL
+        sync: false
+      - key: PAYPAL_EMAIL
+        sync: false

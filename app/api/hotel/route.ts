@@ -5,7 +5,11 @@ import { Resend } from "resend";
 export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
-const resend  = new Resend(process.env.RESEND_API_KEY);
+// Constructed per request: `new Resend()` throws when the key is absent, which
+// would otherwise fail `next build` on any machine without the secret.
+function resendClient() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return "—";
@@ -116,7 +120,7 @@ export async function POST(req: NextRequest) {
   // ── Send confirmation email ───────────────────────────────────────────────
   if (email && process.env.RESEND_API_KEY) {
     const from = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
-    await resend.emails.send({
+    await resendClient().emails.send({
       from,
       to:      email,
       subject: "Hotel room request received — Jeffrey & Katie 🏨",

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
+import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 
 export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
-const resend  = new Resend(process.env.RESEND_API_KEY);
+
+// Constructed per request: `new Resend()` throws when the key is absent, which
+// would otherwise fail `next build` on any machine without the secret.
+function resendClient() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 function buildRSVPEmail(data: {
   name: string;
@@ -14,6 +20,7 @@ function buildRSVPEmail(data: {
   plusOneName: string;
   dietary: string;
   message: string;
+  editUrl: string;
 }): string {
   const attending = data.attending === "yes";
 
@@ -70,9 +77,26 @@ function buildRSVPEmail(data: {
                 <p style="margin:0;font-family:sans-serif;font-size:13px;color:#4a3728;">
                   <strong>Where:</strong> The Forum Hotel, 540 Massie Rd, Charlottesville, VA 22903
                 </p>` : ""}
+                ${data.editUrl ? `
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;background:#FEE8EC;border:1px solid #FFB3C4;">
+                  <tr>
+                    <td style="padding:20px 24px;text-align:center;">
+                      <p style="margin:0 0 14px;font-family:sans-serif;font-size:13px;line-height:1.6;color:#4a3728;">
+                        Need to change your answer? You can update this RSVP yourself
+                        until <strong>${formatDeadline()}</strong>.
+                      </p>
+                      <a href="${data.editUrl}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:10px 22px;display:inline-block;">
+                        Edit my RSVP
+                      </a>
+                      <p style="margin:14px 0 0;font-family:sans-serif;font-size:11px;color:#8B0010;">
+                        This link is just for you — please don't forward it.
+                      </p>
+                    </td>
+                  </tr>
+                </table>` : `
                 <p style="margin:24px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;text-align:center;">
                   Need to make a change? Reach out to us directly.
-                </p>
+                </p>`}
               </td>
             </tr>
             <tr>
@@ -99,7 +123,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Save to Notion ────────────────────────────────────────────────────────
-  await notion.pages.create({
+  const created = await notion.pages.create({
     parent: { database_id: process.env.NOTION_DATABASE_ID },
     properties: {
       Name:                   { title:     [{ text: { content: name ?? "" } }] },
@@ -116,13 +140,18 @@ export async function POST(req: NextRequest) {
   // ── Send confirmation email ───────────────────────────────────────────────
   if (email && process.env.RESEND_API_KEY) {
     const from = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
-    await resend.emails.send({
+    // Links must be absolute in email; prefer the configured site URL and fall
+    // back to the origin this request arrived on.
+    const origin  = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
+    const editUrl = buildEditUrl(created.id, origin);
+
+    await resendClient().emails.send({
       from,
       to:      email,
       subject: attending === "yes"
         ? "You're on the list! RSVP confirmed — Jeffrey & Katie 💍"
         : "RSVP received — Jeffrey & Katie",
-      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, dietary, message }),
+      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, dietary, message, editUrl }),
     });
   }
 

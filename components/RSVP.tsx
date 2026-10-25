@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import HotelBlock from "./HotelBlock";
+import ResendEditLink from "./ResendEditLink";
 import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
 
@@ -211,6 +212,12 @@ export default function RSVP() {
                 </button>
               </form>
             )}
+
+            {/* Outside the form above: ResendEditLink renders its own form, and
+                nesting one form inside another breaks submission. */}
+            <div className="mt-5">
+              <ResendEditLink compact />
+            </div>
           </div>
 
           {/* Hotel Block */}

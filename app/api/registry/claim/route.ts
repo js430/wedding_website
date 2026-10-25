@@ -5,7 +5,11 @@ import { encrypt } from "@/lib/encrypt";
 import { SHIPPING_LINES } from "@/lib/shipping";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
-const resend  = new Resend(process.env.RESEND_API_KEY);
+// Constructed per request: `new Resend()` throws when the key is absent, which
+// would otherwise fail `next build` on any machine without the secret.
+function resendClient() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 interface ClaimItem {
   id:      string;
@@ -214,7 +218,7 @@ export async function POST(req: NextRequest) {
   // ── Send email ────────────────────────────────────────────────────────────
   const fromAddress = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
 
-  const { error } = await resend.emails.send({
+  const { error } = await resendClient().emails.send({
     from:    fromAddress,
     to:      email,
     subject: "Your picks from Jeffrey & Katie's Registry 💍",
