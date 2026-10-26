@@ -21,35 +21,24 @@ export default function SparkleTitle({
 }) {
   return (
     <div className={`relative ${className}`}>
+      {/*
+        Animated as one element, not per letter.
+
+        .section-title paints a gradient clipped to the text. A child span
+        carrying a transform or opacity gets its own compositing layer, and the
+        parent's clipped gradient does not paint into it — the letter renders
+        transparent and simply disappears. Framer leaves sub-pixel residual
+        transforms on individual letters, so a staggered per-letter entrance
+        dropped random letters ("Registry" rendering as "Re stry").
+      */}
       <motion.h2
         className="section-title"
-        aria-label={text}
-        initial="hidden"
-        whileInView="visible"
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.045, delayChildren: 0.15 } },
-        }}
+        transition={{ type: "spring", damping: 15, stiffness: 180, delay: 0.1 }}
       >
-        {Array.from(text).map((ch, i) => (
-          <motion.span
-            key={i}
-            aria-hidden="true"
-            className="inline-block"
-            variants={{
-              hidden: { opacity: 0, y: 18, rotate: 6 },
-              visible: {
-                opacity: 1,
-                y: 0,
-                rotate: 0,
-                transition: { type: "spring", damping: 13, stiffness: 220 },
-              },
-            }}
-          >
-            {ch === " " ? " " : ch}
-          </motion.span>
-        ))}
+        {text}
       </motion.h2>
 
       {SPARKLES.map((s, i) => (
