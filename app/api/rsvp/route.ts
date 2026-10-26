@@ -168,6 +168,8 @@ export async function POST(req: NextRequest) {
       });
 
   // ── Send confirmation email ───────────────────────────────────────────────
+  let emailed = true;
+
   if (email && process.env.RESEND_API_KEY) {
     const from = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
     // Links must be absolute in email; prefer the configured site URL and fall
@@ -176,7 +178,7 @@ export async function POST(req: NextRequest) {
     const editUrl = buildEditUrl(created.id, origin);
     const icsUrl  = `${origin}/api/calendar`;
 
-    await resendClient().emails.send({
+    const { error } = await resendClient().emails.send({
       from,
       to:      email,
       subject: attending === "yes"
@@ -184,7 +186,18 @@ export async function POST(req: NextRequest) {
         : "RSVP received — Jeffrey & Katie",
       html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, dietary, message, editUrl, icsUrl }),
     });
+
+    // The RSVP itself is already saved, so a failed email must not fail the
+    // request — but it was previously swallowed entirely, which made a guest
+    // who never received their confirmation look like a successful RSVP.
+    if (error) {
+      console.error("[RSVP] Confirmation email failed:", error);
+      emailed = false;
+    }
+  } else if (email) {
+    console.warn("[RSVP] RESEND_API_KEY not set — no confirmation email sent.");
+    emailed = false;
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailed });
 }
