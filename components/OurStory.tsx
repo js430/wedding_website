@@ -3,9 +3,24 @@ import SparkleTitle from "./SparkleTitle";
 
 const milestones = [
   {
-    year: "October 2018",
+    year: "September 1, 2018",
     title: "How We Met",
-    body: "At UVA, the Chinese Student Association and the Greek life worlds of Lambda Phi Epsilon and Alpha Kappa Delta Phi had a way of bringing the same people together. For Jeffrey and Katie, it only took a few of those moments to realize they were meant to keep finding each other.",
+    body: "At UVA, the Chinese Student Association and the Greek life worlds of Lambda Phi Epsilon and Alpha Kappa Delta Phi had a way of bringing the same people together. On the first day of September, those overlapping circles put Jeffrey and Katie in the same room — and it only took a few of those moments to realize they were meant to keep finding each other.",
+  },
+  {
+    year: "October 9, 2018",
+    title: "Our First Date",
+    body: "Five weeks later, they finally made plans that weren't somebody else's. No group chat, no crowded room, no mutual friends to fall back on — just the two of them, talking long past the point where either had anywhere else to be.",
+  },
+  {
+    year: "May 2020",
+    title: "Katie Graduates",
+    body: "Katie finished her time at UVA and left Grounds for the next chapter. The place where they met became a place they visited — but the two of them kept going, now with a year of Charlottesville left between them.",
+  },
+  {
+    year: "May 2021",
+    title: "Jeffrey Graduates",
+    body: "A year later, Jeffrey walked too, and Charlottesville went from home to history. Everything that came after — the moves, the jobs, the cities — they built somewhere else, carrying the place that started it with them.",
   },
   {
     year: "August 2025",
@@ -15,7 +30,7 @@ const milestones = [
   {
     year: "March 2027",
     title: "The Wedding",
-    body: "Back at the University of Virginia, where two paths first crossed, Jeffrey and Katie will celebrate the life they've built together. The place that brought them together will be the place they begin forever.",
+    body: "Almost six years after they last called it home, Jeffrey and Katie are coming back to Charlottesville. They'll say their vows a short walk from where two sets of friends first overlapped — ending where they began, and beginning again.",
   },
 ];
 
