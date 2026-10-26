@@ -10,7 +10,7 @@ const milestones = [
   {
     year: "October 9, 2018",
     title: "Our First Date",
-    body: "Five weeks later, they finally made plans that weren't somebody else's. No group chat, no crowded room, no mutual friends to fall back on — just the two of them, talking long past the point where either had anywhere else to be.",
+    body: "Five weeks later, they finally made plans that weren't somebody else's. Dinner at Doma — no group chat, no crowded room, no mutual friends to fall back on, just the two of them talking long past the point where either had anywhere else to be.",
   },
   {
     year: "May 2020",
