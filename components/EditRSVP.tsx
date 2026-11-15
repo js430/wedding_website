@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import MealPicker from "./MealPicker";
 import ResendEditLink from "./ResendEditLink";
 
 interface Rsvp {
@@ -15,6 +16,8 @@ interface Rsvp {
   plusOneName: string;
   dietary:     string;
   message:     string;
+  meal:        string;
+  plusOneMeal: string;
 }
 
 type Load = "loading" | "ready" | "invalid" | "missing";
@@ -35,6 +38,8 @@ export default function EditRSVP() {
   const [plusOneName, setPlusOneName] = useState("");
   const [dietary,     setDietary]     = useState("");
   const [message,     setMessage]     = useState("");
+  const [meal,        setMeal]        = useState("");
+  const [plusOneMeal, setPlusOneMeal] = useState("");
 
   useEffect(() => {
     if (!token) { setLoad("missing"); return; }
@@ -51,6 +56,8 @@ export default function EditRSVP() {
         setPlusOneName(data.rsvp.plusOneName);
         setDietary(data.rsvp.dietary);
         setMessage(data.rsvp.message);
+        setMeal(data.rsvp.meal ?? "");
+        setPlusOneMeal(data.rsvp.plusOneMeal ?? "");
         setClosed(data.closed);
         setDeadline(data.deadline);
         setLoad("ready");
@@ -66,13 +73,21 @@ export default function EditRSVP() {
       const res = await fetch("/api/rsvp/edit", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message }),
+        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message, meal, plusOneMeal }),
       });
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 403) {
         setClosed(true);
         setDeadline(data.deadline ?? deadline);
+        return;
+      }
+      if (res.status === 400 && data.error === "meal-required") {
+        setError("Please choose a meal for yourself.");
+        return;
+      }
+      if (res.status === 400 && data.error === "guest-meal-required") {
+        setError("Please choose a meal for your guest.");
         return;
       }
       if (!res.ok) throw new Error();
@@ -124,6 +139,8 @@ export default function EditRSVP() {
     );
 
   const attendingYes = attending === "yes";
+  const needsMeal = attendingYes && !meal;
+  const needsGuestMeal = attendingYes && plusOne === "yes" && !plusOneMeal;
 
   return shell(
     <>
@@ -181,7 +198,10 @@ export default function EditRSVP() {
                     key={opt.id}
                     type="button"
                     disabled={closed}
-                    onClick={() => setPlusOne(opt.id as "yes" | "no")}
+                    onClick={() => {
+                      setPlusOne(opt.id as "yes" | "no");
+                      if (opt.id === "no") setPlusOneMeal("");
+                    }}
                     className={`py-2.5 px-4 border font-sans text-sm transition-all disabled:opacity-50 ${
                       plusOne === opt.id
                         ? "bg-rose-deep text-white border-rose-deep"
@@ -210,16 +230,34 @@ export default function EditRSVP() {
               </div>
             )}
 
+            <MealPicker
+              legend="Your meal"
+              idPrefix="edit-meal"
+              value={meal}
+              onChange={setMeal}
+              disabled={closed}
+            />
+
+            {plusOne === "yes" && (
+              <MealPicker
+                legend="Your guest's meal"
+                idPrefix="edit-guest-meal"
+                value={plusOneMeal}
+                onChange={setPlusOneMeal}
+                disabled={closed}
+              />
+            )}
+
             <div>
               <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
-                Dietary restrictions
+                Allergies or dietary notes
               </label>
               <input
                 type="text"
                 value={dietary}
                 disabled={closed}
                 onChange={(e) => setDietary(e.target.value)}
-                placeholder="Vegetarian, gluten-free, etc."
+                placeholder="Nut allergy, shellfish, etc."
                 className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep disabled:opacity-50"
               />
             </div>
@@ -242,10 +280,16 @@ export default function EditRSVP() {
 
         {error && <p className="text-red-500 text-xs text-center font-sans">{error}</p>}
 
+        {!closed && (needsMeal || needsGuestMeal) && (
+          <p className="font-sans text-xs text-bark/60 text-center">
+            {needsMeal ? "Choose a meal to continue." : "Choose a meal for your guest to continue."}
+          </p>
+        )}
+
         {!closed && (
           <button
             type="submit"
-            disabled={saving || !attending}
+            disabled={saving || !attending || needsMeal || needsGuestMeal}
             className="w-full btn-primary disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save changes"}
