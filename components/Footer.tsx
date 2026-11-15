@@ -6,7 +6,7 @@ export default function Footer() {
         <span className="font-serif italic text-gold text-base tracking-wide">J·K</span>
       </div>
       <p className="font-serif italic text-2xl text-rose-blush mb-2">
-        Jeffrey &amp; Katie
+        Katie &amp; Jeffrey
       </p>
       <p className="font-sans text-xs tracking-widest uppercase mb-6">
         March 27, 2027 · Charlottesville, VA

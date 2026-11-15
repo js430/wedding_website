@@ -260,6 +260,9 @@ export default function EditRSVP() {
                 placeholder="Nut allergy, shellfish, etc."
                 className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep disabled:opacity-50"
               />
+              <p className="font-sans text-xs text-bark/50 mt-1.5 leading-relaxed">
+                We can&apos;t guarantee we can accommodate every request, but we&apos;ll do our best.
+              </p>
             </div>
           </>
         )}

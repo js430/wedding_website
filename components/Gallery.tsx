@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 const photos = [
   {
     src: "/photo-walking.jpg",
-    alt: "Jeffrey and Katie walking together",
+    alt: "Katie and Jeffrey walking together",
     caption: "Where we wander",
   },
   {
@@ -19,7 +19,7 @@ const photos = [
   },
   {
     src: "/photoshoot-1.jpg",
-    alt: "Jeffrey and Katie standing together in a meadow below the hills",
+    alt: "Katie and Jeffrey standing together in a meadow below the hills",
     caption: "The long view",
   },
   {
@@ -29,7 +29,7 @@ const photos = [
   },
   {
     src: "/photoshoot-3.jpg",
-    alt: "Jeffrey and Katie sitting in the grass of a peach orchard",
+    alt: "Katie and Jeffrey sitting in the grass of a peach orchard",
     caption: "An afternoon in the orchard",
   },
   {
@@ -39,7 +39,7 @@ const photos = [
   },
   {
     src: "/photoshoot-4.jpg",
-    alt: "Jeffrey and Katie beneath the peach trees in late summer",
+    alt: "Katie and Jeffrey beneath the peach trees in late summer",
     caption: "Late summer",
   },
 ];

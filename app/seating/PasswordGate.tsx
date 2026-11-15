@@ -33,7 +33,7 @@ export default function PasswordGate() {
       <div className="bg-white/80 border border-rose-soft/30 p-10 max-w-sm w-full text-center shadow-sm">
         <p className="font-serif italic text-gold text-sm mb-2">Private Access</p>
         <h1 className="font-serif text-3xl text-bark mb-2">Seating Chart</h1>
-        <p className="font-sans text-bark/50 text-sm mb-8">Jeffrey &amp; Katie · March 27, 2027</p>
+        <p className="font-sans text-bark/50 text-sm mb-8">Katie &amp; Jeffrey · March 27, 2027</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="password"

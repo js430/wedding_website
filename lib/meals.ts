@@ -10,9 +10,8 @@
  * allergy is a note to the kitchen about a chosen plate, not a plate of
  * its own.
  *
- * The labels below are placeholders — edit them to the real menu. Changing an
- * `id` after invitations go out orphans meals already stored in Notion, so
- * change labels freely and ids never.
+ * Changing an `id` after invitations go out orphans meals already stored in
+ * Notion, so change labels freely and ids never.
  */
 
 export type MealKind = "main" | "special";
@@ -28,10 +27,9 @@ export interface MealOption {
 }
 
 export const MEAL_OPTIONS: MealOption[] = [
-  // ── The three mains ──────────────────────────────────────────────────────
-  { id: "beef",    label: "Braised Short Rib",    note: "with roasted root vegetables", kind: "main" },
-  { id: "chicken", label: "Herb-Roasted Chicken", note: "with lemon and new potatoes",  kind: "main" },
-  { id: "fish",    label: "Pan-Seared Salmon",    note: "with spring greens",           kind: "main" },
+  // ── The two mains ────────────────────────────────────────────────────────
+  { id: "fish", label: "Sea Bass",                kind: "main" },
+  { id: "beef", label: "Braised Beef Short Rib",  kind: "main" },
 
   // ── Special meals, prepared separately ───────────────────────────────────
   { id: "vegetarian",  label: "Vegetarian",  kind: "special" },

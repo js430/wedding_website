@@ -4,7 +4,7 @@
  */
 
 export const EVENT = {
-  title:    "Jeffrey & Katie's Wedding",
+  title:    "Katie & Jeffrey's Wedding",
   /** Doors open; the ceremony begins at 5:00 PM. */
   start:    "2027-03-27T16:00:00",
   end:      "2027-03-27T23:00:00",
@@ -39,7 +39,7 @@ export function buildIcs(now: Date = new Date()): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Jeffrey and Katie//Wedding//EN",
+    "PRODID:-//Katie and Jeffrey//Wedding//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

@@ -108,7 +108,7 @@ const faqs = [
       },
       {
         q: "I have a question not answered here — who do I contact?",
-        a: "Feel free to reach out to either of us:\n\nJeffrey Shi — (757) 634-4911 or jeffreyshi430@gmail.com\nKatie Shen — (571) 208-4478 or katie.shen2016@gmail.com",
+        a: "Feel free to reach out to either of us:\n\nKatie Shen — (571) 208-4478 or katie.shen2016@gmail.com\nJeffrey Shi — (757) 634-4911 or jeffreyshi430@gmail.com",
       },
     ],
   },

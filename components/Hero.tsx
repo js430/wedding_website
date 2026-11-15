@@ -43,11 +43,11 @@ export default function Hero() {
         </p>
 
         <h1 className="font-script text-8xl md:text-[10rem] text-bark mb-6 leading-none">
-          <span className="hero-enter block [animation-delay:150ms]">Jeffrey</span>
+          <span className="hero-enter block [animation-delay:150ms]">Katie</span>
           <span className="hero-enter block font-script text-5xl md:text-7xl text-rose-deep my-1 [animation-delay:350ms]">
             &amp;
           </span>
-          <span className="hero-enter block [animation-delay:550ms]">Katie</span>
+          <span className="hero-enter block [animation-delay:550ms]">Jeffrey</span>
         </h1>
 
         <div className="hero-enter flex items-center gap-4 mb-8 [animation-delay:750ms]">

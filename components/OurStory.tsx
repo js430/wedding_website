@@ -5,7 +5,7 @@ const milestones = [
   {
     year: "September 1, 2018",
     title: "How We Met",
-    body: "At UVA, the Chinese Student Association and the Greek life worlds of Lambda Phi Epsilon and Alpha Kappa Delta Phi had a way of bringing the same people together. On the first day of September, those overlapping circles put Jeffrey and Katie in the same room — and it only took a few of those moments to realize they were meant to keep finding each other.",
+    body: "At UVA, the Chinese Student Association and the Greek life worlds of Lambda Phi Epsilon and Alpha Kappa Delta Phi had a way of bringing the same people together. On the first day of September, those overlapping circles put Katie and Jeffrey in the same room — and it only took a few of those moments to realize they were meant to keep finding each other.",
   },
   {
     year: "October 9, 2018",
@@ -30,7 +30,7 @@ const milestones = [
   {
     year: "March 2027",
     title: "The Wedding",
-    body: "Almost six years after they last called it home, Jeffrey and Katie are coming back to Charlottesville. They'll say their vows a short walk from where two sets of friends first overlapped — ending where they began, and beginning again.",
+    body: "Almost six years after they last called it home, Katie and Jeffrey are coming back to Charlottesville. They'll say their vows a short walk from where two sets of friends first overlapped — ending where they began, and beginning again.",
   },
 ];
 

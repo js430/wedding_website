@@ -15,7 +15,7 @@ export async function GET() {
   return new NextResponse(body, {
     headers: {
       "Content-Type":        "text/calendar; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="jeffrey-and-katie-wedding.ics"',
+      "Content-Disposition": 'attachment; filename="katie-and-jeffrey-wedding.ics"',
       "Content-Length":      String(body.byteLength),
       "Cache-Control":       "public, max-age=3600",
     },

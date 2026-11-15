@@ -28,7 +28,7 @@ function buildResendEmail(name: string, editUrl: string): string {
           <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;max-width:560px;width:100%;">
             <tr>
               <td style="background:#1E0008;padding:32px;text-align:center;">
-                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Jeffrey &amp; Katie</p>
+                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Katie &amp; Jeffrey</p>
                 <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">Your RSVP Link</h1>
               </td>
             </tr>
@@ -50,7 +50,7 @@ function buildResendEmail(name: string, editUrl: string): string {
             </tr>
             <tr>
               <td style="background:#FEE8EC;padding:20px;text-align:center;">
-                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Jeffrey &amp; Katie · March 27, 2027 · Charlottesville, VA</p>
+                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA</p>
               </td>
             </tr>
           </table>
@@ -108,9 +108,9 @@ export async function POST(req: NextRequest) {
     }
 
     await new Resend(process.env.RESEND_API_KEY).emails.send({
-      from:    process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>",
+      from:    process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>",
       to:      address,
-      subject: "Your RSVP link — Jeffrey & Katie",
+      subject: "Your RSVP link — Katie & Jeffrey",
       html:    buildResendEmail(name, editUrl),
     });
   } catch (err: any) {

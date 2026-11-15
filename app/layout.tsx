@@ -30,17 +30,17 @@ export const viewport = {
 
 export const metadata: Metadata = {
   other: { "darkreader-lock": "" },
-  title: "Jeffrey & Katie — March 27, 2027",
-  description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
+  title: "Katie & Jeffrey — March 27, 2027",
+  description: "Join us as we celebrate the wedding of Katie Shen & Jeffrey Shi in Charlottesville, VA.",
   openGraph: {
-    title: "Jeffrey & Katie — March 27, 2027",
-    description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
+    title: "Katie & Jeffrey — March 27, 2027",
+    description: "Join us as we celebrate the wedding of Katie Shen & Jeffrey Shi in Charlottesville, VA.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jeffrey & Katie — March 27, 2027",
-    description: "Join us as we celebrate the wedding of Jeffrey Shi & Katie Shen in Charlottesville, VA.",
+    title: "Katie & Jeffrey — March 27, 2027",
+    description: "Join us as we celebrate the wedding of Katie Shen & Jeffrey Shi in Charlottesville, VA.",
   },
   // Keep the wedding out of search results: the site carries the venue, the
   // date and, nearer the day, guest names and table assignments.
