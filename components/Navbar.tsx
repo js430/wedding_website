@@ -58,7 +58,7 @@ export default function Navbar() {
           href={resolveHref("#top")}
           className="font-serif text-xl text-bark tracking-wide"
         >
-          J &amp; K
+          K &amp; J
         </a>
 
         {/* Desktop */}

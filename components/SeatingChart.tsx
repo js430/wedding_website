@@ -440,7 +440,7 @@ export default function SeatingChart() {
         <div className="bg-crimson-darkest text-rose-blush px-6 py-3 flex items-center justify-between shrink-0">
           <div>
             <h1 className="font-serif text-xl leading-none">Seating Chart</h1>
-            <p className="font-sans text-rose-soft/50 text-xs mt-0.5">Jeffrey &amp; Katie · March 27, 2027</p>
+            <p className="font-sans text-rose-soft/50 text-xs mt-0.5">Katie &amp; Jeffrey · March 27, 2027</p>
           </div>
           <div className="flex items-center gap-5">
             {saving && <span className="font-sans text-rose-soft/50 text-xs animate-pulse">Saving…</span>}

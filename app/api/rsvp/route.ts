@@ -64,7 +64,7 @@ function buildRSVPEmail(data: {
           <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;max-width:560px;width:100%;">
             <tr>
               <td style="background:#1E0008;padding:32px;text-align:center;">
-                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Jeffrey &amp; Katie</p>
+                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Katie &amp; Jeffrey</p>
                 <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">
                   ${attending ? "RSVP Confirmed" : "We'll Miss You"}
                 </h1>
@@ -116,7 +116,7 @@ function buildRSVPEmail(data: {
             </tr>
             <tr>
               <td style="background:#FEE8EC;padding:20px;text-align:center;">
-                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Jeffrey &amp; Katie · March 27, 2027 · Charlottesville, VA</p>
+                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA</p>
               </td>
             </tr>
           </table>
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
   let emailed = true;
 
   if (email && process.env.RESEND_API_KEY) {
-    const from = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
+    const from = process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>";
     // Links must be absolute in email; prefer the configured site URL and fall
     // back to the origin this request arrived on.
     const origin  = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
@@ -203,8 +203,8 @@ export async function POST(req: NextRequest) {
       from,
       to:      email,
       subject: attending === "yes"
-        ? "You're on the list! RSVP confirmed — Jeffrey & Katie 💍"
-        : "RSVP received — Jeffrey & Katie",
+        ? "You're on the list! RSVP confirmed — Katie & Jeffrey 💍"
+        : "RSVP received — Katie & Jeffrey",
       html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, editUrl, icsUrl }),
     });
 

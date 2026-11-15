@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import EditRSVP from "@/components/EditRSVP";
 
-export const metadata = { title: "Edit your RSVP · Jeffrey & Katie" };
+export const metadata = { title: "Edit your RSVP · Katie & Jeffrey" };
 
 export default function EditRSVPPage() {
   return (

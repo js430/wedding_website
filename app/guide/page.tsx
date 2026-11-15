@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import GuidePage from "@/components/GuidePage";
 
 export const metadata: Metadata = {
-  title: "Charlottesville Guide — Jeffrey & Katie",
+  title: "Charlottesville Guide — Katie & Jeffrey",
   description:
-    "Where to stay, eat, and explore in Charlottesville for Jeffrey & Katie's wedding weekend.",
+    "Where to stay, eat, and explore in Charlottesville for Katie & Jeffrey's wedding weekend.",
 };
 
 export default function Guide() {

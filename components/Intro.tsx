@@ -88,7 +88,7 @@ export default function Intro() {
             style={{ backgroundColor: "#FFF9F3" }}
           >
             <p className="font-script text-5xl md:text-6xl text-crimson-dark leading-tight">
-              Jeffrey &amp; Katie
+              Katie &amp; Jeffrey
             </p>
             <div className="h-px w-16 bg-gold/60 my-2" />
             <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-bark/60">

@@ -55,7 +55,7 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
             <tr>
               <td style="background:#1E0008;padding:32px;text-align:center;">
                 <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">
-                  Jeffrey &amp; Katie
+                  Katie &amp; Jeffrey
                 </p>
                 <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">
                   Your Registry Picks
@@ -106,7 +106,7 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
             <tr>
               <td style="background:#FEE8EC;padding:20px;text-align:center;">
                 <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">
-                  Jeffrey &amp; Katie · March 27, 2027 · Charlottesville, VA
+                  Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA
                 </p>
               </td>
             </tr>
@@ -216,12 +216,12 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Send email ────────────────────────────────────────────────────────────
-  const fromAddress = process.env.REGISTRY_FROM_EMAIL ?? "Jeffrey & Katie <onboarding@resend.dev>";
+  const fromAddress = process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>";
 
   const { error } = await resendClient().emails.send({
     from:    fromAddress,
     to:      email,
-    subject: "Your picks from Jeffrey & Katie's Registry 💍",
+    subject: "Your picks from Katie & Jeffrey's Registry 💍",
     html:    buildEmail(guestName, items),
   });
 
