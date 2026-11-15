@@ -3,6 +3,7 @@ import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { googleCalendarUrl } from "@/lib/event";
+import { isValidMeal, mealLabel } from "@/lib/meals";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,8 @@ function buildRSVPEmail(data: {
   attending: string;
   plusOne: string;
   plusOneName: string;
+  meal: string;
+  plusOneMeal: string;
   dietary: string;
   message: string;
   editUrl: string;
@@ -31,8 +34,14 @@ function buildRSVPEmail(data: {
     ...(attending && data.plusOne === "yes" ? [
       { label: "+1",        value: data.plusOneName || "Yes" },
     ] : []),
+    ...(attending && data.meal ? [
+      { label: "Your meal", value: mealLabel(data.meal) },
+    ] : []),
+    ...(attending && data.plusOne === "yes" && data.plusOneMeal ? [
+      { label: "Guest's meal", value: mealLabel(data.plusOneMeal) },
+    ] : []),
     ...(attending && data.dietary ? [
-      { label: "Dietary",   value: data.dietary },
+      { label: "Allergies", value: data.dietary },
     ] : []),
     ...(data.message ? [
       { label: "Message",   value: data.message },
@@ -120,7 +129,17 @@ function buildRSVPEmail(data: {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, email, attending, plusOne, plusOneName, dietary, message } = body;
+  const { name, email, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message } = body;
+
+  // ── Validate meals ────────────────────────────────────────────────────────
+  // Before any Notion call, so it works with no Notion configured. A guest who
+  // declines needs no meal.
+  if (attending === "yes" && !isValidMeal(meal)) {
+    return NextResponse.json({ error: "meal-required" }, { status: 400 });
+  }
+  if (attending === "yes" && plusOne === "yes" && !isValidMeal(plusOneMeal)) {
+    return NextResponse.json({ error: "guest-meal-required" }, { status: 400 });
+  }
 
   if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
     console.warn("[RSVP] NOTION_TOKEN or NOTION_DATABASE_ID not set — logging only");
@@ -149,12 +168,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const properties = {
+  const properties: Record<string, any> = {
       Name:                   { title:     [{ text: { content: name ?? "" } }] },
       Email:                  { email:     address || null },
       Attending:              { select:    { name: attending === "yes" ? "Yes" : "No" } },
       "+1":                   { select:    { name: plusOne === "yes" ? "Yes" : "No" } },
       "Guest Name":           { rich_text: [{ text: { content: plusOneName ?? "" } }] },
+      Meal:                   { select:    attending === "yes" ? { name: mealLabel(meal) } : null },
+      "Guest Meal":           { select:    attending === "yes" && plusOne === "yes" ? { name: mealLabel(plusOneMeal) } : null },
       "Dietary Restrictions": { rich_text: [{ text: { content: dietary ?? "" } }] },
       Message:                { rich_text: [{ text: { content: message ?? "" } }] },
       "Submitted At":         { date:      { start: new Date().toISOString() } },
@@ -184,7 +205,7 @@ export async function POST(req: NextRequest) {
       subject: attending === "yes"
         ? "You're on the list! RSVP confirmed — Jeffrey & Katie 💍"
         : "RSVP received — Jeffrey & Katie",
-      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, dietary, message, editUrl, icsUrl }),
+      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, editUrl, icsUrl }),
     });
 
     // The RSVP itself is already saved, so a failed email must not fail the

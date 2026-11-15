@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
+import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ function readRsvp(page: any) {
     attending:   p.Attending?.select?.name === "Yes" ? "yes" : "no",
     plusOne:     p["+1"]?.select?.name === "Yes" ? "yes" : "no",
     plusOneName: p["Guest Name"]?.rich_text?.[0]?.plain_text ?? "",
+    meal:        labelToId(p.Meal?.select?.name ?? ""),
+    plusOneMeal: labelToId(p["Guest Meal"]?.select?.name ?? ""),
     dietary:     p["Dietary Restrictions"]?.rich_text?.[0]?.plain_text ?? "",
     message:     p.Message?.rich_text?.[0]?.plain_text ?? "",
   };
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/rsvp/edit — save changes, until the deadline passes. */
 export async function POST(req: NextRequest) {
-  const { token, attending, plusOne, plusOneName, dietary, message } =
+  const { token, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message } =
     await req.json();
 
   const pageId = verifyEditToken(token ?? "");
@@ -64,6 +67,14 @@ export async function POST(req: NextRequest) {
   }
 
   const attendingYes = attending === "yes";
+  const bringingPlusOne = attendingYes && plusOne === "yes";
+
+  if (attendingYes && !isValidMeal(meal)) {
+    return NextResponse.json({ error: "meal-required" }, { status: 400 });
+  }
+  if (bringingPlusOne && !isValidMeal(plusOneMeal)) {
+    return NextResponse.json({ error: "guest-meal-required" }, { status: 400 });
+  }
 
   try {
     await notionClient().pages.update({
@@ -72,6 +83,8 @@ export async function POST(req: NextRequest) {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
         "+1":                   { select:    { name: attendingYes && plusOne === "yes" ? "Yes" : "No" } },
         "Guest Name":           { rich_text: [{ text: { content: attendingYes ? (plusOneName ?? "") : "" } }] },
+        Meal:                   { select:    attendingYes ? { name: mealLabel(meal) } : null },
+        "Guest Meal":           { select:    bringingPlusOne ? { name: mealLabel(plusOneMeal) } : null },
         "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? (dietary ?? "") : "" } }] },
         Message:                { rich_text: [{ text: { content: message ?? "" } }] },
         "Submitted At":         { date:      { start: new Date().toISOString() } },

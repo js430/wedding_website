@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import MealPicker from "./MealPicker";
 import HotelBlock from "./HotelBlock";
 import ResendEditLink from "./ResendEditLink";
 import Reveal from "./Reveal";
@@ -12,10 +13,17 @@ export default function RSVP() {
   const [status, setStatus] = useState<Status>("idle");
   const [attending, setAttending] = useState<"yes" | "no" | "">("");
   const [plusOne, setPlusOne] = useState<"yes" | "no" | "">("");
+  const [meal, setMeal] = useState("");
+  const [plusOneMeal, setPlusOneMeal] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const needsMeal = attending === "yes" && !meal;
+  const needsGuestMeal = attending === "yes" && plusOne === "yes" && !plusOneMeal;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("submitting");
+    setErrorMsg("");
 
     const form = e.currentTarget;
     const data = {
@@ -23,6 +31,8 @@ export default function RSVP() {
       email: (form.elements.namedItem("email") as HTMLInputElement).value,
       attending,
       plusOne,
+      meal: attending === "yes" ? meal : "",
+      plusOneMeal: attending === "yes" && plusOne === "yes" ? plusOneMeal : "",
       plusOneName: (form.elements.namedItem("plusOneName") as HTMLInputElement)?.value ?? "",
       dietary: (form.elements.namedItem("dietary") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
@@ -34,7 +44,19 @@ export default function RSVP() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) {
+        let code = "";
+        if (res.status === 400) {
+          const body = await res.json().catch(() => ({}));
+          code = typeof body?.error === "string" ? body.error : "";
+        }
+        if (code === "meal-required") {
+          setErrorMsg("Please choose a meal for yourself.");
+        } else if (code === "guest-meal-required") {
+          setErrorMsg("Please choose a meal for your guest.");
+        }
+        throw new Error("Request failed");
+      }
       setStatus("success");
 
       // Celebrate a yes with palette-colored confetti
@@ -119,7 +141,11 @@ export default function RSVP() {
                         type="button"
                         onClick={() => {
                           setAttending(v);
-                          if (v === "no") setPlusOne("");
+                          if (v === "no") {
+                            setPlusOne("");
+                            setMeal("");
+                            setPlusOneMeal("");
+                          }
                         }}
                         className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
                           attending === v
@@ -144,7 +170,10 @@ export default function RSVP() {
                           <button
                             key={v}
                             type="button"
-                            onClick={() => setPlusOne(v)}
+                            onClick={() => {
+                              setPlusOne(v);
+                              if (v === "no") setPlusOneMeal("");
+                            }}
                             className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
                               plusOne === v
                                 ? "bg-rose-deep text-ivory border-rose-deep"
@@ -171,14 +200,30 @@ export default function RSVP() {
                       </div>
                     )}
 
+                    <MealPicker
+                      legend="Your meal"
+                      idPrefix="rsvp-meal"
+                      value={meal}
+                      onChange={setMeal}
+                    />
+
+                    {plusOne === "yes" && (
+                      <MealPicker
+                        legend="Your guest's meal"
+                        idPrefix="rsvp-guest-meal"
+                        value={plusOneMeal}
+                        onChange={setPlusOneMeal}
+                      />
+                    )}
+
                     <div>
                       <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
-                        Dietary Restrictions
+                        Allergies or dietary notes
                       </label>
                       <input
                         name="dietary"
                         type="text"
-                        placeholder="Vegetarian, gluten-free, etc."
+                        placeholder="Nut allergy, shellfish, etc."
                         className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
                       />
                     </div>
@@ -199,13 +244,19 @@ export default function RSVP() {
 
                 {status === "error" && (
                   <p className="text-red-500 text-sm font-sans text-center">
-                    Something went wrong. Please try again or email us directly.
+                    {errorMsg || "Something went wrong. Please try again or email us directly."}
+                  </p>
+                )}
+
+                {(needsMeal || needsGuestMeal) && (
+                  <p className="font-sans text-xs text-bark/60 text-center">
+                    {needsMeal ? "Choose a meal to continue." : "Choose a meal for your guest to continue."}
                   </p>
                 )}
 
                 <button
                   type="submit"
-                  disabled={!attending || status === "submitting"}
+                  disabled={!attending || needsMeal || needsGuestMeal || status === "submitting"}
                   className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {status === "submitting" ? "Sending..." : "Send RSVP"}
