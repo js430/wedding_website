@@ -1,15 +1,14 @@
 /**
- * Signing for the personal invite links and the device cookie they set.
+ * Signing for the device cookie that a personal invite link (or typed code) sets.
  *
  * Web Crypto only, no Node imports: middleware imports this file and may run
  * on the Edge runtime, where `crypto` / `Buffer` / `timingSafeEqual` are absent.
  *
- * Two kinds of signed value, both keyed with INVITE_SECRET:
- *   - link code:      HMAC("invite:"  + id)                 → 12 chars, in the URL
- *   - session cookie: HMAC("session:" + id + ":" + issuedAt) → full length
- * The "invite:" and "session:" prefixes keep the two from being
- * interchangeable: a link code can never be replayed as a cookie signature,
- * and a cookie signature can never be used as a link code.
+ * One signed value, keyed with INVITE_SECRET:
+ *   - session cookie: HMAC("session:" + id + ":" + issuedAt)
+ * The cookie is signed over the household's page id, not its code. Household
+ * codes (see invite-codes.ts) are random, stored in Notion, and not derived
+ * from the secret, so they are not signed here.
  */
 
 export const SESSION_COOKIE = "invite";
@@ -51,16 +50,6 @@ function safeEqual(a: string, b: string): boolean {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
-}
-
-/**
- * The 12-character code in a household's personal link. Returns "" when no
- * signing secret is set, so an unsigned code is never issued.
- */
-export async function inviteCode(pageId: string): Promise<string> {
-  const secret = process.env.INVITE_SECRET;
-  if (!secret) return "";
-  return (await hmac("invite:" + normalizeId(pageId), secret)).slice(0, 12);
 }
 
 /** Cookie value `${id}.${issuedAt}.${sig}`, or "" when no secret is set. */

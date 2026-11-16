@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const url = await inviteUrl(siteOrigin(req), row);
     console.info("[Invite request] attempting send for", row.name);
-    const sent = await sendInviteEmail(row.email, row.name, url);
+    const sent = await sendInviteEmail(row.email, row.name, url, row.code);
     if (!sent.ok) {
       console.error("[Invite request] email failed:", sent.error);
     }

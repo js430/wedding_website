@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "rate-limited" }, { status: 429, headers });
   }
 
-  const result = await sendInviteEmail(row.email, row.name, await inviteUrl(siteOrigin(req), row));
+  const result = await sendInviteEmail(row.email, row.name, await inviteUrl(siteOrigin(req), row), row.code);
   if (!result.ok) {
     return NextResponse.json({ error: "send-failed" }, { status: 502, headers });
   }

@@ -36,7 +36,7 @@ const isUnsent = (r: Invitation) => Boolean(r.email) && !r.revoked && !r.linkSen
 /** Email one household their link and stamp "Link Sent". */
 async function sendOne(req: NextRequest, row: Invitation): Promise<{ ok: boolean; error?: string }> {
   const url = await inviteUrl(siteOrigin(req), row);
-  const sent = await sendInviteEmail(row.email, row.name, url);
+  const sent = await sendInviteEmail(row.email, row.name, url, row.code);
   if (!sent.ok) return sent;
   try {
     await markLinkSent(row.id);
@@ -69,10 +69,11 @@ export async function GET(req: NextRequest) {
         phone: r.phone,
         revoked: r.revoked,
         linkSent: r.linkSent,
+        code: r.code,
         url: await inviteUrl(origin, r),
       })),
     );
-    return NextResponse.json({ configured: true, gateOn, invites });
+    return NextResponse.json({ configured: true, gateOn, site: origin, invites });
   } catch (err) {
     console.error("[Invite admin] Failed to load invitations:", err);
     return NextResponse.json({ error: "Failed to load invitations" }, { status: 500 });

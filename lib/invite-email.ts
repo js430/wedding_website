@@ -11,9 +11,22 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function buildInviteEmail(name: string, url: string): string {
+export function buildInviteEmail(name: string, url: string, code?: string): string {
   const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi there,";
   const href = escapeHtml(url);
+  let host = "";
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    host = "";
+  }
+  const codeBlock =
+    code && host
+      ? `<p style="margin:22px 0 6px;font-family:sans-serif;font-size:13px;color:#4a3728;line-height:1.6;">
+                  On a computer? Go to <strong>${escapeHtml(host)}</strong> and enter your code:
+                </p>
+                <p style="margin:0;font-family:'SFMono-Regular',Menlo,Consolas,'Courier New',monospace;font-size:32px;font-weight:bold;letter-spacing:0.3em;color:#1E0008;">${escapeHtml(code)}</p>`
+      : "";
   return `
     <!DOCTYPE html>
     <html>
@@ -37,6 +50,7 @@ function buildInviteEmail(name: string, url: string): string {
                 <a href="${href}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:12px 26px;display:inline-block;">
                   Open the website
                 </a>
+                ${codeBlock}
                 <p style="margin:18px 0 0;font-family:sans-serif;font-size:13px;color:#4a3728;line-height:1.6;">
                   Your link works on any of your devices — phone, computer, tablet —
                   and you can open it again from this email anytime.
@@ -64,6 +78,7 @@ export async function sendInviteEmail(
   to: string,
   name: string,
   url: string,
+  code?: string,
 ): Promise<{ ok: boolean; error?: string }> {
   if (!process.env.RESEND_API_KEY) return { ok: false, error: "RESEND_API_KEY not set" };
   try {
@@ -71,7 +86,7 @@ export async function sendInviteEmail(
       from: process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>",
       to,
       subject: INVITE_EMAIL_SUBJECT,
-      html: buildInviteEmail(name, url),
+      html: buildInviteEmail(name, url, code),
     });
     if (error) return { ok: false, error: error.message ?? String(error) };
     return { ok: true };

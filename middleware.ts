@@ -12,6 +12,7 @@ const PUBLIC_PREFIXES = [
   "/gate",
   "/i/",
   "/api/invite/request",
+  "/api/invite/code",
   // Edit links, resend and calendar files carry their own auth or are harmless,
   // and arrive from email on devices that have no cookie yet.
   "/rsvp/edit",

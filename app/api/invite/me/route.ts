@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "no-session" }, { status: 401, headers });
 
   if (!invitesConfigured()) {
-    return NextResponse.json({ name: "", url: "", hasEmail: false }, { headers });
+    return NextResponse.json({ name: "", url: "", code: "", hasEmail: false }, { headers });
   }
 
   let row;
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { name: row.name, url: await inviteUrl(siteOrigin(req), row), hasEmail: Boolean(row.email) },
+    { name: row.name, url: await inviteUrl(siteOrigin(req), row), code: row.code, hasEmail: Boolean(row.email) },
     { headers },
   );
 }
