@@ -1,6 +1,7 @@
 import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
 import Tilt from "./Tilt";
+import ColorPalette from "./ColorPalette";
 import { HOTEL_BOOKING_URL, HOTEL_WEBSITE_URL } from "./HotelBlock";
 import { googleCalendarUrl } from "@/lib/event";
 
@@ -122,23 +123,7 @@ export default function EventDetails() {
             <p className="font-sans text-bark/60 text-sm mb-4">
               Please avoid white. We encourage guests to embrace our wedding palette:
             </p>
-            <div className="bg-white rounded p-3 flex justify-center gap-3 mt-3">
-              {[
-                { color: "#FEE8EC", label: "Blush" },
-                { color: "#FFB3C4", label: "Pink" },
-                { color: "#CC1428", label: "Crimson" },
-                { color: "#8B0010", label: "Burgundy" },
-                { color: "#1E0008", label: "Maroon" },
-              ].map(({ color, label }) => (
-                <div key={color} className="flex flex-col items-center gap-1">
-                  <div
-                    className="w-10 h-10 border border-gray-200"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="font-sans text-gray-500 text-xs">{label}</span>
-                </div>
-              ))}
-            </div>
+            <ColorPalette />
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
             <p className="font-serif italic text-gold text-sm mb-2">Save the Date</p>
