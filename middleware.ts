@@ -4,15 +4,15 @@ import { SESSION_COOKIE, verifySession } from "@/lib/invite-crypto";
 /**
  * Invite gate. Enforced only when INVITE_GATE is exactly "on"; otherwise the
  * site behaves as if this file did not exist. Only the signed cookie is
- * checked here (Edge-safe); revocation is checked in /api/invite/me.
+ * checked here (Edge-safe). It is bound to SITE_PASSWORD, so changing the
+ * password signs every device out.
  */
 
 const PUBLIC_PREFIXES = [
-  // The gate itself and the personal links that set the cookie.
+  // The gate, the shared link that sets the cookie, and the password box.
   "/gate",
   "/i/",
-  "/api/invite/request",
-  "/api/invite/code",
+  "/api/invite/unlock",
   // Edit links, resend and calendar files carry their own auth or are harmless,
   // and arrive from email on devices that have no cookie yet.
   "/rsvp/edit",
@@ -24,7 +24,6 @@ const PUBLIC_PREFIXES = [
   "/api/diagnostics",
   // Admin and seating have their own passwords.
   "/admin",
-  "/api/invite/admin",
   "/seating",
   "/api/seating",
   "/api/meals",

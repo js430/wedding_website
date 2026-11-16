@@ -9,8 +9,7 @@ import { useInvite } from "@/lib/use-invite";
 const TRIGGER_TEXT = "Open on another device";
 
 /**
- * The trigger button. Renders nothing unless this device's household is
- * recognised. Style it per placement with `className`.
+ * The trigger button. Renders nothing unless this device is signed in. Style it per placement with `className`.
  */
 export function InviteDevicesTrigger({
   className = "",
@@ -28,8 +27,6 @@ export function InviteDevicesTrigger({
   );
 }
 
-type SendState = "idle" | "sending" | "sent" | "limited" | "error";
-
 /**
  * The dialog. Rendered in a portal on <body> so it is never inside a <form>,
  * and never trapped by the navbar's backdrop-filter.
@@ -45,14 +42,13 @@ export function InviteDevicesModal({
   onClose: () => void;
   fallbackFocus?: React.RefObject<HTMLElement | null>;
 }) {
-  const { status, name, url, hasEmail } = useInvite();
+  const { status, password, host, link } = useInvite();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [send, setSend] = useState<SendState>("idle");
+  const [copied, setCopied] = useState<"" | "password" | "link">("");
   const [qr, setQr] = useState("");
 
   const shown = open && status === "ready";
@@ -78,8 +74,7 @@ export function InviteDevicesModal({
   // Fresh state each time it opens.
   useEffect(() => {
     if (shown) {
-      setCopied(false);
-      setSend("idle");
+      setCopied("");
     }
   }, [shown]);
 
@@ -124,9 +119,9 @@ export function InviteDevicesModal({
 
   // QR code, generated in the browser from our own link.
   useEffect(() => {
-    if (!shown || !url) return;
+    if (!shown || !link) return;
     let alive = true;
-    QRCode.toString(url, {
+    QRCode.toString(link, {
       type: "svg",
       margin: 1,
       color: { dark: "#1E0008", light: "#FFFFFF" },
@@ -136,7 +131,7 @@ export function InviteDevicesModal({
     return () => {
       alive = false;
     };
-  }, [shown, url]);
+  }, [shown, link]);
 
   useEffect(
     () => () => {
@@ -145,43 +140,22 @@ export function InviteDevicesModal({
     [],
   );
 
-  const copy = useCallback(async () => {
+  const copy = useCallback(async (what: "password" | "link", text: string) => {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
+      await navigator.clipboard.writeText(text);
+      setCopied(what);
       if (copyTimer.current) clearTimeout(copyTimer.current);
-      copyTimer.current = setTimeout(() => setCopied(false), 2000);
+      copyTimer.current = setTimeout(() => setCopied(""), 2000);
     } catch {
-      // Fail silently: the link is in the field to copy by hand.
+      // Fail silently: the text is on screen to copy by hand.
     }
-  }, [url]);
-
-  async function emailMe() {
-    if (send === "sending") return;
-    setSend("sending");
-    try {
-      const res = await fetch("/api/invite/send-self", { method: "POST" });
-      setSend(res.ok ? "sent" : res.status === 429 ? "limited" : "error");
-    } catch {
-      setSend("error");
-    }
-  }
+  }, []);
 
   if (!mounted) return null;
 
   const btn =
     "inline-flex items-center justify-center px-5 py-2.5 font-sans text-xs tracking-widest uppercase transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-deep focus-visible:ring-offset-2";
   const primary = `${btn} bg-rose-deep text-rose-blush hover:bg-crimson-dark`;
-  const secondary = `${btn} border border-rose-deep/50 text-rose-deep hover:bg-rose-soft/20`;
-
-  const message =
-    send === "sent"
-      ? "Sent — check your inbox."
-      : send === "limited"
-        ? "You've requested a few already — try again in a little while."
-        : send === "error"
-          ? "Sorry, we couldn't send that just now. Please copy the link instead."
-          : "";
 
   return createPortal(
     <AnimatePresence>
@@ -207,51 +181,45 @@ export function InviteDevicesModal({
             <h2 id={titleId} className="font-serif text-2xl text-rose-deep mb-3">
               {TRIGGER_TEXT}
             </h2>
-            <p className="font-sans text-sm text-bark/80 leading-relaxed mb-5">
-              This is your household&apos;s personal link for {name}. It works on any device &mdash; open it once
-              and that device stays in.
+            <p className="font-sans text-sm text-bark/80 leading-relaxed mb-3">
+              On a computer? Go to <strong className="break-all">{host}</strong> and enter the password:
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-              <input
-                type="text"
-                readOnly
-                value={url}
-                aria-label="Your personal link"
-                onFocus={(e) => e.currentTarget.select()}
-                className="min-w-0 flex-1 bg-white border border-rose-soft/60 px-3 py-2.5 font-sans text-sm text-bark focus:outline-none focus:ring-2 focus:ring-rose-deep"
-              />
-              <button type="button" onClick={copy} className={primary}>
-                {copied ? "Copied ✓" : "Copy link"}
+            <p
+              className="bg-white border border-rose-soft/60 px-3 py-3 font-serif text-2xl tracking-widest text-bark break-words select-all"
+              aria-label="Password"
+            >
+              {password}
+            </p>
+            <div className="mt-3 mb-6">
+              <button type="button" onClick={() => copy("password", password)} className={primary}>
+                {copied === "password" ? "Copied ✓" : "Copy password"}
               </button>
             </div>
 
-            {hasEmail && (
-              <div className="mb-5">
-                <button
-                  type="button"
-                  onClick={emailMe}
-                  disabled={send === "sending" || send === "sent"}
-                  className={`${secondary} disabled:opacity-60`}
-                >
-                  {send === "sending" ? "Sending…" : "Email it to me"}
-                </button>
-                <p role="status" aria-live="polite" className="font-sans text-sm text-bark/80 mt-2 min-h-[1.25rem]">
-                  {message}
-                </p>
-              </div>
-            )}
+            <div className="flex flex-col sm:flex-row gap-2 mb-6">
+              <input
+                type="text"
+                readOnly
+                value={link}
+                aria-label="Link to open on another device"
+                onFocus={(e) => e.currentTarget.select()}
+                className="min-w-0 flex-1 bg-white border border-rose-soft/60 px-3 py-2.5 font-sans text-sm text-bark focus:outline-none focus:ring-2 focus:ring-rose-deep"
+              />
+              <button type="button" onClick={() => copy("link", link)} className={primary}>
+                {copied === "link" ? "Copied ✓" : "Copy link"}
+              </button>
+            </div>
 
             {qr && (
               <div className="mb-6">
                 <div
                   className="mx-auto w-[168px] h-[168px] bg-white [&>svg]:block [&>svg]:w-full [&>svg]:h-full"
                   role="img"
-                  aria-label="QR code of your personal link"
+                  aria-label="QR code of the link"
                   dangerouslySetInnerHTML={{ __html: qr }}
                 />
                 <p className="font-sans text-xs text-bark/70 mt-2">
-                  On a computer? Scan this with your phone&apos;s camera.
+                  Or scan this with your phone&apos;s camera.
                 </p>
               </div>
             )}

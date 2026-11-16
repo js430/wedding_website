@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-export type InviteStatus = "loading" | "ready" | "none" | "revoked" | "unavailable";
+export type InviteStatus = "loading" | "ready" | "none" | "unavailable";
 
 export interface InviteState {
   status: InviteStatus;
-  name: string;
-  url: string;
-  hasEmail: boolean;
+  password: string;
+  host: string;
+  link: string;
 }
 
-const LOADING: InviteState = { status: "loading", name: "", url: "", hasEmail: false };
+const LOADING: InviteState = { status: "loading", password: "", host: "", link: "" };
 
 async function fetchInvite(): Promise<InviteState> {
   try {
@@ -23,18 +23,16 @@ async function fetchInvite(): Promise<InviteState> {
       body = null;
     }
     if (res.status === 200) {
-      const url = typeof body?.url === "string" ? body.url : "";
-      if (!url) return { ...LOADING, status: "none" };
+      const password = typeof body?.password === "string" ? body.password : "";
+      if (!password) return { ...LOADING, status: "none" };
       return {
         status: "ready",
-        name: typeof body?.name === "string" ? body.name : "",
-        url,
-        hasEmail: Boolean(body?.hasEmail),
+        password,
+        host: typeof body?.host === "string" ? body.host : "",
+        link: typeof body?.link === "string" ? body.link : "",
       };
     }
-    if (res.status === 401) {
-      return { ...LOADING, status: body?.error === "revoked" ? "revoked" : "none" };
-    }
+    if (res.status === 401) return { ...LOADING, status: "none" };
     return { ...LOADING, status: "unavailable" };
   } catch {
     return { ...LOADING, status: "unavailable" };

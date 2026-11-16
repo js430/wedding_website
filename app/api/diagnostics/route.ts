@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { clientKey } from "@/lib/invite-guard";
+import { gateConfigured } from "@/lib/invite-crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,12 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     clientIp: clientIp(req),
+    gate: {
+      enforced: process.env.INVITE_GATE === "on",
+      configured: gateConfigured(),
+      sitePasswordSet: present("SITE_PASSWORD").set,
+      inviteSecretSet: present("INVITE_SECRET").set,
+    },
     email: resend,
     notion: { rsvpDatabase: rsvpDb, registryDatabase: registryDb },
     variablesSet: [
@@ -104,6 +111,8 @@ export async function GET(req: NextRequest) {
       "REGISTRY_CLAIM_KEY",
       "NEXT_PUBLIC_SITE_URL",
       "NOTION_TOKEN",
+      "SITE_PASSWORD",
+      "INVITE_SECRET",
       "VENMO_HANDLE",
       "ZELLE_EMAIL",
       "PAYPAL_EMAIL",

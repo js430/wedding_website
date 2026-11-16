@@ -1,14 +1,16 @@
 /**
- * Signing for the device cookie that a personal invite link (or typed code) sets.
+ * Signing for the device cookie that the shared-password link (or typed
+ * password) sets.
  *
  * Web Crypto only, no Node imports: middleware imports this file and may run
  * on the Edge runtime, where `crypto` / `Buffer` / `timingSafeEqual` are absent.
  *
- * One signed value, keyed with INVITE_SECRET:
- *   - session cookie: HMAC("session:" + id + ":" + issuedAt)
- * The cookie is signed over the household's page id, not its code. Household
- * codes (see invite-codes.ts) are random, stored in Notion, and not derived
- * from the secret, so they are not signed here.
+ * The cookie is `${issuedAt}.${sig}`, where
+ *   sig = HMAC-SHA256(INVITE_SECRET, "session:" + sha256hex(password) + ":" + issuedAt)
+ *
+ * The hash of the current SITE_PASSWORD is part of what is signed so that
+ * changing SITE_PASSWORD makes every cookie already issued fail verification:
+ * it signs every device out. That is the couple's only revoke switch.
  */
 
 export const SESSION_COOKIE = "invite";
@@ -21,15 +23,26 @@ export const SESSION_EXPIRES = new Date("2027-06-01T00:00:00Z");
 
 const encoder = new TextEncoder();
 
-/** Lowercase, dashes removed: Notion returns ids with dashes, humans paste them without. */
-export function normalizeId(pageId: string): string {
-  return pageId.toLowerCase().replace(/-/g, "");
+/** Case and surrounding whitespace never matter when comparing passwords. */
+export function normalizePassword(s: string): string {
+  return s.trim().toLowerCase();
 }
 
 function toBase64Url(bytes: Uint8Array): string {
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function toHex(bytes: Uint8Array): string {
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += bytes[i].toString(16).padStart(2, "0");
+  return out;
+}
+
+async function sha256hex(s: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", encoder.encode(s));
+  return toHex(new Uint8Array(digest));
 }
 
 async function hmac(payload: string, secret: string): Promise<string> {
@@ -52,26 +65,52 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** Cookie value `${id}.${issuedAt}.${sig}`, or "" when no secret is set. */
-export async function signSession(pageId: string, issuedAt: number): Promise<string> {
-  const secret = process.env.INVITE_SECRET;
-  if (!secret) return "";
-  const id = normalizeId(pageId);
-  return `${id}.${issuedAt}.${await hmac(`session:${id}:${issuedAt}`, secret)}`;
+/** Both SITE_PASSWORD and INVITE_SECRET are set (and not blank). */
+export function gateConfigured(): boolean {
+  return Boolean(process.env.SITE_PASSWORD?.trim() && process.env.INVITE_SECRET);
 }
 
-/** Normalized page id if the cookie is authentic, else null. Never throws. */
-export async function verifySession(value: string | undefined): Promise<string | null> {
+async function sessionSignature(issuedAt: string): Promise<string | null> {
+  const secret = process.env.INVITE_SECRET;
+  const password = process.env.SITE_PASSWORD;
+  if (!secret || !password || !normalizePassword(password)) return null;
+  const passwordHash = await sha256hex(normalizePassword(password));
+  return hmac(`session:${passwordHash}:${issuedAt}`, secret);
+}
+
+/** Cookie value `${issuedAt}.${sig}`, or "" when the gate is not configured. */
+export async function signSession(issuedAt: number): Promise<string> {
+  const sig = await sessionSignature(String(issuedAt));
+  return sig ? `${issuedAt}.${sig}` : "";
+}
+
+/** True if the cookie is authentic for the current password. Never throws. */
+export async function verifySession(value: string | undefined): Promise<boolean> {
   try {
-    const secret = process.env.INVITE_SECRET;
-    if (!secret || !value) return null;
+    if (!value) return false;
     const parts = value.split(".");
-    if (parts.length !== 3) return null;
-    const [id, issuedAt, sig] = parts;
-    if (!id || !issuedAt || !sig) return null;
-    const expected = await hmac(`session:${id}:${issuedAt}`, secret);
-    return safeEqual(sig, expected) ? id : null;
+    if (parts.length !== 2) return false;
+    const [issuedAt, sig] = parts;
+    if (!issuedAt || !sig) return false;
+    const expected = await sessionSignature(issuedAt);
+    return expected !== null && safeEqual(sig, expected);
   } catch {
-    return null;
+    return false;
+  }
+}
+
+/** Does `input` match SITE_PASSWORD (ignoring case and surrounding whitespace)? */
+export async function passwordMatches(input: string): Promise<boolean> {
+  try {
+    const password = process.env.SITE_PASSWORD;
+    if (!password || typeof input !== "string") return false;
+    const want = normalizePassword(password);
+    const got = normalizePassword(input);
+    if (!want || !got) return false;
+    // Compare digests so length differences leak nothing.
+    const [a, b] = await Promise.all([sha256hex(want), sha256hex(got)]);
+    return safeEqual(a, b);
+  } catch {
+    return false;
   }
 }

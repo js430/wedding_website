@@ -67,13 +67,18 @@ services:
         sync: false
 
       # ── Invite gate ───────────────────────────────────────────────────────
-      # Changing INVITE_SECRET invalidates every invite link already sent and
-      # logs every device out.
+      # The ONE shared password for the whole site. The link to text guests is
+      # https://www.jeffandkatie2027.com/i/<password>
+      # Changing it signs every device out and breaks the old link: it is the
+      # only way to revoke access.
+      - key: SITE_PASSWORD
+        sync: false
+      # Signs the device cookie. Changing it also signs every device out.
+      # The gate only works when BOTH SITE_PASSWORD and INVITE_SECRET are set.
       - key: INVITE_SECRET
         sync: false
-      - key: NOTION_INVITES_DATABASE_ID
-        sync: false
-      # "on" enforces the gate; anything else leaves the site open. Set it
-      # only after testing your own link.
+      # "on" enforces the gate; anything else leaves the site open. With
+      # INVITE_GATE=on and SITE_PASSWORD or INVITE_SECRET unset, EVERYONE is
+      # locked out: set both first, then test your own link before turning it on.
       - key: INVITE_GATE
         sync: false

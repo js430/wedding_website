@@ -10,6 +10,14 @@ export const metadata: Metadata = {
   title: "Katie & Jeffrey — March 27, 2027",
 };
 
+/** Same-site paths only: "/x" yes; "//evil", "/\evil" and anything with "://" no. */
+function safeNext(raw: string | string[] | undefined): string {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof v !== "string") return "/";
+  if (!v.startsWith("/") || v.startsWith("//") || v.startsWith("/\\") || v.includes("://")) return "/";
+  return v;
+}
+
 export default async function Gate({
   searchParams,
 }: {
@@ -23,7 +31,7 @@ export default async function Gate({
   if (await verifySession(jar.get(SESSION_COOKIE)?.value)) redirect("/");
 
   const params = await searchParams;
-  const reason = params.invalid ? "invalid" : params.error ? "error" : "none";
+  const reason = params.invalid ? "invalid" : params.blocked ? "blocked" : "none";
 
-  return <GatePage reason={reason} />;
+  return <GatePage reason={reason} next={safeNext(params.next)} />;
 }
