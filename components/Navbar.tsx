@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import { InviteDevicesTrigger, InviteDevicesModal } from "@/components/InviteDevices";
 
 const primaryLinks = [
   { label: "Our Story", href: "#story" },
@@ -22,6 +23,13 @@ export default function Navbar() {
   const pathname = usePathname();
   const onHome = pathname === "/";
   const moreRef = useRef<HTMLLIElement>(null);
+  const moreBtnRef = useRef<HTMLButtonElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const [devicesOpen, setDevicesOpen] = useState(false);
+  // Where focus goes back to when the dialog closes (the menu item that
+  // opened it disappears along with its menu).
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const closeDevices = useCallback(() => setDevicesOpen(false), []);
 
   // Anchor links only work on the homepage — prefix with / when elsewhere
   function resolveHref(href: string) {
@@ -79,6 +87,7 @@ export default function Navbar() {
             onMouseLeave={() => setMoreOpen(false)}
           >
             <button
+              ref={moreBtnRef}
               type="button"
               onClick={() => setMoreOpen((v) => !v)}
               className="nav-link flex items-center gap-1"
@@ -110,6 +119,16 @@ export default function Navbar() {
                       </a>
                     </li>
                   ))}
+                  <li>
+                    <InviteDevicesTrigger
+                      onClick={() => {
+                        returnFocusRef.current = moreBtnRef.current;
+                        setMoreOpen(false);
+                        setDevicesOpen(true);
+                      }}
+                      className="block w-full text-left px-5 py-2.5 font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep hover:bg-rose-soft/15 transition-colors whitespace-nowrap"
+                    />
+                  </li>
                 </div>
               </ul>
             )}
@@ -128,6 +147,7 @@ export default function Navbar() {
 
         {/* Mobile toggle */}
         <button
+          ref={toggleRef}
           className="md:hidden text-bark"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
@@ -157,6 +177,16 @@ export default function Navbar() {
                 </a>
               </li>
             ))}
+            <li>
+              <InviteDevicesTrigger
+                onClick={() => {
+                  returnFocusRef.current = toggleRef.current;
+                  setMenuOpen(false);
+                  setDevicesOpen(true);
+                }}
+                className="font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep transition-colors"
+              />
+            </li>
             <li className="pt-1">
               <a
                 href={resolveHref("#rsvp")}
@@ -169,6 +199,8 @@ export default function Navbar() {
           </ul>
         </div>
       )}
+
+      <InviteDevicesModal open={devicesOpen} onClose={closeDevices} fallbackFocus={returnFocusRef} />
     </nav>
   );
 }

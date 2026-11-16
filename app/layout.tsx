@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Lato, Tangerine } from "next/font/google";
 import SmoothScroll from "@/components/SmoothScroll";
 import PageView from "@/components/PageView";
+import InviteSession from "@/components/InviteSession";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -64,6 +65,7 @@ export default function RootLayout({
     >
       <body>
         <PageView />
+        <InviteSession />
         <SmoothScroll />
         {children}
       </body>
