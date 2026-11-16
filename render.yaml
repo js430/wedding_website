@@ -65,3 +65,15 @@ services:
         sync: false
       - key: PAYPAL_EMAIL
         sync: false
+
+      # ── Invite gate ───────────────────────────────────────────────────────
+      # Changing INVITE_SECRET invalidates every invite link already sent and
+      # logs every device out.
+      - key: INVITE_SECRET
+        sync: false
+      - key: NOTION_INVITES_DATABASE_ID
+        sync: false
+      # "on" enforces the gate; anything else leaves the site open. Set it
+      # only after testing your own link.
+      - key: INVITE_GATE
+        sync: false
