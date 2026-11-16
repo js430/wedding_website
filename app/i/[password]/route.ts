@@ -25,15 +25,11 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ password: s
   const key = clientKey(req);
   if (isBlocked(key).blocked) return redirect(req, "/gate?blocked=1");
 
-  const { password: raw } = await ctx.params;
-  let decoded = "";
-  try {
-    decoded = decodeURIComponent(raw);
-  } catch {
-    // malformed escape: treated as a wrong guess
-  }
+  // Next already percent-decodes route params; decoding again would break
+  // passwords containing "%". An empty value counts as wrong.
+  const { password } = await ctx.params;
 
-  if (!decoded || !(await passwordMatches(decoded))) {
+  if (!password || !(await passwordMatches(password))) {
     recordWrong(key);
     return redirect(req, "/gate?invalid=1");
   }
