@@ -78,7 +78,9 @@ export default function ColorPalette() {
 
   return (
     <div className="bg-white rounded p-3 mt-3">
-      <div className="flex justify-center gap-1.5 sm:gap-3">
+      {/* Wraps instead of overflowing: five 44px tap targets cannot fit one
+          row on a 320px phone, and a second row beats a sideways-scrolling page. */}
+      <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-3 sm:gap-x-3">
         {WEDDING_PALETTE.map(({ hex, label }) => {
           const isSelected = selected === hex;
           return (
