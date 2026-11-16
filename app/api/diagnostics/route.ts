@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
+import { clientKey } from "@/lib/invite-guard";
+import { gateConfigured } from "@/lib/invite-crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,18 @@ async function checkNotionDb(envName: string) {
   }
 }
 
+/** Which header identified this visitor, and the address with its last octet/segment masked. */
+function clientIp(req: NextRequest): { source: string; value: string } {
+  const sources = ["cf-connecting-ip", "true-client-ip", "x-forwarded-for"];
+  const source = sources.find((n) => req.headers.get(n)?.trim()) ?? "none";
+  const raw = clientKey(req);
+  if (raw === "unknown") return { source, value: "unknown" };
+  const masked = raw.includes(":")
+    ? raw.replace(/[^:]*$/, "xxxx")
+    : raw.replace(/[^.]*$/, "x");
+  return { source, value: masked };
+}
+
 export async function GET(req: NextRequest) {
   if (!process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: "ADMIN_PASSWORD not configured" }, { status: 500 });
@@ -82,6 +96,13 @@ export async function GET(req: NextRequest) {
   ]);
 
   return NextResponse.json({
+    clientIp: clientIp(req),
+    gate: {
+      enforced: process.env.INVITE_GATE === "on",
+      configured: gateConfigured(),
+      sitePasswordSet: present("SITE_PASSWORD").set,
+      inviteSecretSet: present("INVITE_SECRET").set,
+    },
     email: resend,
     notion: { rsvpDatabase: rsvpDb, registryDatabase: registryDb },
     variablesSet: [
@@ -90,6 +111,8 @@ export async function GET(req: NextRequest) {
       "REGISTRY_CLAIM_KEY",
       "NEXT_PUBLIC_SITE_URL",
       "NOTION_TOKEN",
+      "SITE_PASSWORD",
+      "INVITE_SECRET",
       "VENMO_HANDLE",
       "ZELLE_EMAIL",
       "PAYPAL_EMAIL",

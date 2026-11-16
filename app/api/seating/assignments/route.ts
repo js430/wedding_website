@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
+import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
 
 export const dynamic = "force-dynamic";
+
+// A Notion page id: 32 hex chars, dashes optional.
+const NOTION_ID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const SEAT_DB  = () => process.env.NOTION_SEATING_DATABASE_ID!;
@@ -23,7 +27,11 @@ async function syncToRSVP(
   });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isSeatingAuthed(req.cookies.get(SEATING_COOKIE)?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!process.env.NOTION_SEATING_DATABASE_ID) {
     return NextResponse.json({ assignments: [] });
   }
@@ -42,11 +50,20 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.NOTION_SEATING_DATABASE_ID) {
-    return NextResponse.json({ ok: true });
+  if (!isSeatingAuthed(req.cookies.get(SEATING_COOKIE)?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { guestId, guestName, tableId, tableName, seatNumber } = await req.json();
+
+  // guestId becomes a Notion page id; refuse anything that is not one.
+  if (typeof guestId !== "string" || !NOTION_ID.test(guestId)) {
+    return NextResponse.json({ error: "Invalid guest id" }, { status: 400 });
+  }
+
+  if (!process.env.NOTION_SEATING_DATABASE_ID) {
+    return NextResponse.json({ ok: true });
+  }
 
   // ── Find existing seating record for this guest ───────────────────────────
   const existing = await notion.databases.query({
