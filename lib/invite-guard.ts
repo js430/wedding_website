@@ -1,5 +1,5 @@
 /**
- * Wrong-guess block for invite codes (the typed box and /i/<code> links).
+ * Wrong-guess block for invite codes (the typed box and /i/<token> links).
  *
  * 5 wrong attempts within a rolling hour block that client for 1 hour. If the
  * same client is blocked again within 24 hours of its previous block ending,

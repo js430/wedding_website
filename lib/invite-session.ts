@@ -1,5 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE, SESSION_EXPIRES, signSession } from "@/lib/invite-crypto";
+import { SESSION_COOKIE, SESSION_EXPIRES, linkToken, signSession } from "@/lib/invite-crypto";
 
 /** Node route-handler helpers for the shared-password gate. */
 
@@ -28,7 +28,8 @@ export function displayHost(origin: string): string {
   }
 }
 
-/** The link the couple texts to everyone. */
+/** The link the couple texts to everyone (carries a derived token, not the password). */
 export async function inviteLink(origin: string): Promise<string> {
-  return `${origin}/i/${encodeURIComponent((process.env.SITE_PASSWORD ?? "").trim())}`;
+  const token = await linkToken();
+  return token ? `${origin}/i/${token}` : "";
 }

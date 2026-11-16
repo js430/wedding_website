@@ -114,3 +114,45 @@ export async function passwordMatches(input: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * The token in the shared invite link (/i/<token>); the link does not contain
+ * the password. It is derived, not stored: the first 16 hex characters of
+ * HMAC-SHA256(INVITE_SECRET, "link:" + sha256hex(password)). So it changes
+ * automatically whenever SITE_PASSWORD or INVITE_SECRET changes (old links stop
+ * working, same as the old design) and there is no extra setting. The "link:"
+ * prefix keeps it distinct from session signatures. 64 bits plus the
+ * wrong-guess block makes guessing impractical.
+ */
+export async function linkToken(): Promise<string> {
+  if (!gateConfigured()) return "";
+  const secret = process.env.INVITE_SECRET as string;
+  const password = process.env.SITE_PASSWORD as string;
+  const passwordHash = await sha256hex(normalizePassword(password));
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await globalThis.crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(`link:${passwordHash}`),
+  );
+  return toHex(new Uint8Array(sig)).slice(0, 16);
+}
+
+/** Does `input` equal the current link token (case-insensitive)? Never throws. */
+export async function linkTokenMatches(input: string): Promise<boolean> {
+  try {
+    if (typeof input !== "string") return false;
+    const got = input.toLowerCase();
+    if (!/^[0-9a-f]{16}$/.test(got)) return false;
+    const want = await linkToken();
+    return want !== "" && safeEqual(got, want);
+  } catch {
+    return false;
+  }
+}

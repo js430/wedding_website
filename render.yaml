@@ -67,10 +67,12 @@ services:
         sync: false
 
       # ── Invite gate ───────────────────────────────────────────────────────
-      # The ONE shared password for the whole site. The link to text guests is
-      # https://www.jeffandkatie2027.com/i/<password>
-      # Changing it signs every device out and breaks the old link: it is the
-      # only way to revoke access.
+      # The ONE shared password for the whole site. The link to text guests does
+      # NOT contain the password. To get it, sign in on the site with the
+      # password, open "Open on another device" from the menu, and copy the link.
+      # The link changes whenever SITE_PASSWORD or INVITE_SECRET changes.
+      # Changing the password signs every device out and breaks the old link: it
+      # is the only way to revoke access.
       - key: SITE_PASSWORD
         sync: false
       # Signs the device cookie. Changing it also signs every device out.
