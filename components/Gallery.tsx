@@ -44,6 +44,11 @@ const photos = [
   },
 ];
 
+// Grid thumbnails live in /thumbs (made by scripts/make-thumbnails.mjs).
+// next/image is `unoptimized` here: the optimizer's internal fetch of the
+// source file carries no cookie and would be bounced by the invite gate.
+const thumbOf = (src: string) => src.replace(/^\/(.*)\.[^.]+$/, "/thumbs/$1.webp");
+
 export default function Gallery() {
   // Inner layers that drift as you scroll, alternating direction per photo
   const layerRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -116,9 +121,10 @@ export default function Gallery() {
                     style={{ transform: "scale(1.14)" }}
                   >
                     <Image
-                      src={p.src}
+                      src={thumbOf(p.src)}
                       alt={p.alt}
                       fill
+                      unoptimized
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       sizes="(max-width: 768px) 50vw, 33vw"
                     />
@@ -161,6 +167,7 @@ export default function Gallery() {
                 src={photos[active].src}
                 alt={photos[active].alt}
                 fill
+                unoptimized
                 className="object-contain"
                 sizes="90vw"
                 priority

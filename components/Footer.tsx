@@ -1,3 +1,5 @@
+import InviteDevices from "@/components/InviteDevices";
+
 export default function Footer() {
   return (
     <footer className="py-14 px-6 bg-crimson-darkest text-rose-blush/70 text-center">
@@ -15,6 +17,9 @@ export default function Footer() {
       <p className="font-sans text-xs text-ivory/40">
         Made with love · {new Date().getFullYear()}
       </p>
+      <div className="mt-4">
+        <InviteDevices className="font-sans text-xs text-rose-blush/50 underline underline-offset-4 decoration-rose-blush/30 hover:text-rose-blush/80 transition-colors" />
+      </div>
     </footer>
   );
 }

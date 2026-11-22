@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
+import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
 
 export const dynamic = "force-dynamic";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isSeatingAuthed(req.cookies.get(SEATING_COOKIE)?.value)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!process.env.NOTION_DATABASE_ID) {
     return NextResponse.json({ guests: [] });
   }
