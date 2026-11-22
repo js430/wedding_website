@@ -6,6 +6,10 @@ import SparkleTitle from "./SparkleTitle";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+// Gallery photos, in display order. Add a photo: put it in public/, add an
+// entry here, then run `node scripts/make-thumbnails.mjs`. Optional
+// `position` (CSS object-position) moves the square crop, e.g. "center 15%"
+// for a tall photo with faces near the top.
 const photos = [
   {
     src: "/photo-walking.jpg",
@@ -41,6 +45,23 @@ const photos = [
     src: "/photoshoot-4.jpg",
     alt: "Katie and Jeffrey beneath the peach trees in late summer",
     caption: "Late summer",
+  },
+  {
+    src: "/celebration-smile.jpg",
+    alt: "Katie and Jeffrey smiling at a small table with a vase of white flowers",
+    caption: "All smiles",
+  },
+  {
+    src: "/celebration-ring.jpg",
+    alt: "Katie and Jeffrey standing together, Katie's hand with her ring on Jeffrey's chest",
+    caption: "Ring on",
+    // Tall photo with the faces near the top: keep them in the square crop.
+    position: "center 15%",
+  },
+  {
+    src: "/celebration-kiss.jpg",
+    alt: "Katie and Jeffrey sharing a kiss at a small table",
+    caption: "Sealed with a kiss",
   },
 ];
 
@@ -126,6 +147,7 @@ export default function Gallery() {
                       fill
                       unoptimized
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      style={{ objectPosition: p.position ?? "center" }}
                       sizes="(max-width: 768px) 50vw, 33vw"
                     />
                   </div>
