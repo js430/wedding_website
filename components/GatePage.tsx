@@ -69,9 +69,6 @@ export default function GatePage({ reason, next }: { reason: Reason; next: strin
         <h1 className="font-script text-6xl sm:text-7xl text-bark leading-tight break-words">
           Katie &amp; Jeffrey
         </h1>
-        <p className="mt-3 font-sans text-xs tracking-widest uppercase text-bark/60">
-          March 27, 2027 · Charlottesville, Virginia
-        </p>
 
         <p className="mt-6 font-serif italic text-lg text-bark/80">
           This website is for our guests.

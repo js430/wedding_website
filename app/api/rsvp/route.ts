@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
@@ -195,7 +196,7 @@ export async function POST(req: NextRequest) {
     const from = process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>";
     // Links must be absolute in email; prefer the configured site URL and fall
     // back to the origin this request arrived on.
-    const origin  = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
+    const origin  = publicOrigin(req);
     const editUrl = buildEditUrl(created.id, origin);
     const icsUrl  = `${origin}/api/calendar`;
 
