@@ -7,7 +7,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/invite-crypto";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Katie & Jeffrey — March 27, 2027",
+  title: "Katie & Jeffrey",
 };
 
 /** Same-site paths only: "/x" yes; "//evil", "/\evil" and anything with "://" no. */
