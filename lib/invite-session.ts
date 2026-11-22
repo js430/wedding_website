@@ -1,5 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, SESSION_EXPIRES, linkToken, signSession } from "@/lib/invite-crypto";
+import { publicOrigin } from "@/lib/origin";
 
 /** Node route-handler helpers for the shared-password gate. */
 
@@ -14,9 +15,9 @@ export async function setSessionCookie(res: NextResponse): Promise<void> {
   });
 }
 
+/** The site's public address (see lib/origin.ts for why not req.nextUrl.origin). */
 export function siteOrigin(req: NextRequest): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  return configured ? configured.replace(/\/+$/, "") : req.nextUrl.origin;
+  return publicOrigin(req);
 }
 
 /** What guests should type into the address bar: the host without "www.". */

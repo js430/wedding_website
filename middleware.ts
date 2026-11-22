@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/invite-crypto";
+import { publicOrigin } from "@/lib/origin";
 
 /**
  * Invite gate. Enforced only when INVITE_GATE is exactly "on"; otherwise the
@@ -56,8 +57,10 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "invite-required" }, { status: 401 });
   }
-  const url = new URL(`/gate?next=${encodeURIComponent(pathname + search)}`, req.url);
-  return NextResponse.redirect(url);
+  // Middleware redirects must be absolute, but req.url is the server's internal
+  // address behind Render (localhost:10000), so build it from the public origin.
+  const target = `/gate?next=${encodeURIComponent(pathname + search)}`;
+  return NextResponse.redirect(new URL(target, publicOrigin(req)));
 }
 
 // Everything except build assets: photos and /_next/image stay gated.

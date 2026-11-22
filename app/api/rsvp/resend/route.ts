@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
     }
 
     const name    = page.properties?.Name?.title?.[0]?.plain_text ?? "";
-    const origin  = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
+    const origin  = publicOrigin(req);
     const editUrl = buildEditUrl(page.id, origin);
     if (!editUrl) {
       console.warn("[RSVP resend] REGISTRY_CLAIM_KEY not set — cannot mint link");

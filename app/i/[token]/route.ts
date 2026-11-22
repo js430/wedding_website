@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { gateConfigured, linkTokenMatches } from "@/lib/invite-crypto";
 import { setSessionCookie } from "@/lib/invite-session";
+import { redirectTo } from "@/lib/origin";
 import { clientKey, isBlocked, recordWrong } from "@/lib/invite-guard";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,9 @@ export const dynamic = "force-dynamic";
  * WhatsApp) fetching this URL are harmless: they get a cookie they throw away.
  */
 
-function redirect(req: NextRequest, path: string): NextResponse {
-  const res = NextResponse.redirect(new URL(path, req.url));
+function redirect(_req: NextRequest, path: string): NextResponse {
+  // Relative Location: req.url is the server's internal address behind Render.
+  const res = redirectTo(path);
   res.headers.set("Cache-Control", "no-store");
   return res;
 }
