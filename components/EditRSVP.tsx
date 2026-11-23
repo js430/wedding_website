@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import AttendanceChoice from "./AttendanceChoice";
 import MealPicker from "./MealPicker";
 import ResendEditLink from "./ResendEditLink";
 
@@ -16,6 +17,7 @@ interface Rsvp {
   plusOneName: string;
   dietary:     string;
   message:     string;
+  noUpdates?:  boolean;
   meal:        string;
   plusOneMeal: string;
 }
@@ -38,6 +40,7 @@ export default function EditRSVP() {
   const [plusOneName, setPlusOneName] = useState("");
   const [dietary,     setDietary]     = useState("");
   const [message,     setMessage]     = useState("");
+  const [noUpdates,   setNoUpdates]   = useState(false);
   const [meal,        setMeal]        = useState("");
   const [plusOneMeal, setPlusOneMeal] = useState("");
 
@@ -56,6 +59,7 @@ export default function EditRSVP() {
         setPlusOneName(data.rsvp.plusOneName);
         setDietary(data.rsvp.dietary);
         setMessage(data.rsvp.message);
+        setNoUpdates(data.rsvp.noUpdates === true);
         setMeal(data.rsvp.meal ?? "");
         setPlusOneMeal(data.rsvp.plusOneMeal ?? "");
         setClosed(data.closed);
@@ -73,7 +77,7 @@ export default function EditRSVP() {
       const res = await fetch("/api/rsvp/edit", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message, meal, plusOneMeal }),
+        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message, meal, plusOneMeal, noUpdates }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -158,62 +162,20 @@ export default function EditRSVP() {
         className="bg-white/60 border border-rose-soft/30 p-8 space-y-6"
         aria-disabled={closed}
       >
-        {/* Attending */}
-        <div>
-          <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-            Will you be joining us?
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { id: "yes", label: "Joyfully accepts" },
-              { id: "no",  label: "Regretfully declines" },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={closed}
-                onClick={() => setAttending(opt.id as "yes" | "no")}
-                className={`py-3 px-4 border font-sans text-sm transition-all disabled:opacity-50 ${
-                  attending === opt.id
-                    ? "bg-rose-deep text-white border-rose-deep"
-                    : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AttendanceChoice
+          legend="Will you be joining us?"
+          attending={attending}
+          plusOne={plusOne}
+          disabled={closed}
+          onChange={(a, p) => {
+            setAttending(a);
+            setPlusOne(p);
+            if (p === "no") setPlusOneMeal("");
+          }}
+        />
 
         {attendingYes && (
           <>
-            {/* Plus one */}
-            <div>
-              <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-                Bringing a guest?
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[{ id: "yes", label: "Yes" }, { id: "no", label: "No" }].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={closed}
-                    onClick={() => {
-                      setPlusOne(opt.id as "yes" | "no");
-                      if (opt.id === "no") setPlusOneMeal("");
-                    }}
-                    className={`py-2.5 px-4 border font-sans text-sm transition-all disabled:opacity-50 ${
-                      plusOne === opt.id
-                        ? "bg-rose-deep text-white border-rose-deep"
-                        : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {plusOne === "yes" && (
               <div>
                 <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
@@ -280,6 +242,19 @@ export default function EditRSVP() {
             className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none disabled:opacity-50"
           />
         </div>
+
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={noUpdates}
+            disabled={closed}
+            onChange={(e) => setNoUpdates(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-rose-deep cursor-pointer disabled:cursor-default"
+          />
+          <span className="font-sans text-xs text-bark/70 leading-relaxed">
+            No update emails, please. We&apos;ll still email you about your RSVP.
+          </span>
+        </label>
 
         {error && <p className="text-red-500 text-xs text-center font-sans">{error}</p>}
 
