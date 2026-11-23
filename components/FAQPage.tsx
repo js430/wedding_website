@@ -21,6 +21,10 @@ const faqs = [
         q: "Can I change my RSVP after submitting?",
         a: "Yes. Your confirmation email has an \"Edit my RSVP\" link you can use any time until February 27, 2027. Lost the email? Use the \"Email me my edit link\" option in the RSVP section and we'll send it again.",
       },
+      {
+        q: "How will we hear about updates?",
+        a: "By email. Any major updates and news about the wedding will go to the email address you give when you RSVP, so please use one you check. Rather not get them? Tick \"No update emails, please\" on the RSVP form, or change it later with your \"Edit my RSVP\" link.",
+      },
     ],
   },
   {

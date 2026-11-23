@@ -34,8 +34,10 @@ export default function RSVP() {
       meal: attending === "yes" ? meal : "",
       plusOneMeal: attending === "yes" && plusOne === "yes" ? plusOneMeal : "",
       plusOneName: (form.elements.namedItem("plusOneName") as HTMLInputElement)?.value ?? "",
-      dietary: (form.elements.namedItem("dietary") as HTMLInputElement).value,
+      // Only on the page when accepting; a declining guest has no dietary field.
+      dietary: (form.elements.namedItem("dietary") as HTMLInputElement | null)?.value ?? "",
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+      noUpdates: (form.elements.namedItem("noUpdates") as HTMLInputElement).checked,
     };
 
     try {
@@ -126,8 +128,23 @@ export default function RSVP() {
                     required
                     type="email"
                     placeholder="jane@example.com"
+                    aria-describedby="rsvp-email-note"
                     className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
                   />
+                  <p id="rsvp-email-note" className="mt-1.5 font-sans text-xs text-bark/60 leading-relaxed">
+                    We&apos;ll send your confirmation here, along with any major updates
+                    and news about the wedding, so please use an address you check.
+                  </p>
+                  <label className="mt-3 flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      name="noUpdates"
+                      type="checkbox"
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-rose-deep cursor-pointer"
+                    />
+                    <span className="font-sans text-xs text-bark/70 leading-relaxed">
+                      No update emails, please. Just send my RSVP confirmation.
+                    </span>
+                  </label>
                 </div>
 
                 <div>

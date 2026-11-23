@@ -16,6 +16,7 @@ interface Rsvp {
   plusOneName: string;
   dietary:     string;
   message:     string;
+  noUpdates?:  boolean;
   meal:        string;
   plusOneMeal: string;
 }
@@ -38,6 +39,7 @@ export default function EditRSVP() {
   const [plusOneName, setPlusOneName] = useState("");
   const [dietary,     setDietary]     = useState("");
   const [message,     setMessage]     = useState("");
+  const [noUpdates,   setNoUpdates]   = useState(false);
   const [meal,        setMeal]        = useState("");
   const [plusOneMeal, setPlusOneMeal] = useState("");
 
@@ -56,6 +58,7 @@ export default function EditRSVP() {
         setPlusOneName(data.rsvp.plusOneName);
         setDietary(data.rsvp.dietary);
         setMessage(data.rsvp.message);
+        setNoUpdates(data.rsvp.noUpdates === true);
         setMeal(data.rsvp.meal ?? "");
         setPlusOneMeal(data.rsvp.plusOneMeal ?? "");
         setClosed(data.closed);
@@ -73,7 +76,7 @@ export default function EditRSVP() {
       const res = await fetch("/api/rsvp/edit", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message, meal, plusOneMeal }),
+        body:    JSON.stringify({ token, attending, plusOne, plusOneName, dietary, message, meal, plusOneMeal, noUpdates }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -280,6 +283,19 @@ export default function EditRSVP() {
             className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none disabled:opacity-50"
           />
         </div>
+
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={noUpdates}
+            disabled={closed}
+            onChange={(e) => setNoUpdates(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-rose-deep cursor-pointer disabled:cursor-default"
+          />
+          <span className="font-sans text-xs text-bark/70 leading-relaxed">
+            No update emails, please. We&apos;ll still email you about your RSVP.
+          </span>
+        </label>
 
         {error && <p className="text-red-500 text-xs text-center font-sans">{error}</p>}
 

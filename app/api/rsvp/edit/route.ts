@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
+import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ function readRsvp(page: any) {
     plusOneMeal: labelToId(p["Guest Meal"]?.select?.name ?? ""),
     dietary:     p["Dietary Restrictions"]?.rich_text?.[0]?.plain_text ?? "",
     message:     p.Message?.rich_text?.[0]?.plain_text ?? "",
+    noUpdates:   p[UPDATES_OPT_OUT]?.checkbox === true,
   };
 }
 
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/rsvp/edit — save changes, until the deadline passes. */
 export async function POST(req: NextRequest) {
-  const { token, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message } =
+  const { token, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, noUpdates } =
     await req.json();
 
   const pageId = verifyEditToken(token ?? "");
@@ -77,9 +79,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await notionClient().pages.update({
-      page_id: pageId,
-      properties: {
+    const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
         "+1":                   { select:    { name: attendingYes && plusOne === "yes" ? "Yes" : "No" } },
         "Guest Name":           { rich_text: [{ text: { content: attendingYes ? (plusOneName ?? "") : "" } }] },
@@ -88,8 +88,11 @@ export async function POST(req: NextRequest) {
         "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? (dietary ?? "") : "" } }] },
         Message:                { rich_text: [{ text: { content: message ?? "" } }] },
         "Submitted At":         { date:      { start: new Date().toISOString() } },
-      },
-    });
+        [UPDATES_OPT_OUT]:      { checkbox:  noUpdates === true },
+    };
+    await withOptionalOptOut(properties, (props) =>
+      notionClient().pages.update({ page_id: pageId, properties: props }),
+    );
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("[RSVP edit] update failed:", err?.message ?? err);

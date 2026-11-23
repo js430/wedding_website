@@ -3,6 +3,7 @@ import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
+import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
 import { googleCalendarUrl } from "@/lib/event";
 import { isValidMeal, mealLabel } from "@/lib/meals";
 
@@ -26,6 +27,7 @@ function buildRSVPEmail(data: {
   dietary: string;
   message: string;
   editUrl: string;
+  noUpdates: boolean;
   icsUrl: string;
 }): string {
   const attending = data.attending === "yes";
@@ -113,6 +115,11 @@ function buildRSVPEmail(data: {
                 <p style="margin:24px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;text-align:center;">
                   Need to make a change? Reach out to us directly.
                 </p>`}
+                <p style="margin:24px 0 0;font-family:sans-serif;font-size:12px;line-height:1.6;color:#4a3728;text-align:center;">
+                  ${data.noUpdates
+                    ? "You've opted out of wedding update emails, so we'll only email you about your RSVP. Changed your mind? Use the Edit my RSVP link above."
+                    : "We'll send any major updates and news about the wedding to this email address. Rather not get them? Use the Edit my RSVP link above to opt out."}
+                </p>
               </td>
             </tr>
             <tr>
@@ -131,6 +138,7 @@ function buildRSVPEmail(data: {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { name, email, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message } = body;
+  const noUpdates = body.noUpdates === true;
 
   // ── Validate meals ────────────────────────────────────────────────────────
   // Before any Notion call, so it works with no Notion configured. A guest who
@@ -180,14 +188,15 @@ export async function POST(req: NextRequest) {
       "Dietary Restrictions": { rich_text: [{ text: { content: dietary ?? "" } }] },
       Message:                { rich_text: [{ text: { content: message ?? "" } }] },
       "Submitted At":         { date:      { start: new Date().toISOString() } },
+      [UPDATES_OPT_OUT]:      { checkbox:  noUpdates },
   };
 
-  const created = existingId
-    ? await notion.pages.update({ page_id: existingId, properties })
-    : await notion.pages.create({
-        parent: { database_id: process.env.NOTION_DATABASE_ID },
-        properties,
-      });
+  const databaseId = process.env.NOTION_DATABASE_ID;
+  const created = await withOptionalOptOut(properties, (props) =>
+    existingId
+      ? notion.pages.update({ page_id: existingId, properties: props })
+      : notion.pages.create({ parent: { database_id: databaseId }, properties: props }),
+  );
 
   // ── Send confirmation email ───────────────────────────────────────────────
   let emailed = true;
@@ -206,7 +215,7 @@ export async function POST(req: NextRequest) {
       subject: attending === "yes"
         ? "You're on the list! RSVP confirmed — Katie & Jeffrey 💍"
         : "RSVP received — Katie & Jeffrey",
-      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, editUrl, icsUrl }),
+      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, editUrl, icsUrl, noUpdates }),
     });
 
     // The RSVP itself is already saved, so a failed email must not fail the
