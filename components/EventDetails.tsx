@@ -35,10 +35,10 @@ const events = [
   {
     type: "After Party",
     icon: "🎉",
-    time: "12:00 AM or later",
+    time: "Time TBD",
     venue: "The Corner",
     address: "University Ave, Charlottesville, VA",
-    notes: "The night isn't over — join us at The Corner, right in the heart of UVA, where it all began.",
+    notes: "To be decided on the day, depending on interest and how the night goes. If it happens, join us at The Corner, right in the heart of UVA, where it all began.",
     mapUrl: "https://maps.google.com/?q=The+Corner+University+Ave+Charlottesville+VA",
   },
 ];
@@ -50,7 +50,7 @@ function EventCard({ event: e, optional }: { event: Event; optional?: boolean })
     <div className="lift bg-ivory/80 backdrop-blur border border-rose-soft/30 hover:border-rose-soft/60 p-8 text-center relative h-full">
       {optional && (
         <span className="absolute top-3 right-3 font-sans text-xs tracking-widest uppercase text-gold border border-gold/40 px-2 py-0.5">
-          Optional
+          Optional · TBD
         </span>
       )}
       <div className="text-4xl mb-4">{e.icon}</div>
