@@ -78,7 +78,7 @@ const faqs = [
     questions: [
       {
         q: "What is the dress code?",
-        a: "Business Formal. We encourage guests to embrace our wedding colors — blush, pink, crimson, burgundy, and deep maroon. Please avoid white.",
+        a: "Business Formal. Please don't wear white or red, or any shade of either: no ivory, cream or champagne, and no crimson, burgundy or maroon.",
       },
       {
         q: "Can I wear heels?",

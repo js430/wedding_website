@@ -1,7 +1,6 @@
 import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
 import Tilt from "./Tilt";
-import ColorPalette from "./ColorPalette";
 import { HOTEL_BOOKING_URL, HOTEL_WEBSITE_URL } from "./HotelBlock";
 import { googleCalendarUrl } from "@/lib/event";
 
@@ -120,10 +119,10 @@ export default function EventDetails() {
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
-            <p className="font-sans text-bark/60 text-sm mb-4">
-              Please avoid white. We encourage guests to embrace our wedding palette:
+            <p className="font-sans text-bark/60 text-sm leading-relaxed">
+              Please don&apos;t wear white or red, or any shade of either:
+              no ivory, cream or champagne, and no crimson, burgundy or maroon.
             </p>
-            <ColorPalette />
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
             <p className="font-serif italic text-gold text-sm mb-2">Save the Date</p>
