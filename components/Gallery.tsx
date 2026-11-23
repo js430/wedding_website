@@ -12,14 +12,31 @@ import { AnimatePresence, motion } from "framer-motion";
 // for a tall photo with faces near the top.
 const photos = [
   {
-    src: "/photo-walking.jpg",
-    alt: "Katie and Jeffrey walking together",
-    caption: "Where we wander",
-  },
-  {
     src: "/photo-proposal.jpg",
     alt: "The proposal — Brooklyn Bridge",
     caption: "The question — Brooklyn, NY",
+  },
+  {
+    src: "/proposal-yes.jpg",
+    alt: "Jeffrey on one knee slipping the ring onto Katie's finger beneath the Brooklyn Bridge",
+    caption: "She said yes",
+  },
+  {
+    src: "/proposal-ring.jpg",
+    alt: "Katie's hand with her engagement ring, holding a bouquet of dahlias and roses",
+    caption: "The ring",
+    // Show more of the bouquet above the ring in the square crop.
+    position: "center 40%",
+  },
+  {
+    src: "/proposal-arch.jpg",
+    alt: "Katie and Jeffrey sitting in a brick archway, smiling",
+    caption: "Framed in brick",
+  },
+  {
+    src: "/photo-walking.jpg",
+    alt: "Katie and Jeffrey walking together",
+    caption: "Where we wander",
   },
   {
     src: "/photoshoot-1.jpg",
