@@ -40,7 +40,7 @@ const faqs = [
       },
       {
         q: "What is the schedule for the evening?",
-        a: "4:00 PM — Doors open\n5:00 PM — Ceremony\nFollowing the ceremony — Cocktail hour on the outdoor patio\n7:00 PM — Reception (dinner & dancing)\n12:00 AM — After party at The Corner (optional)",
+        a: "4:00 PM — Doors open\n5:00 PM — Ceremony\nFollowing the ceremony — Cocktail hour on the outdoor patio\n7:00 PM — Reception (dinner & dancing)\nLater — After party at The Corner (optional, TBD: decided on the day depending on interest and timing)",
       },
       {
         q: "Is the wedding adults only?",
