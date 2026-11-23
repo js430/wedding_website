@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import AttendanceChoice from "./AttendanceChoice";
 import MealPicker from "./MealPicker";
 import ResendEditLink from "./ResendEditLink";
 
@@ -161,62 +162,20 @@ export default function EditRSVP() {
         className="bg-white/60 border border-rose-soft/30 p-8 space-y-6"
         aria-disabled={closed}
       >
-        {/* Attending */}
-        <div>
-          <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-            Will you be joining us?
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { id: "yes", label: "Joyfully accepts" },
-              { id: "no",  label: "Regretfully declines" },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={closed}
-                onClick={() => setAttending(opt.id as "yes" | "no")}
-                className={`py-3 px-4 border font-sans text-sm transition-all disabled:opacity-50 ${
-                  attending === opt.id
-                    ? "bg-rose-deep text-white border-rose-deep"
-                    : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AttendanceChoice
+          legend="Will you be joining us?"
+          attending={attending}
+          plusOne={plusOne}
+          disabled={closed}
+          onChange={(a, p) => {
+            setAttending(a);
+            setPlusOne(p);
+            if (p === "no") setPlusOneMeal("");
+          }}
+        />
 
         {attendingYes && (
           <>
-            {/* Plus one */}
-            <div>
-              <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-                Bringing a guest?
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[{ id: "yes", label: "Yes" }, { id: "no", label: "No" }].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={closed}
-                    onClick={() => {
-                      setPlusOne(opt.id as "yes" | "no");
-                      if (opt.id === "no") setPlusOneMeal("");
-                    }}
-                    className={`py-2.5 px-4 border font-sans text-sm transition-all disabled:opacity-50 ${
-                      plusOne === opt.id
-                        ? "bg-rose-deep text-white border-rose-deep"
-                        : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {plusOne === "yes" && (
               <div>
                 <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">

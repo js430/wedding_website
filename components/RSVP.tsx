@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import AttendanceChoice from "./AttendanceChoice";
 import MealPicker from "./MealPicker";
 import HotelBlock from "./HotelBlock";
 import ResendEditLink from "./ResendEditLink";
@@ -147,62 +148,20 @@ export default function RSVP() {
                   </label>
                 </div>
 
-                <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-                    Will you attend? *
-                  </label>
-                  <div className="flex gap-4">
-                    {(["yes", "no"] as const).map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => {
-                          setAttending(v);
-                          if (v === "no") {
-                            setPlusOne("");
-                            setMeal("");
-                            setPlusOneMeal("");
-                          }
-                        }}
-                        className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
-                          attending === v
-                            ? "bg-rose-deep text-ivory border-rose-deep"
-                            : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                        }`}
-                      >
-                        {v === "yes" ? "Joyfully Accepts" : "Regretfully Declines"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <AttendanceChoice
+                  legend="Will you attend? *"
+                  attending={attending}
+                  plusOne={plusOne}
+                  onChange={(a, p) => {
+                    setAttending(a);
+                    setPlusOne(p);
+                    if (a === "no") setMeal("");
+                    if (p === "no") setPlusOneMeal("");
+                  }}
+                />
 
                 {attending === "yes" && (
                   <>
-                    <div>
-                      <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
-                        Bringing a +1?
-                      </label>
-                      <div className="flex gap-4">
-                        {(["yes", "no"] as const).map((v) => (
-                          <button
-                            key={v}
-                            type="button"
-                            onClick={() => {
-                              setPlusOne(v);
-                              if (v === "no") setPlusOneMeal("");
-                            }}
-                            className={`flex-1 py-3 border font-sans text-sm tracking-widest uppercase transition-all ${
-                              plusOne === v
-                                ? "bg-rose-deep text-ivory border-rose-deep"
-                                : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                            }`}
-                          >
-                            {v === "yes" ? "Yes" : "No"}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {plusOne === "yes" && (
                       <div>
                         <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
