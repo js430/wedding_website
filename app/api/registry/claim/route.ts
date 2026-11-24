@@ -147,7 +147,11 @@ async function findAlreadyClaimed(items: ClaimItem[]): Promise<string[]> {
   return checks.filter((n): n is string => n !== null);
 }
 
-/** Close the other price-point options belonging to the same gift. */
+/**
+ * Close the other price-point options belonging to the same gift, unless
+ * the group allows multiple (`Allow Multiple` ticked on any of its rows):
+ * then each option stays open until someone claims that one.
+ */
 async function closeSiblingOptions(pageId: string, encryptedValue: string) {
   try {
     const group = await groupOf(pageId);
@@ -157,6 +161,10 @@ async function closeSiblingOptions(pageId: string, encryptedValue: string) {
       database_id: process.env.NOTION_REGISTRY_DATABASE_ID!,
       filter: { property: "Group", rich_text: { equals: group } },
     });
+
+    if (siblings.results.some((page: any) => page.properties?.["Allow Multiple"]?.checkbox === true)) {
+      return;
+    }
 
     await Promise.all(
       siblings.results
@@ -213,7 +221,8 @@ export async function POST(req: NextRequest) {
           },
         });
         // A gift offered at several price points closes entirely once one
-        // option is taken, so nobody is sent to buy the same gift twice.
+        // option is taken, so nobody is sent to buy the same gift twice
+        // (unless the group allows multiple; see closeSiblingOptions).
         await closeSiblingOptions(item.id, encryptedValue);
       })
     );

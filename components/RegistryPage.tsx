@@ -16,30 +16,36 @@ type Status = "idle" | "submitting" | "success" | "error";
 
 function ItemCard({
   group,
-  selectedId,
-  onSelect,
+  basket,
+  onSet,
 }: {
   group: RegistryGroup;
-  /** The option id currently in the guest's basket, if any. */
-  selectedId: string | null;
-  /** Select this option, or pass null to drop the gift from the basket. */
-  onSelect: (optionId: string | null) => void;
+  /** Every option id currently in the guest's basket. */
+  basket: Set<string>;
+  /** Put an option of this gift in the basket (true) or take it out (false). */
+  onSet: (optionId: string, on: boolean) => void;
 }) {
-  const { lead, options, claimed } = group;
+  const { lead, options, claimed, multiple } = group;
   const hasOptions = options.length > 1;
 
-  // Which option the card is showing. Once the guest has selected one, that
-  // is the shown one; otherwise the cheapest, so the card leads with its
-  // lowest price point.
-  const [viewingId, setViewingId] = useState(lead.id);
-  const shown = options.find((o) => o.id === (selectedId ?? viewingId)) ?? lead;
+  const inBasket = options.filter((o) => basket.has(o.id));
+  const selected = inBasket.length > 0;
+  // A one-of gift has at most one option in the basket, and the card follows it.
+  const singleSelectedId = !multiple && selected ? inBasket[0].id : null;
+
+  // Which option the card is showing: the one in the basket for a one-of
+  // gift; otherwise the one last clicked, starting from the cheapest option
+  // still open, so the card leads with its lowest available price point.
+  const firstOpen = options.find((o) => !o.claimed) ?? lead;
+  const [viewingId, setViewingId] = useState(firstOpen.id);
+  const shown = options.find((o) => o.id === (singleSelectedId ?? viewingId)) ?? firstOpen;
   const shownImage = shown.imageUrl || lead.imageUrl;
-  const selected = selectedId !== null;
+  const shownSelected = basket.has(shown.id);
 
   function chooseOption(id: string) {
     setViewingId(id);
-    // Switching options while in the basket swaps the selection over.
-    if (selected) onSelect(id);
+    // Switching options of a one-of gift while in the basket swaps it over.
+    if (singleSelectedId) onSet(id, true);
   }
 
   return (
@@ -92,7 +98,7 @@ function ItemCard({
             <>
               ${shown.price.toFixed(2)}
               <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/40 font-normal">MSRP</span>
-              {hasOptions && !selected && (
+              {hasOptions && !singleSelectedId && (
                 <span className="text-bark/40 font-normal"> · {options.length} options</span>
               )}
             </>
@@ -107,11 +113,13 @@ function ItemCard({
         {hasOptions && !claimed && (
           <div className="mb-3">
             <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-1.5">
-              Choose one
+              {multiple ? "Choose any" : "Choose one"}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {options.map((o) => {
                 const active = o.id === shown.id;
+                const taken = multiple && o.claimed;
+                const picked = multiple && basket.has(o.id);
                 return (
                   <button
                     key={o.id}
@@ -121,10 +129,15 @@ function ItemCard({
                     className={`font-sans text-xs px-2.5 py-1.5 border transition-all text-left ${
                       active
                         ? "border-rose-deep text-rose-deep bg-rose-blush/60"
+                        : taken
+                        ? "border-rose-soft/30 text-bark/35"
                         : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
                     }`}
                   >
-                    {optionLabel(o)}
+                    {picked && <span aria-hidden="true">✓ </span>}
+                    <span className={taken ? "line-through" : ""}>{optionLabel(o)}</span>
+                    {taken && <span className="sr-only"> (taken)</span>}
+                    {picked && <span className="sr-only"> (selected)</span>}
                   </button>
                 );
               })}
@@ -150,25 +163,30 @@ function ItemCard({
               View Item ↗
             </a>
           )}
-          {!claimed && (
+          {!claimed && shown.claimed && (
+            <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/40 px-3 py-1.5">
+              Taken
+            </span>
+          )}
+          {!claimed && !shown.claimed && (
             <button
-              onClick={() => onSelect(selected ? null : shown.id)}
+              onClick={() => onSet(shown.id, !shownSelected)}
               className={`ml-auto flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
-                selected
+                shownSelected
                   ? "bg-rose-deep text-white border-rose-deep"
                   : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
               }`}
             >
               <span className={`w-3.5 h-3.5 border flex items-center justify-center shrink-0 ${
-                selected ? "border-white bg-white/20" : "border-bark/40"
+                shownSelected ? "border-white bg-white/20" : "border-bark/40"
               }`}>
-                {selected && (
+                {shownSelected && (
                   <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </span>
-              {selected ? "Selected" : "Select"}
+              {shownSelected ? "Selected" : "Select"}
             </button>
           )}
           </div>
@@ -272,15 +290,17 @@ export default function RegistryPage() {
   }
 
   /**
-   * Record the guest's chosen option for a gift. At most one option per group
-   * can be in the basket, so any sibling already selected is dropped first.
+   * Put an option of a gift in the basket or take it out. A one-of gift
+   * holds at most one option, so any sibling already selected is dropped
+   * first; a gift that allows multiple can hold several.
    */
-  function selectOption(group: RegistryGroup, optionId: string | null) {
+  function setOption(group: RegistryGroup, optionId: string, on: boolean) {
     setTaken([]);
     setSelected((prev) => {
       const next = new Set(prev);
-      for (const o of group.options) next.delete(o.id);
-      if (optionId) next.add(optionId);
+      if (on && !group.multiple) for (const o of group.options) next.delete(o.id);
+      if (on) next.add(optionId);
+      else next.delete(optionId);
       return next;
     });
   }
@@ -312,10 +332,14 @@ export default function RegistryPage() {
       }
       if (!res.ok) throw new Error();
 
-      // Mark claimed locally — a claimed option closes its whole gift, so
-      // close every sibling too, mirroring what the server just did.
+      // Mark claimed locally, mirroring what the server just did: a claimed
+      // option closes its whole gift, unless the gift allows multiple.
+      const multipleGroups = new Set(groups.filter((g) => g.multiple).map((g) => g.key));
       const claimedGroups = new Set(
-        items.filter((i) => selected.has(i.id)).map((i) => i.group.trim() || i.id)
+        items
+          .filter((i) => selected.has(i.id))
+          .map((i) => i.group.trim() || i.id)
+          .filter((key) => !multipleGroups.has(key))
       );
       setItems((prev) =>
         prev.map((i) =>
@@ -457,10 +481,8 @@ export default function RegistryPage() {
                 <ItemCard
                   key={group.key}
                   group={group}
-                  selectedId={
-                    group.options.find((o) => selected.has(o.id))?.id ?? null
-                  }
-                  onSelect={(optionId) => selectOption(group, optionId)}
+                  basket={selected}
+                  onSet={(optionId, on) => setOption(group, optionId, on)}
                 />
               ))}
             </div>

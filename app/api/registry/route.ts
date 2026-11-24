@@ -31,6 +31,8 @@ export async function GET() {
         // Rows sharing a Group are price-point options of one gift; blank = standalone.
         group:       p.Group?.rich_text?.[0]?.plain_text  ?? "",
         option:      p.Option?.rich_text?.[0]?.plain_text ?? "",
+        // Ticked on any row of a group: its options are claimed one by one.
+        multiple:    p["Allow Multiple"]?.checkbox ?? false,
       };
     });
 
