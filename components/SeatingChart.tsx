@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverlay,
-  useDraggable, useDroppable, PointerSensor, useSensor, useSensors,
+  useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -15,6 +15,8 @@ interface Guest {
   plusOne: boolean;
   plusOneName?: string;
   dietary?: string;
+  /** 2 when the guest brings a +1. */
+  seatCount?: number;
 }
 
 interface Table {
@@ -159,8 +161,10 @@ function CircularTable({
 }) {
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState(table.name);
-  const seated = Object.keys(guestMap).length;
+  // People, not cards: a guest with a +1 takes two places at the table.
+  const seated = Object.values(guestMap).reduce((n, g) => n + (g.seatCount ?? 1), 0);
   const full = seated >= table.capacity;
+  const over = seated > table.capacity;
 
   return (
     <div className="relative flex flex-col items-center" style={{ width: CANVAS }}>
@@ -242,16 +246,22 @@ function CircularTable({
               {table.name}
             </button>
           )}
-          <p className={`font-sans text-xs mt-0.5 ${full ? "text-rose-deep" : "text-bark/40"}`}>
+          <p
+            className={`font-sans text-xs mt-0.5 ${over ? "text-red-600 font-semibold" : full ? "text-rose-deep" : "text-bark/40"}`}
+            title={over ? "More people than places at this table" : "People seated / places"}
+          >
             {seated}/
             <input
               type="number"
               value={table.capacity}
               min={1}
               max={20}
-              onChange={(e) => onCapacityChange(Number(e.target.value))}
-              className="w-5 bg-transparent focus:outline-none text-xs"
-              title="Capacity"
+              onChange={(e) => {
+                const n = Math.round(Number(e.target.value));
+                if (Number.isFinite(n)) onCapacityChange(Math.min(20, Math.max(1, n)));
+              }}
+              className="w-7 bg-transparent focus:outline-none text-xs"
+              aria-label={`Places at ${table.name}`}
             />
           </p>
         </div>
@@ -268,7 +278,7 @@ function UnassignedPanel({ guests }: { guests: Guest[] }) {
   return (
     <div
       ref={setNodeRef}
-      className={`w-52 shrink-0 flex flex-col border-r border-rose-soft/30 transition-colors ${
+      className={`w-full md:w-52 max-h-48 md:max-h-none shrink-0 flex flex-col border-b md:border-b-0 md:border-r border-rose-soft/30 transition-colors ${
         isOver ? "bg-rose-soft/20" : "bg-rose-blush/40"
       }`}
     >
@@ -299,7 +309,9 @@ export default function SeatingChart() {
   const [activeGuest, setActiveGuest] = useState<Guest | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    // Phones: a short press starts a drag, so the page can still scroll.
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } })
   );
 
   // ── Load ────────────────────────────────────────────────────────────────
@@ -324,6 +336,7 @@ export default function SeatingChart() {
         ]);
         const { guests: g } = await gRes.json();
         const { assignments: a } = await aRes.json();
+        if (!Array.isArray(g) || !Array.isArray(a)) throw new Error("bad response");
         setGuests(g);
         const map: Record<string, SeatAssignment> = {};
         a.forEach((row: { guestId: string; tableId: string; seatNumber: number }) => {
@@ -345,12 +358,24 @@ export default function SeatingChart() {
     const guest     = guests.find((g) => g.id === guestId);
     const tableName = tableId ? (tables.find((t) => t.id === tableId)?.name ?? "") : null;
     try {
-      await fetch("/api/seating/assignments", {
+      const res = await fetch("/api/seating/assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ guestId, guestName: guest?.name ?? "", tableId, tableName, seatNumber }),
       });
-    } catch (e) { console.error("Save failed", e); }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        window.alert(
+          data.error === "seat-taken"
+            ? "That seat was just taken (maybe in another tab). Reloading the chart."
+            : "Couldn't save that change. Reloading the chart.",
+        );
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Save failed", e);
+      window.alert("Couldn't save that change. Check your connection and reload.");
+    }
     setSaving(false);
   }
 
@@ -412,16 +437,47 @@ export default function SeatingChart() {
     setTables((p) => p.filter((t) => t.id !== tableId));
   }
 
+  function renameTable(tableId: string, name: string) {
+    setTables((p) => p.map((x) => (x.id === tableId ? { ...x, name } : x)));
+    // The table name is also saved on each seated guest's records.
+    Object.keys(assignments)
+      .filter((gid) => assignments[gid]?.tableId === tableId)
+      .forEach((gid) => persistNamed(gid, tableId, assignments[gid].seatNumber, name));
+  }
+
+  async function persistNamed(guestId: string, tableId: string, seatNumber: number, tableName: string) {
+    await fetch("/api/seating/assignments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guestId, tableId, tableName, seatNumber }),
+    }).catch((e) => console.error("Rename save failed", e));
+  }
+
+  /**
+   * Where a guest actually shows on the chart. An assignment to a table this
+   * browser doesn't have (tables live in this browser only) or to a seat past
+   * the table's size can't be drawn, so that guest is listed as unassigned
+   * rather than silently disappearing.
+   */
+  function placement(guestId: string): SeatAssignment | null {
+    const a = assignments[guestId];
+    if (!a) return null;
+    const table = tables.find((t) => t.id === a.tableId);
+    return table && a.seatNumber >= 1 && a.seatNumber <= table.capacity ? a : null;
+  }
+
   function getGuestMap(tableId: string): Record<number, Guest> {
     const map: Record<number, Guest> = {};
     guests.forEach((g) => {
-      const a = assignments[g.id];
+      const a = placement(g.id);
       if (a?.tableId === tableId) map[a.seatNumber] = g;
     });
     return map;
   }
 
-  const unassigned = guests.filter((g) => !assignments[g.id]);
+  const unassigned = guests.filter((g) => !placement(g.id));
+  const seatedPeople = guests.filter((g) => placement(g.id)).reduce((n, g) => n + (g.seatCount ?? 1), 0);
+  const totalPeople = guests.reduce((n, g) => n + (g.seatCount ?? 1), 0);
 
   // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
@@ -445,7 +501,7 @@ export default function SeatingChart() {
           <div className="flex items-center gap-5">
             {saving && <span className="font-sans text-rose-soft/50 text-xs animate-pulse">Saving…</span>}
             <span className="font-sans text-rose-blush/60 text-sm">
-              {Object.keys(assignments).length} / {guests.length} seated
+              {seatedPeople} / {totalPeople} people seated
             </span>
             <button
               onClick={addTable}
@@ -460,7 +516,7 @@ export default function SeatingChart() {
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           <UnassignedPanel guests={unassigned} />
 
           <div className="flex-1 overflow-auto p-6" data-lenis-prevent>
@@ -479,7 +535,7 @@ export default function SeatingChart() {
                     guestMap={getGuestMap(t.id)}
                     activeGuestId={activeGuest?.id ?? null}
                     onRemove={() => removeTable(t.id)}
-                    onRename={(name) => setTables((p) => p.map((x) => x.id === t.id ? { ...x, name } : x))}
+                    onRename={(name) => renameTable(t.id, name)}
                     onCapacityChange={(cap) => setTables((p) => p.map((x) => x.id === t.id ? { ...x, capacity: cap } : x))}
                   />
                 ))}

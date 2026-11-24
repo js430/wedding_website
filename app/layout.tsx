@@ -29,6 +29,9 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
+  // Absolute base for the link-preview image (og:image) and other metadata
+  // URLs; without it Next falls back to http://localhost:3000.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://www.jeffandkatie2027.com"),
   other: { "darkreader-lock": "" },
   title: "Katie & Jeffrey — March 27, 2027",
   description: "Join us as we celebrate the wedding of Katie Shen & Jeffrey Shi in Charlottesville, VA.",

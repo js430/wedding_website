@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/admin-auth";
 import { record, flush, readAll, isBot, trackablePath } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
 
 /** POST — count one page view. Fire-and-forget from the browser. */
 export async function POST(req: NextRequest) {
-  const { path } = await req.json().catch(() => ({ path: "" }));
+  // A page view is a few bytes; refuse anything bigger without reading it.
+  if (Number(req.headers.get("content-length") ?? 0) > 2048) {
+    return NextResponse.json({ error: "too-large" }, { status: 413 });
+  }
+  const body = await req.json().catch(() => null);
+  const path = body && typeof body === "object" ? (body as { path?: unknown }).path : "";
 
   if (isBot(req.headers.get("user-agent") ?? "")) {
     return NextResponse.json({ ok: true });
@@ -15,7 +21,8 @@ export async function POST(req: NextRequest) {
   if (clean) {
     record(clean);
     // Flushes on its own schedule; this just gives it a chance to run.
-    await flush().catch(() => {});
+    // Not awaited, so the guest's request never waits on Notion.
+    void flush().catch(() => {});
   }
 
   return NextResponse.json({ ok: true });
@@ -23,14 +30,8 @@ export async function POST(req: NextRequest) {
 
 /** GET — the dashboard's data, behind the admin password. */
 export async function GET(req: NextRequest) {
-  const given = req.headers.get("x-admin-password") ?? "";
-
-  if (!process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "ADMIN_PASSWORD not configured" }, { status: 500 });
-  }
-  if (given !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkAdmin(req);
+  if (denied) return denied;
 
   // Write out anything buffered so the dashboard shows the latest.
   await flush(true).catch(() => {});

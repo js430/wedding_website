@@ -6,6 +6,9 @@ import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
 import { googleCalendarUrl } from "@/lib/event";
 import { isValidMeal, mealLabel } from "@/lib/meals";
+import { cleanEmail, cleanText, escapeHtml, readJson, withLock } from "@/lib/input";
+import { allow } from "@/lib/rate-limit";
+import { clientKey } from "@/lib/invite-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +57,7 @@ function buildRSVPEmail(data: {
   const rowsHtml = rows.map(r => `
     <tr>
       <td style="padding:8px 0;font-family:sans-serif;font-size:13px;color:#8B0010;width:120px;vertical-align:top;">${r.label}</td>
-      <td style="padding:8px 0;font-family:sans-serif;font-size:13px;color:#1E0008;vertical-align:top;">${r.value}</td>
+      <td style="padding:8px 0;font-family:sans-serif;font-size:13px;color:#1E0008;vertical-align:top;">${escapeHtml(r.value)}</td>
     </tr>
   `).join("");
 
@@ -75,7 +78,7 @@ function buildRSVPEmail(data: {
             </tr>
             <tr>
               <td style="padding:32px;">
-                <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:18px;color:#1E0008;">Hi ${data.name},</p>
+                <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:18px;color:#1E0008;">Hi ${escapeHtml(data.name)},</p>
                 <p style="margin:0 0 24px;font-family:sans-serif;font-size:14px;color:#4a3728;line-height:1.6;">
                   ${attending
                     ? "We're so excited to celebrate with you on March 27, 2027! Here's a summary of your RSVP:"
@@ -92,7 +95,7 @@ function buildRSVPEmail(data: {
                   <strong>Where:</strong> The Forum Hotel, 540 Massie Rd, Charlottesville, VA 22903
                 </p>
                 <p style="margin:0;">
-                  <a href="${data.icsUrl}" style="font-family:sans-serif;font-size:12px;color:#8B0010;text-decoration:underline;margin-right:14px;">Add to Apple/Outlook</a>
+                  <a href="${escapeHtml(data.icsUrl)}" style="font-family:sans-serif;font-size:12px;color:#8B0010;text-decoration:underline;margin-right:14px;">Add to Apple/Outlook</a>
                   <a href="${googleCalendarUrl()}" style="font-family:sans-serif;font-size:12px;color:#8B0010;text-decoration:underline;">Add to Google Calendar</a>
                 </p>` : ""}
                 ${data.editUrl ? `
@@ -103,7 +106,7 @@ function buildRSVPEmail(data: {
                         Need to change your answer? You can update this RSVP yourself
                         until <strong>${formatDeadline()}</strong>.
                       </p>
-                      <a href="${data.editUrl}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:10px 22px;display:inline-block;">
+                      <a href="${escapeHtml(data.editUrl)}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:10px 22px;display:inline-block;">
                         Edit my RSVP
                       </a>
                       <p style="margin:14px 0 0;font-family:sans-serif;font-size:11px;color:#8B0010;">
@@ -136,96 +139,130 @@ function buildRSVPEmail(data: {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { name, email, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message } = body;
-  const noUpdates = body.noUpdates === true;
+  const parsed = await readJson(req);
+  if (parsed.error) return parsed.error;
+  const body = parsed.body;
 
-  // ── Validate meals ────────────────────────────────────────────────────────
-  // Before any Notion call, so it works with no Notion configured. A guest who
-  // declines needs no meal.
+  // ── Clean and validate ────────────────────────────────────────────────────
+  // Before any Notion call, so it works with no Notion configured.
+  const name        = cleanText(body.name, 200);
+  const email       = cleanEmail(body.email);
+  const attending   = body.attending === "yes" ? "yes" : body.attending === "no" ? "no" : "";
+  const plusOne     = attending === "yes" && body.plusOne === "yes" ? "yes" : "no";
+  const plusOneName = plusOne === "yes" ? cleanText(body.plusOneName, 200) : "";
+  const meal        = attending === "yes" ? body.meal : "";
+  const plusOneMeal = plusOne === "yes" ? body.plusOneMeal : "";
+  const dietary     = attending === "yes" ? cleanText(body.dietary, 1000) : "";
+  const message     = cleanText(body.message, 2000);
+  const noUpdates   = body.noUpdates === true;
+
+  if (!name)      return NextResponse.json({ error: "name-required" }, { status: 400 });
+  if (!email)     return NextResponse.json({ error: "email-invalid" }, { status: 400 });
+  if (!attending) return NextResponse.json({ error: "attending-required" }, { status: 400 });
+  // A guest who declines needs no meal.
   if (attending === "yes" && !isValidMeal(meal)) {
     return NextResponse.json({ error: "meal-required" }, { status: 400 });
   }
-  if (attending === "yes" && plusOne === "yes" && !isValidMeal(plusOneMeal)) {
+  if (plusOne === "yes" && !isValidMeal(plusOneMeal)) {
     return NextResponse.json({ error: "guest-meal-required" }, { status: 400 });
+  }
+
+  // Each RSVP sends an email, so cap how often one network or one address can
+  // trigger it. Generous enough for a household fixing a typo a few times.
+  if (!allow(`rsvp-ip:${clientKey(req)}`, 30, 60 * 60 * 1000) || !allow(`rsvp-email:${email}`, 8, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "rate-limited" }, { status: 429 });
   }
 
   if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
     console.warn("[RSVP] NOTION_TOKEN or NOTION_DATABASE_ID not set — logging only");
-    console.log("[RSVP]", new Date().toISOString(), body);
-    return NextResponse.json({ ok: true });
+    console.log("[RSVP]", new Date().toISOString(), { name, email, attending, plusOne });
+    return NextResponse.json({ ok: true, emailed: false });
   }
+  const databaseId = process.env.NOTION_DATABASE_ID;
 
   // ── Save to Notion ────────────────────────────────────────────────────────
   // One row per email: a guest who submits twice (or hits back and resubmits)
   // updates their answer instead of inflating the headcount with a second row.
-  const address = typeof email === "string" ? email.trim().toLowerCase() : "";
-  let existingId: string | null = null;
+  // The lock makes two submissions for the same email take turns, so both
+  // can't miss each other's row and create two.
+  let saved: { value: { id: string }; optOutSaved: boolean };
+  try {
+    saved = await withLock(`rsvp:${email}`, async () => {
+      let existingId: string | null = null;
+      try {
+        const prior = await notion.databases.query({
+          database_id: databaseId,
+          filter: { property: "Email", email: { equals: email } },
+          page_size: 1,
+        });
+        existingId = prior.results[0]?.id ?? null;
+      } catch (err: any) {
+        // A lookup failure must not cost the guest their RSVP — fall through
+        // and create a row, accepting a possible duplicate.
+        console.warn("[RSVP] duplicate check failed:", err?.message ?? err);
+      }
 
-  if (address) {
-    try {
-      const prior = await notion.databases.query({
-        database_id: process.env.NOTION_DATABASE_ID,
-        filter: { property: "Email", email: { equals: address } },
-        page_size: 1,
-      });
-      existingId = prior.results[0]?.id ?? null;
-    } catch (err: any) {
-      // A lookup failure must not cost the guest their RSVP — fall through
-      // and create a row, accepting a possible duplicate.
-      console.warn("[RSVP] duplicate check failed:", err?.message ?? err);
-    }
+      const properties: Record<string, any> = {
+        Name:                   { title:     [{ text: { content: name } }] },
+        Email:                  { email },
+        Attending:              { select:    { name: attending === "yes" ? "Yes" : "No" } },
+        "+1":                   { select:    { name: plusOne === "yes" ? "Yes" : "No" } },
+        "Guest Name":           { rich_text: [{ text: { content: plusOneName } }] },
+        Meal:                   { select:    attending === "yes" ? { name: mealLabel(meal as string) } : null },
+        "Guest Meal":           { select:    plusOne === "yes" ? { name: mealLabel(plusOneMeal as string) } : null },
+        "Dietary Restrictions": { rich_text: [{ text: { content: dietary } }] },
+        Message:                { rich_text: [{ text: { content: message } }] },
+        "Submitted At":         { date:      { start: new Date().toISOString() } },
+        [UPDATES_OPT_OUT]:      { checkbox:  noUpdates },
+      };
+
+      return withOptionalOptOut(properties, (props) =>
+        existingId
+          ? notion.pages.update({ page_id: existingId, properties: props })
+          : notion.pages.create({ parent: { database_id: databaseId }, properties: props }),
+      );
+    });
+  } catch (err: any) {
+    console.error("[RSVP] Saving to Notion failed:", err?.message ?? err);
+    return NextResponse.json({ error: "save-failed" }, { status: 502 });
   }
-
-  const properties: Record<string, any> = {
-      Name:                   { title:     [{ text: { content: name ?? "" } }] },
-      Email:                  { email:     address || null },
-      Attending:              { select:    { name: attending === "yes" ? "Yes" : "No" } },
-      "+1":                   { select:    { name: plusOne === "yes" ? "Yes" : "No" } },
-      "Guest Name":           { rich_text: [{ text: { content: plusOneName ?? "" } }] },
-      Meal:                   { select:    attending === "yes" ? { name: mealLabel(meal) } : null },
-      "Guest Meal":           { select:    attending === "yes" && plusOne === "yes" ? { name: mealLabel(plusOneMeal) } : null },
-      "Dietary Restrictions": { rich_text: [{ text: { content: dietary ?? "" } }] },
-      Message:                { rich_text: [{ text: { content: message ?? "" } }] },
-      "Submitted At":         { date:      { start: new Date().toISOString() } },
-      [UPDATES_OPT_OUT]:      { checkbox:  noUpdates },
-  };
-
-  const databaseId = process.env.NOTION_DATABASE_ID;
-  const created = await withOptionalOptOut(properties, (props) =>
-    existingId
-      ? notion.pages.update({ page_id: existingId, properties: props })
-      : notion.pages.create({ parent: { database_id: databaseId }, properties: props }),
-  );
 
   // ── Send confirmation email ───────────────────────────────────────────────
   let emailed = true;
 
-  if (email && process.env.RESEND_API_KEY) {
+  if (process.env.RESEND_API_KEY) {
     const from = process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>";
     // Links must be absolute in email; prefer the configured site URL and fall
     // back to the origin this request arrived on.
     const origin  = publicOrigin(req);
-    const editUrl = buildEditUrl(created.id, origin);
+    const editUrl = buildEditUrl(saved.value.id, origin);
     const icsUrl  = `${origin}/api/calendar`;
 
-    const { error } = await resendClient().emails.send({
-      from,
-      to:      email,
-      subject: attending === "yes"
-        ? "You're on the list! RSVP confirmed — Katie & Jeffrey 💍"
-        : "RSVP received — Katie & Jeffrey",
-      html: buildRSVPEmail({ name: name ?? "", attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, editUrl, icsUrl, noUpdates }),
-    });
-
-    // The RSVP itself is already saved, so a failed email must not fail the
-    // request — but it was previously swallowed entirely, which made a guest
-    // who never received their confirmation look like a successful RSVP.
-    if (error) {
-      console.error("[RSVP] Confirmation email failed:", error);
+    try {
+      const { error } = await resendClient().emails.send({
+        from,
+        to:      email,
+        subject: attending === "yes"
+          ? "You're on the list! RSVP confirmed — Katie & Jeffrey 💍"
+          : "RSVP received — Katie & Jeffrey",
+        html: buildRSVPEmail({
+          name, attending, plusOne, plusOneName, meal: meal as string, plusOneMeal: plusOneMeal as string,
+          dietary, message, editUrl, icsUrl,
+          // Only claim an opt-out that was actually recorded.
+          noUpdates: noUpdates && saved.optOutSaved,
+        }),
+      });
+      // The RSVP itself is already saved, so a failed email must not fail the
+      // request; the page tells the guest instead.
+      if (error) {
+        console.error("[RSVP] Confirmation email failed:", error);
+        emailed = false;
+      }
+    } catch (err: any) {
+      console.error("[RSVP] Confirmation email failed:", err?.message ?? err);
       emailed = false;
     }
-  } else if (email) {
+  } else {
     console.warn("[RSVP] RESEND_API_KEY not set — no confirmation email sent.");
     emailed = false;
   }

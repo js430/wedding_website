@@ -19,6 +19,8 @@ const config: Config = {
           darkest: "#1E0008",
         },
         gold: "#c9a838",
+        // Small gold text on the blush background (4.9:1 contrast).
+        "gold-dark": "#7a6312",
         ivory: "#FEE8EC",
         bark: "#1E0008",
       },

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/admin-auth";
 import { Client } from "@notionhq/client";
 import { tallyMeals, RsvpRow } from "@/lib/meal-tally";
 
@@ -9,14 +10,8 @@ const text = (p: any): string =>
 
 /** GET — meal counts for the caterer, behind the admin password. */
 export async function GET(req: NextRequest) {
-  const given = req.headers.get("x-admin-password") ?? "";
-
-  if (!process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "ADMIN_PASSWORD not configured" }, { status: 500 });
-  }
-  if (given !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkAdmin(req);
+  if (denied) return denied;
 
   if (!process.env.NOTION_TOKEN || !process.env.NOTION_DATABASE_ID) {
     return NextResponse.json(tallyMeals([]));

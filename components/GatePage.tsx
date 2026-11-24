@@ -20,7 +20,16 @@ function duration(seconds: number): string {
  * links would only bounce back here. `next` has already been checked as a
  * same-site path by the page.
  */
-export default function GatePage({ reason, next }: { reason: Reason; next: string }) {
+export default function GatePage({
+  reason,
+  next,
+  blockedFor = 3600,
+}: {
+  reason: Reason;
+  next: string;
+  /** Seconds left on a wrong-guess block, when reason is "blocked". */
+  blockedFor?: number;
+}) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +46,10 @@ export default function GatePage({ reason, next }: { reason: Reason; next: strin
         body: JSON.stringify({ password }),
       });
       if (res.ok) {
-        window.location.replace(next);
+        // Keep a #section the guest was linked to: the server never sees it,
+        // so it is not part of `next`.
+        const hash = next.includes("#") ? "" : window.location.hash;
+        window.location.replace(next + hash);
         return;
       }
       if (res.status === 400) {
@@ -81,7 +93,7 @@ export default function GatePage({ reason, next }: { reason: Reason; next: strin
           >
             {reason === "invalid"
               ? "That link didn't work — it may have been cut off when copied. Try entering the password instead."
-              : "Too many incorrect tries from this network. Please wait about an hour, then try again."}
+              : `Too many incorrect tries from this network. Please wait about ${duration(blockedFor)}, then try again.`}
           </p>
         )}
 

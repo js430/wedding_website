@@ -35,23 +35,72 @@ function utcStamp(d: Date): string {
  */
 const CRLF = String.fromCharCode(13, 10);
 
+/** Escape text for an iCalendar value (backslash, comma, semicolon, newline). */
+function icsText(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\r?\n/g, "\\n");
+}
+
+/** Fold a content line at 75 octets, as RFC 5545 asks. */
+function fold(line: string): string {
+  const enc = new TextEncoder();
+  if (enc.encode(line).length <= 75) return line;
+  const parts: string[] = [];
+  let current = "";
+  for (const ch of Array.from(line)) {
+    const limit = parts.length === 0 ? 75 : 74; // continuation lines start with a space
+    if (enc.encode(current + ch).length > limit) {
+      parts.push(current);
+      current = ch;
+    } else {
+      current += ch;
+    }
+  }
+  parts.push(current);
+  return parts.join(CRLF + " ");
+}
+
+/** America/New_York, so calendars that don't know the zone id still get the times right. */
+const NEW_YORK_VTIMEZONE = [
+  "BEGIN:VTIMEZONE",
+  "TZID:America/New_York",
+  "BEGIN:DAYLIGHT",
+  "TZOFFSETFROM:-0500",
+  "TZOFFSETTO:-0400",
+  "TZNAME:EDT",
+  "DTSTART:19700308T020000",
+  "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU",
+  "END:DAYLIGHT",
+  "BEGIN:STANDARD",
+  "TZOFFSETFROM:-0400",
+  "TZOFFSETTO:-0500",
+  "TZNAME:EST",
+  "DTSTART:19701101T020000",
+  "RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU",
+  "END:STANDARD",
+  "END:VTIMEZONE",
+];
+
 export function buildIcs(now: Date = new Date()): string {
   return [
+    ...[
+
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Katie and Jeffrey//Wedding//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    ...(EVENT.timeZone === "America/New_York" ? NEW_YORK_VTIMEZONE : []),
     "BEGIN:VEVENT",
     `UID:wedding-2027-03-27@jeffreyandkatie`,
     `DTSTAMP:${utcStamp(now)}`,
     `DTSTART;TZID=${EVENT.timeZone}:${stamp(EVENT.start)}`,
     `DTEND;TZID=${EVENT.timeZone}:${stamp(EVENT.end)}`,
-    `SUMMARY:${EVENT.title}`,
-    `LOCATION:${EVENT.venue}\\, ${EVENT.address}`,
-    `DESCRIPTION:${EVENT.details}`,
+    `SUMMARY:${icsText(EVENT.title)}`,
+    `LOCATION:${icsText(`${EVENT.venue}, ${EVENT.address}`)}`,
+    `DESCRIPTION:${icsText(EVENT.details)}`,
     "END:VEVENT",
     "END:VCALENDAR",
+    ].map(fold),
   ].join(CRLF);
 }
 

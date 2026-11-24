@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useId } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
@@ -94,8 +94,8 @@ const faqs = [
         a: "Our registry is right here on this site! Visit the Registry page to browse items and have purchase links sent directly to your email. Prices shown are the retail price (MSRP), just for reference: you're welcome to buy any gift wherever you like, and if you find it for less elsewhere, we encourage it!",
       },
       {
-        q: "Do you have a cash fund option?",
-        a: "Yes! Scroll to the bottom of our Registry page to find the Cash Fund section, where you can choose your preferred payment method (Venmo, PayPal, Zelle, or cash on the day of) and have the details sent straight to your email.",
+        q: "Can we give cash instead of a gift?",
+        a: "Of course! Please bring it with you on the day. No need to let us know ahead of time.",
       },
     ],
   },
@@ -120,22 +120,25 @@ const faqs = [
 
 function AccordionItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
 
   return (
     <div className="border-b border-rose-soft/30 last:border-0">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
         className="w-full text-left py-4 flex items-center justify-between gap-4 group"
       >
         <span className="font-serif text-bark text-lg group-hover:text-rose-deep transition-colors">
           {q}
         </span>
-        <span className={`shrink-0 text-gold transition-transform duration-200 ${open ? "rotate-45" : ""}`}>
+        <span aria-hidden="true" className={`shrink-0 text-gold transition-transform duration-200 ${open ? "rotate-45" : ""}`}>
           ✦
         </span>
       </button>
       {open && (
-        <div className="pb-4 pr-8">
+        <div id={panelId} className="pb-4 pr-8">
           {a.split("\n").map((line, i) => (
             <p key={i} className="font-sans text-bark/70 text-sm leading-relaxed">
               {line}
@@ -153,7 +156,7 @@ export default function FAQPage() {
       <Navbar />
       <main className="min-h-screen bg-rose-blush pt-24 pb-20 px-6">
         <div className="max-w-2xl mx-auto">
-          <SparkleTitle text="FAQ" className="mt-8" />
+          <SparkleTitle as="h1" text="FAQ" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

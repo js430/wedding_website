@@ -36,6 +36,17 @@ export default function Intro() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Hold the page still behind the intro, so the guest starts at the top.
+  useEffect(() => {
+    if (phase === "done") return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [phase === "done"]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function fastForward() {
     advance("cardOut");
   }
@@ -56,6 +67,8 @@ export default function Intro() {
     <motion.div
       onClick={fastForward}
       role="presentation"
+      // data-lenis-prevent: the smooth-scroll library ignores wheel events here.
+      data-lenis-prevent
       className="fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest overflow-hidden"
       animate={{ opacity: phase === "fade" ? 0 : 1 }}
       transition={{ duration: 0.9, ease: "easeInOut" }}

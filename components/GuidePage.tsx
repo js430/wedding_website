@@ -320,7 +320,7 @@ export default function GuidePage() {
       <Navbar />
       <main className="min-h-screen bg-rose-blush pt-24 pb-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <SparkleTitle text="Charlottesville Guide" className="mt-8" />
+          <SparkleTitle as="h1" text="Charlottesville Guide" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>

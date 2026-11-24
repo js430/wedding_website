@@ -12,14 +12,15 @@ export const UPDATES_OPT_OUT = "Updates Opt-Out";
 /**
  * Run a Notion write, and if Notion rejects it only because the opt-out
  * column hasn't been added to the database yet, retry without that field.
- * A missing column must never cost a guest their RSVP.
+ * A missing column must never cost a guest their RSVP. `optOutSaved` says
+ * whether the opt-out made it into Notion.
  */
 export async function withOptionalOptOut<T>(
   properties: Record<string, any>,
   write: (properties: Record<string, any>) => Promise<T>,
-): Promise<T> {
+): Promise<{ value: T; optOutSaved: boolean }> {
   try {
-    return await write(properties);
+    return { value: await write(properties), optOutSaved: UPDATES_OPT_OUT in properties };
   } catch (err: any) {
     const message = String(err?.message ?? "");
     if (!(UPDATES_OPT_OUT in properties) || !message.includes(UPDATES_OPT_OUT)) throw err;
@@ -27,6 +28,6 @@ export async function withOptionalOptOut<T>(
       `[RSVP] Notion has no "${UPDATES_OPT_OUT}" checkbox column; saved without it. Add the column to record opt-outs.`,
     );
     const { [UPDATES_OPT_OUT]: _omit, ...rest } = properties;
-    return write(rest);
+    return { value: await write(rest), optOutSaved: false };
   }
 }

@@ -178,10 +178,11 @@ export default function EditRSVP() {
           <>
             {plusOne === "yes" && (
               <div>
-                <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                <label htmlFor="edit-guest-name" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                   Guest&apos;s name
                 </label>
                 <input
+                  id="edit-guest-name"
                   type="text"
                   value={plusOneName}
                   disabled={closed}
@@ -211,10 +212,11 @@ export default function EditRSVP() {
             )}
 
             <div>
-              <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+              <label htmlFor="edit-dietary" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                 Allergies or dietary notes
               </label>
               <input
+                id="edit-dietary"
                 type="text"
                 value={dietary}
                 disabled={closed}
@@ -230,10 +232,11 @@ export default function EditRSVP() {
         )}
 
         <div>
-          <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+          <label htmlFor="edit-message" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
             A note for us <span className="normal-case tracking-normal">(optional)</span>
           </label>
           <textarea
+            id="edit-message"
             rows={3}
             value={message}
             disabled={closed}

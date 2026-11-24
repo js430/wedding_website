@@ -3,6 +3,7 @@ import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
 import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
+import { cleanText, readJson } from "@/lib/input";
 
 export const dynamic = "force-dynamic";
 
@@ -51,10 +52,14 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/rsvp/edit — save changes, until the deadline passes. */
 export async function POST(req: NextRequest) {
-  const { token, attending, plusOne, plusOneName, meal, plusOneMeal, dietary, message, noUpdates } =
-    await req.json();
+  const parsed = await readJson(req);
+  if (parsed.error) return parsed.error;
+  const { token, attending, plusOne, meal, plusOneMeal, noUpdates } = parsed.body as Record<string, any>;
+  const plusOneName = cleanText(parsed.body.plusOneName, 200);
+  const dietary     = cleanText(parsed.body.dietary, 1000);
+  const message     = cleanText(parsed.body.message, 2000);
 
-  const pageId = verifyEditToken(token ?? "");
+  const pageId = verifyEditToken(typeof token === "string" ? token : "");
   if (!pageId) {
     return NextResponse.json({ error: "invalid-token" }, { status: 401 });
   }
@@ -68,6 +73,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (attending !== "yes" && attending !== "no") {
+    return NextResponse.json({ error: "attending-required" }, { status: 400 });
+  }
   const attendingYes = attending === "yes";
   const bringingPlusOne = attendingYes && plusOne === "yes";
 
@@ -82,11 +90,11 @@ export async function POST(req: NextRequest) {
     const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
         "+1":                   { select:    { name: attendingYes && plusOne === "yes" ? "Yes" : "No" } },
-        "Guest Name":           { rich_text: [{ text: { content: attendingYes ? (plusOneName ?? "") : "" } }] },
+        "Guest Name":           { rich_text: [{ text: { content: attendingYes ? plusOneName : "" } }] },
         Meal:                   { select:    attendingYes ? { name: mealLabel(meal) } : null },
         "Guest Meal":           { select:    bringingPlusOne ? { name: mealLabel(plusOneMeal) } : null },
-        "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? (dietary ?? "") : "" } }] },
-        Message:                { rich_text: [{ text: { content: message ?? "" } }] },
+        "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? dietary : "" } }] },
+        Message:                { rich_text: [{ text: { content: message } }] },
         "Submitted At":         { date:      { start: new Date().toISOString() } },
         [UPDATES_OPT_OUT]:      { checkbox:  noUpdates === true },
     };
