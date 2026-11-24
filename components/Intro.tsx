@@ -36,17 +36,6 @@ export default function Intro() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // Hold the page still behind the intro, so the guest starts at the top.
-  useEffect(() => {
-    if (phase === "done") return;
-    const root = document.documentElement;
-    const previous = root.style.overflow;
-    root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = previous;
-    };
-  }, [phase === "done"]); // eslint-disable-line react-hooks/exhaustive-deps
-
   function fastForward() {
     advance("cardOut");
   }
@@ -73,6 +62,10 @@ export default function Intro() {
       animate={{ opacity: phase === "fade" ? 0 : 1 }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
     >
+      {/* Hold the page still behind the intro, so the guest starts at the top.
+          A style tag (not an effect) so it applies from the first paint,
+          before the page is interactive; it goes away with the intro. */}
+      <style>{"html{overflow:hidden}"}</style>
       {/* Candlelight vignette */}
       <div
         className="absolute inset-0"

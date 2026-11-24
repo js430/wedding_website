@@ -281,7 +281,7 @@ function PlaceCard({
         }`}
       >
         {highlight && (
-          <span className="mb-2 w-fit font-sans text-[10px] tracking-widest uppercase text-gold border border-gold/50 px-2 py-0.5">
+          <span className="mb-2 w-fit font-sans text-[10px] tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
             ✦ {highlight}
           </span>
         )}

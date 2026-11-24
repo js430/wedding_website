@@ -365,6 +365,7 @@ export default function RegistryPage() {
     e.preventDefault();
     if (!selected.size || !email || !name) return;
     setStatus("submitting");
+    setTaken([]);
 
     setErrorMsg("");
     // Only ids: the server looks up each gift's details itself.
