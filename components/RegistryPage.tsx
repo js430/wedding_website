@@ -6,7 +6,7 @@ import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
 import { SHIPPING_LINES, SHIPPING_TEXT } from "@/lib/shipping";
 import {
-  groupItems, optionLabel, sortGroups, groupInRange, PRICE_RANGES,
+  groupItems, optionLabel, sortGroups, groupInRange, PRICE_RANGES, wanted, remaining,
   type RegistryItem, type RegistryGroup, type SortMode,
 } from "@/lib/registry";
 
@@ -18,15 +18,23 @@ function ItemCard({
   group,
   basket,
   onSet,
+  qtyOf,
+  onQty,
 }: {
   group: RegistryGroup;
   /** Every option id currently in the guest's basket. */
   basket: Set<string>;
   /** Put an option of this gift in the basket (true) or take it out (false). */
   onSet: (optionId: string, on: boolean) => void;
+  /** How many of an option the guest is taking. */
+  qtyOf: (optionId: string) => number;
+  onQty: (optionId: string, qty: number) => void;
 }) {
   const { lead, options, claimed, multiple } = group;
-  const hasOptions = options.length > 1;
+  // A one-of gift someone has started buying shows only that option.
+  const pickerOptions = group.shown;
+  const hasOptions = pickerOptions.length > 1;
+  const isOpen = (o: { id: string }) => group.available.some((a) => a.id === o.id);
 
   const inBasket = options.filter((o) => basket.has(o.id));
   const selected = inBasket.length > 0;
@@ -36,9 +44,11 @@ function ItemCard({
   // Which option the card is showing: the one in the basket for a one-of
   // gift; otherwise the one last clicked, starting from the cheapest option
   // still open, so the card leads with its lowest available price point.
-  const firstOpen = options.find((o) => !o.claimed) ?? lead;
+  const firstOpen = group.available[0] ?? group.shown[0] ?? lead;
   const [viewingId, setViewingId] = useState(firstOpen.id);
-  const shown = options.find((o) => o.id === (singleSelectedId ?? viewingId)) ?? firstOpen;
+  const shown = pickerOptions.find((o) => o.id === (singleSelectedId ?? viewingId)) ?? firstOpen;
+  const shownWanted = wanted(shown);
+  const shownLeft = remaining(shown);
   const shownImage = shown.imageUrl || lead.imageUrl;
   const shownSelected = basket.has(shown.id);
 
@@ -99,11 +109,19 @@ function ItemCard({
               ${shown.price.toFixed(2)}
               <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/40 font-normal">MSRP</span>
               {hasOptions && !singleSelectedId && (
-                <span className="text-bark/40 font-normal"> · {options.length} options</span>
+                <span className="text-bark/40 font-normal"> · {pickerOptions.length} options</span>
               )}
             </>
           )}
         </p>
+        {shownWanted > 1 && (
+          <p className="font-sans text-xs text-bark/60 -mt-1 mb-2">
+            We&apos;d love {shownWanted}
+            {shownLeft < shownWanted && (
+              <> · <span className="text-rose-deep">{shownLeft > 0 ? `${shownLeft} left` : "all claimed"}</span></>
+            )}
+          </p>
+        )}
 
         <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 line-clamp-2 min-h-[2.85rem]">
           {lead.description}
@@ -116,9 +134,9 @@ function ItemCard({
               {multiple ? "Choose any" : "Choose one"}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {options.map((o) => {
+              {pickerOptions.map((o) => {
                 const active = o.id === shown.id;
-                const taken = multiple && o.claimed;
+                const taken = !isOpen(o);
                 const picked = multiple && basket.has(o.id);
                 return (
                   <button
@@ -152,7 +170,7 @@ function ItemCard({
             </p>
           )}
 
-          <div className="flex items-center gap-3 pt-3 border-t border-rose-soft/20">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-3 border-t border-rose-soft/20">
           {shown.link && (
             <a
               href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
@@ -163,15 +181,29 @@ function ItemCard({
               View Item ↗
             </a>
           )}
-          {!claimed && shown.claimed && (
+          {!claimed && !isOpen(shown) && (
             <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/40 px-3 py-1.5">
               Taken
             </span>
           )}
-          {!claimed && !shown.claimed && (
+          {!claimed && isOpen(shown) && shownSelected && shownLeft > 1 && (
+            <label className="ml-auto flex items-center gap-1.5 font-sans text-xs text-bark/60">
+              Qty
+              <select
+                value={qtyOf(shown.id)}
+                onChange={(e) => onQty(shown.id, Number(e.target.value))}
+                className="border border-rose-soft/50 bg-white/80 px-1.5 py-1 text-xs text-bark focus:outline-none focus:border-rose-deep"
+              >
+                {Array.from({ length: shownLeft }, (_, n) => n + 1).map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          {!claimed && isOpen(shown) && (
             <button
               onClick={() => onSet(shown.id, !shownSelected)}
-              className={`ml-auto flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
+              className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
                 shownSelected
                   ? "bg-rose-deep text-white border-rose-deep"
                   : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
@@ -249,25 +281,39 @@ export default function RegistryPage() {
   const [rangeId,  setRangeId]  = useState<string | null>(null);
   const [sort,     setSort]     = useState<SortMode>("featured");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // How many of each selected option (1 unless the guest picks more).
+  const [qty, setQty] = useState<Record<string, number>>({});
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
   const [status,   setStatus]   = useState<Status>("idle");
   const [copied,   setCopied]   = useState(false);
   const [taken,    setTaken]    = useState<string[]>([]);
+  const [loadError, setLoadError] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Cash fund state
-  const [cashName,   setCashName]   = useState("");
-  const [cashEmail,  setCashEmail]  = useState("");
-  const [cashAmount, setCashAmount] = useState("");
-  const [cashMethod, setCashMethod] = useState<"venmo"|"paypal"|"zelle"|"cash"|"">("");
-  const [cashNote,   setCashNote]   = useState("");
-  const [cashStatus, setCashStatus] = useState<Status>("idle");
+
+  /** Fetch the registry; false when it couldn't be loaded. */
+  async function fetchItems(): Promise<RegistryItem[] | null> {
+    try {
+      const res = await fetch("/api/registry", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || data.error || !Array.isArray(data.items)) return null;
+      return data.items;
+    } catch {
+      return null;
+    }
+  }
+
+  async function load() {
+    setLoading(true);
+    const fresh = await fetchItems();
+    if (fresh) setItems(fresh);
+    setLoadError(!fresh);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    fetch("/api/registry")
-      .then((r) => r.json())
-      .then((data) => { setItems(data.items ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+    load();
   }, []);
 
   const categories = ["All", ...Array.from(new Set(items.map((i) => i.category))).sort()];
@@ -284,6 +330,15 @@ export default function RegistryPage() {
 
   const filtersActive = filter !== "All" || range !== null;
 
+  const byId = new Map(items.map((i) => [i.id, i]));
+  /** Chosen quantity, never more than what's left. */
+  function qtyOf(id: string): number {
+    const item = byId.get(id);
+    const left = item ? remaining(item) : 1;
+    return Math.max(1, Math.min(qty[id] ?? 1, left || 1));
+  }
+  const basketCount = Array.from(selected).reduce((n, id) => n + qtyOf(id), 0);
+
   function clearFilters() {
     setFilter("All");
     setRangeId(null);
@@ -296,6 +351,7 @@ export default function RegistryPage() {
    */
   function setOption(group: RegistryGroup, optionId: string, on: boolean) {
     setTaken([]);
+    if (status === "success" || status === "error") setStatus("idle");
     setSelected((prev) => {
       const next = new Set(prev);
       if (on && !group.multiple) for (const o of group.options) next.delete(o.id);
@@ -309,75 +365,59 @@ export default function RegistryPage() {
     e.preventDefault();
     if (!selected.size || !email || !name) return;
     setStatus("submitting");
+    setTaken([]);
 
-    const chosenItems = items
-      .filter((i) => selected.has(i.id))
-      .map(({ id, name, price, link, variant }) => ({ id, name, price, link, variant }));
+    setErrorMsg("");
+    // Only ids: the server looks up each gift's details itself.
+    const chosen = items.filter((i) => selected.has(i.id)).map((i) => ({ id: i.id, qty: qtyOf(i.id) }));
 
     try {
       const res = await fetch("/api/registry/claim", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ guestName: name, email, items: chosenItems }),
+        body:    JSON.stringify({ guestName: name, email, items: chosen }),
       });
       if (res.status === 409) {
-        // Someone claimed one of these while this page was open.
+        // Someone claimed one of these while this page was open. Refresh, and
+        // keep the guest's other picks that are still available.
         const data = await res.json().catch(() => ({}));
         setTaken(data.items ?? []);
-        const fresh = await fetch("/api/registry").then((r) => r.json());
-        setItems(fresh.items ?? []);
-        setSelected(new Set());
+        const fresh = await fetchItems();
+        if (fresh) {
+          setItems(fresh);
+          const open = new Set(groupItems(fresh).flatMap((g) => g.available.map((i) => i.id)));
+          setSelected((prev) => new Set(Array.from(prev).filter((id) => open.has(id))));
+        } else {
+          setSelected(new Set());
+        }
         setStatus("idle");
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(
+          data.error === "email-failed"
+            ? "We couldn't send the email, so nothing was reserved. Please try again in a minute."
+            : data.error === "email-invalid"
+            ? "Please check your email address."
+            : data.error === "rate-limited"
+            ? "Too many tries for now. Please wait a bit and try again."
+            : "Something went wrong. Please try again.",
+        );
+        throw new Error();
+      }
 
-      // Mark claimed locally, mirroring what the server just did: a claimed
-      // option closes its whole gift, unless the gift allows multiple.
-      const multipleGroups = new Set(groups.filter((g) => g.multiple).map((g) => g.key));
-      const claimedGroups = new Set(
-        items
-          .filter((i) => selected.has(i.id))
-          .map((i) => i.group.trim() || i.id)
-          .filter((key) => !multipleGroups.has(key))
-      );
-      setItems((prev) =>
-        prev.map((i) =>
-          selected.has(i.id) || claimedGroups.has(i.group.trim() || i.id)
-            ? { ...i, claimed: true }
-            : i
-        )
-      );
+      // Reload, so counts and closed options match what the server recorded.
+      const fresh = await fetchItems();
+      if (fresh) setItems(fresh);
       setSelected(new Set());
+      setQty({});
       setStatus("success");
     } catch {
       setStatus("error");
     }
   }
 
-  async function handleCashSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!cashEmail || !cashName || !cashMethod) return;
-    setCashStatus("submitting");
-    try {
-      const res = await fetch("/api/registry/cash", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ guestName: cashName, email: cashEmail, amount: cashAmount, method: cashMethod, note: cashNote }),
-      });
-      if (!res.ok) throw new Error();
-      setCashStatus("success");
-    } catch {
-      setCashStatus("error");
-    }
-  }
-
-  const METHODS = [
-    { id: "venmo",  label: "Venmo" },
-    { id: "paypal", label: "PayPal" },
-    { id: "zelle",  label: "Zelle" },
-    { id: "cash",   label: "Cash on the day of" },
-  ] as const;
 
   return (
     <>
@@ -387,7 +427,7 @@ export default function RegistryPage() {
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
-          <SparkleTitle text="Registry" className="mt-8" />
+          <SparkleTitle as="h1" text="Registry" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>
@@ -469,6 +509,15 @@ export default function RegistryPage() {
             <p className="text-center font-serif italic text-bark/50 py-20">
               Loading registry…
             </p>
+          ) : loadError ? (
+            <div role="alert" className="text-center py-20">
+              <p className="font-sans text-bark/70 text-sm mb-4">
+                We couldn&apos;t load the registry just now.
+              </p>
+              <button type="button" onClick={load} className="btn-outline">
+                Try again
+              </button>
+            </div>
           ) : filtered.length === 0 ? (
             <p className="text-center font-sans text-bark/40 py-20">
               {filtersActive
@@ -483,93 +532,24 @@ export default function RegistryPage() {
                   group={group}
                   basket={selected}
                   onSet={(optionId, on) => setOption(group, optionId, on)}
+                  qtyOf={qtyOf}
+                  onQty={(optionId, n) => setQty((q) => ({ ...q, [optionId]: n }))}
                 />
               ))}
             </div>
           )}
-          {/* Cash fund */}
-          <div className="mt-20 border-t border-rose-soft/40 pt-16">
-            <h3 className="font-serif text-3xl text-bark text-center mb-2">Cash Fund</h3>
-            <div className="flex items-center justify-center gap-3 mb-8">
+          {/* Cash gifts: on the day only */}
+          <div className="mt-20 border-t border-rose-soft/40 pt-16 text-center">
+            <h2 className="font-serif text-3xl text-bark mb-2">Cash Gifts</h2>
+            <div className="flex items-center justify-center gap-3 mb-6" aria-hidden="true">
               <span className="block h-px w-12 bg-gold" />
               <span className="text-gold">✦</span>
               <span className="block h-px w-12 bg-gold" />
             </div>
-            <p className="text-center font-sans text-bark/60 text-sm mb-10 max-w-md mx-auto">
-              If you'd prefer to contribute to our honeymoon fund, fill out the form
-              below and we'll send you payment details by email.
+            <p className="font-sans text-bark/70 text-sm leading-relaxed max-w-md mx-auto">
+              If you&apos;d rather give cash, you&apos;re welcome to bring it with you on
+              the day. No need to let us know ahead of time.
             </p>
-
-            {cashStatus === "success" ? (
-              <div className="max-w-md mx-auto text-center py-10 bg-white/60 border border-rose-soft/30">
-                <p className="text-4xl mb-4">💛</p>
-                <p className="font-serif text-2xl text-bark mb-2">Thank You!</p>
-                <p className="font-sans text-bark/60 text-sm">Check your inbox for payment details.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleCashSubmit} className="max-w-md mx-auto bg-white/60 border border-rose-soft/30 p-8 space-y-5">
-                {/* Name + email */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Name *</label>
-                    <input required type="text" value={cashName} onChange={e => setCashName(e.target.value)}
-                      placeholder="Jane Smith"
-                      className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
-                  </div>
-                  <div>
-                    <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Email *</label>
-                    <input required type="email" value={cashEmail} onChange={e => setCashEmail(e.target.value)}
-                      placeholder="jane@email.com"
-                      className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
-                  </div>
-                </div>
-
-                {/* Amount */}
-                <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Amount <span className="normal-case tracking-normal">(optional)</span></label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-bark/40 font-sans text-sm">$</span>
-                    <input type="number" min="1" value={cashAmount} onChange={e => setCashAmount(e.target.value)}
-                      placeholder="0"
-                      className="w-full border border-rose-soft/60 bg-white/80 pl-7 pr-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep" />
-                  </div>
-                </div>
-
-                {/* Payment method */}
-                <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">Payment Method *</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {METHODS.map(m => (
-                      <button key={m.id} type="button" onClick={() => setCashMethod(m.id)}
-                        className={`py-2.5 border font-sans text-sm tracking-wide transition-all ${
-                          cashMethod === m.id
-                            ? "bg-rose-deep text-white border-rose-deep"
-                            : "border-rose-soft/60 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
-                        }`}>
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Note */}
-                <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">Leave a note <span className="normal-case tracking-normal">(optional)</span></label>
-                  <textarea rows={2} value={cashNote} onChange={e => setCashNote(e.target.value)}
-                    placeholder="A kind word..."
-                    className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none" />
-                </div>
-
-                {cashStatus === "error" && (
-                  <p className="text-red-500 text-xs text-center font-sans">Something went wrong. Please try again.</p>
-                )}
-
-                <button type="submit" disabled={!cashName || !cashEmail || !cashMethod || cashStatus === "submitting"}
-                  className="w-full btn-primary disabled:opacity-50">
-                  {cashStatus === "submitting" ? "Sending…" : "Send Payment Details"}
-                </button>
-              </form>
-            )}
           </div>
 
         </div>
@@ -620,12 +600,21 @@ export default function RegistryPage() {
                 </p>
               </div>
             </div>
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={() => setStatus("idle")}
+                className="font-sans text-xs tracking-widest uppercase text-rose-blush/70 underline underline-offset-4 hover:text-rose-blush"
+              >
+                Done
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-4">
             <div className="flex flex-col md:flex-row items-center gap-3">
               <p className="font-sans text-rose-blush/70 text-sm shrink-0">
-                {selected.size} item{selected.size !== 1 ? "s" : ""} selected
+                {basketCount} item{basketCount !== 1 ? "s" : ""} selected
               </p>
               <div className="flex flex-col sm:flex-row flex-1 gap-3 w-full">
                 <input
@@ -633,6 +622,8 @@ export default function RegistryPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
+                  aria-label="Your name"
+                  autoComplete="name"
                   required
                   className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/30 px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft"
                 />
@@ -641,6 +632,8 @@ export default function RegistryPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="your@email.com"
+                  aria-label="Your email"
+                  autoComplete="email"
                   required
                   className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/30 px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft"
                 />
@@ -654,14 +647,14 @@ export default function RegistryPage() {
               </div>
             </div>
             {status === "error" && (
-              <p className="text-red-400 text-xs font-sans mt-2 text-center">
-                Something went wrong. Please try again.
+              <p role="alert" className="text-red-300 text-xs font-sans mt-2 text-center">
+                {errorMsg || "Something went wrong. Please try again."}
               </p>
             )}
             {taken.length > 0 && (
               <p className="text-rose-soft text-xs font-sans mt-2 text-center">
                 Just taken by another guest: {taken.join(", ")}. The registry has
-                been refreshed — please pick again.
+                been refreshed; your other picks are still selected.
               </p>
             )}
           </form>

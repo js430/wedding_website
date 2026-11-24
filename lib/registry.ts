@@ -7,9 +7,16 @@
  * picker, and claiming any one option closes the whole group.
  *
  * Unless the group allows multiple: tick `Allow Multiple` on any of its rows
- * and each option is claimed on its own (once each), so a guest can take
- * one candle scent and leave the others open for someone else, or take
- * several at once. The card closes only when every option is taken.
+ * and each option is claimed on its own, so a guest can take one candle
+ * scent and leave the others open for someone else, or take several at once.
+ * The card closes only when every option is taken.
+ *
+ * Quantities: `Quantity` (number, blank = 1) is how many of a row the couple
+ * wants; the site keeps `Quantity Claimed` (number) up to date. A guest can
+ * claim any number up to what's left, and the row stays open until all are
+ * claimed. In a one-of group, the first purchase picks the option: the other
+ * options close and only that one stays open until its quantity is met (so a
+ * pair of lamps always matches).
  *
  * A row with a blank `Group` is a standalone gift and becomes a group of one,
  * so the rest of the page can treat everything uniformly.
@@ -29,6 +36,32 @@ export interface RegistryItem {
   option:      string;
   /** The row's `Allow Multiple` checkbox. */
   multiple?:   boolean;
+  /** How many the couple wants (`Quantity`; blank = 1). */
+  quantity?:   number;
+  /** How many guests have claimed so far (`Quantity Claimed`; blank = none recorded). */
+  claimedCount?: number | null;
+}
+
+/** How many of this option the couple wants. */
+export function wanted(item: RegistryItem): number {
+  const q = Math.floor(item.quantity ?? 1);
+  return Number.isFinite(q) && q > 1 ? q : 1;
+}
+
+/**
+ * How many have been bought. A row ticked Claimed without a recorded count
+ * (older rows, or a one-of option closed because a sibling was chosen gets
+ * an explicit 0) counts as fully bought.
+ */
+export function bought(item: RegistryItem): number {
+  if (typeof item.claimedCount === "number") return Math.max(0, item.claimedCount);
+  return item.claimed ? wanted(item) : 0;
+}
+
+/** How many a guest can still claim. */
+export function remaining(item: RegistryItem): number {
+  if (item.claimed) return 0;
+  return Math.max(0, wanted(item) - (typeof item.claimedCount === "number" ? item.claimedCount : 0));
 }
 
 export interface RegistryGroup {
@@ -45,6 +78,15 @@ export interface RegistryGroup {
   claimed: boolean;
   /** Options are claimed independently (`Allow Multiple` ticked on any row). */
   multiple: boolean;
+  /**
+   * For a one-of gift: the option someone has already bought. The gift is
+   * then that option only (e.g. the second lamp of a pair must match).
+   */
+  locked: RegistryItem | null;
+  /** Options a guest can pick right now. */
+  available: RegistryItem[];
+  /** Options to show in the picker: a locked one-of gift shows only its option. */
+  shown: RegistryItem[];
 }
 
 /** Label for one option, falling back to price or name when Option is blank. */
@@ -67,12 +109,17 @@ export function groupItems(items: RegistryItem[]): RegistryGroup[] {
   return Array.from(byKey, ([key, options]) => {
     options.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
     const multiple = options.length > 1 && options.some((o) => o.multiple === true);
+    const locked = !multiple && options.length > 1 ? options.find((o) => bought(o) > 0) ?? null : null;
+    const available = options.filter((o) => remaining(o) > 0 && (!locked || o.id === locked.id));
     return {
       key,
       lead:    options[0],
       options,
-      claimed: multiple ? options.every((o) => o.claimed) : options.some((o) => o.claimed),
+      claimed: available.length === 0,
       multiple,
+      locked,
+      available,
+      shown:   locked ? [locked] : options,
     };
   });
 }
@@ -106,8 +153,10 @@ export const PRICE_RANGES: PriceRange[] = [
  * price points, not only its cheapest.
  */
 export function groupInRange(group: RegistryGroup, range: PriceRange): boolean {
+  // Upper bound exclusive, so a $50 gift sits in "$50–$100" only, not in
+  // "Under $50" too.
   return group.options.some(
-    (o) => o.price !== null && o.price >= range.min && o.price <= range.max
+    (o) => o.price !== null && o.price >= range.min && o.price < range.max
   );
 }
 

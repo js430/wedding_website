@@ -34,13 +34,19 @@ export function isBot(userAgent: string): boolean {
   );
 }
 
+/**
+ * The guest-facing pages worth counting. Anything else (made-up paths sent
+ * straight to the endpoint, the admin pages) is ignored, which also keeps
+ * the number of distinct rows small.
+ */
+const TRACKED_PATHS = new Set(["/", "/registry", "/faq", "/guide", "/rsvp/edit", "/welcome", "/gate", "/seating"]);
+
 /** Only count real pages, and never the admin dashboard itself. */
 export function trackablePath(path: string): string | null {
-  if (!path.startsWith("/")) return null;
-  if (path.startsWith("/admin") || path.startsWith("/api")) return null;
-  // Drop query strings and trailing slashes so /registry and /registry/ agree.
-  const clean = path.split("?")[0].replace(/\/+$/, "") || "/";
-  return clean.length > 120 ? null : clean;
+  if (!path.startsWith("/") || path.length > 300) return null;
+  // Drop query strings, fragments and trailing slashes so /registry and /registry/ agree.
+  const clean = path.split(/[?#]/)[0].replace(/\/+$/, "") || "/";
+  return TRACKED_PATHS.has(clean) ? clean : null;
 }
 
 export function record(path: string, now: Date = new Date()) {

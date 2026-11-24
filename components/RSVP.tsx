@@ -17,6 +17,8 @@ export default function RSVP() {
   const [meal, setMeal] = useState("");
   const [plusOneMeal, setPlusOneMeal] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  // What the guest just sent, for the thank-you message.
+  const [sent, setSent] = useState<{ attending: "yes" | "no"; emailed: boolean; email: string } | null>(null);
 
   const needsMeal = attending === "yes" && !meal;
   const needsGuestMeal = attending === "yes" && plusOne === "yes" && !plusOneMeal;
@@ -48,18 +50,21 @@ export default function RSVP() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        let code = "";
-        if (res.status === 400) {
-          const body = await res.json().catch(() => ({}));
-          code = typeof body?.error === "string" ? body.error : "";
-        }
-        if (code === "meal-required") {
-          setErrorMsg("Please choose a meal for yourself.");
-        } else if (code === "guest-meal-required") {
-          setErrorMsg("Please choose a meal for your guest.");
-        }
+        const body = await res.json().catch(() => ({}));
+        const code = typeof body?.error === "string" ? body.error : "";
+        const messages: Record<string, string> = {
+          "meal-required": "Please choose a meal for yourself.",
+          "guest-meal-required": "Please choose a meal for your guest.",
+          "name-required": "Please enter your name.",
+          "email-invalid": "Please check your email address.",
+          "attending-required": "Please let us know if you can make it.",
+          "rate-limited": "Too many tries for now. Please wait a bit and try again.",
+        };
+        if (messages[code]) setErrorMsg(messages[code]);
         throw new Error("Request failed");
       }
+      const result = await res.json().catch(() => ({}));
+      setSent({ attending: attending === "yes" ? "yes" : "no", emailed: result?.emailed !== false, email: data.email.trim() });
       setStatus("success");
 
       // Celebrate a yes with palette-colored confetti
@@ -98,21 +103,36 @@ export default function RSVP() {
             <h3 className="font-serif text-2xl text-bark mb-6 text-center">RSVP</h3>
 
             {status === "success" ? (
-              <div className="text-center py-10">
-                <div className="text-5xl mb-4">💌</div>
+              <div role="status" className="text-center py-10">
+                <div className="text-5xl mb-4" aria-hidden="true">💌</div>
                 <p className="font-serif text-xl text-bark mb-2">Thank You!</p>
-                <p className="font-sans text-bark/60 text-sm">
-                  We have received your RSVP and can&apos;t wait to celebrate with you.
+                <p className="font-sans text-bark/60 text-sm leading-relaxed">
+                  {sent?.attending === "no"
+                    ? "We've received your RSVP. We'll miss you, and thank you for letting us know."
+                    : "We've received your RSVP and can't wait to celebrate with you."}
                 </p>
+                {sent?.emailed === false ? (
+                  <p className="mt-4 font-sans text-sm leading-relaxed text-rose-deep">
+                    Your RSVP is saved, but we couldn&apos;t send the confirmation email
+                    {sent.email ? <> to <strong>{sent.email}</strong></> : null}. You can request
+                    your edit link below in a little while.
+                  </p>
+                ) : (
+                  <p className="mt-4 font-sans text-xs leading-relaxed text-bark/60">
+                    A confirmation is on its way to your inbox, with a link to change your
+                    answer until February 27, 2027.
+                  </p>
+                )}
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                  <label htmlFor="rsvp-name" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                     Full Name *
                   </label>
                   <input
                     name="name"
+                    id="rsvp-name"
                     required
                     type="text"
                     placeholder="Jane Smith"
@@ -121,11 +141,12 @@ export default function RSVP() {
                 </div>
 
                 <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                  <label htmlFor="rsvp-email" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                     Email *
                   </label>
                   <input
                     name="email"
+                    id="rsvp-email"
                     required
                     type="email"
                     placeholder="jane@example.com"
@@ -164,11 +185,12 @@ export default function RSVP() {
                   <>
                     {plusOne === "yes" && (
                       <div>
-                        <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                        <label htmlFor="rsvp-plusOneName" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                           Guest Name
                         </label>
                         <input
                           name="plusOneName"
+                          id="rsvp-plusOneName"
                           type="text"
                           placeholder="Guest's full name"
                           className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
@@ -193,11 +215,12 @@ export default function RSVP() {
                     )}
 
                     <div>
-                      <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                      <label htmlFor="rsvp-dietary" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                         Allergies or dietary notes
                       </label>
                       <input
                         name="dietary"
+                        id="rsvp-dietary"
                         type="text"
                         placeholder="Nut allergy, shellfish, etc."
                         className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
@@ -210,11 +233,12 @@ export default function RSVP() {
                 )}
 
                 <div>
-                  <label className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
+                  <label htmlFor="rsvp-message" className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-1">
                     Message for the Couple
                   </label>
                   <textarea
                     name="message"
+                    id="rsvp-message"
                     rows={3}
                     placeholder="Share a kind word..."
                     className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none"

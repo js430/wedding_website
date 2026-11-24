@@ -71,8 +71,8 @@ export default function AnalyticsDashboard() {
           <div className="bg-white/60 border border-rose-soft/30">
             {paths.length === 0 && <p className="font-sans text-sm text-bark/40 p-5">Nothing recorded yet.</p>}
             {paths.map(([path, views]) => (
-              <div key={path} className="flex items-center justify-between px-5 py-3 border-b border-rose-soft/20 last:border-0">
-                <span className="font-sans text-sm text-bark">{path}</span>
+              <div key={path} className="flex items-center justify-between gap-3 px-5 py-3 border-b border-rose-soft/20 last:border-0">
+                <span className="font-sans text-sm text-bark min-w-0 break-all">{path}</span>
                 <span className="font-sans text-sm text-rose-deep font-medium">{views.toLocaleString()}</span>
               </div>
             ))}
@@ -86,11 +86,14 @@ export default function AnalyticsDashboard() {
             {days.map(([date, views]) => (
               <div key={date} className="flex items-center gap-3">
                 <span className="font-sans text-xs text-bark/50 w-24 shrink-0">{date}</span>
-                <span
-                  className="bg-rose-deep/70 h-3 shrink-0"
-                  style={{ width: `${Math.max(2, (views / peak) * 100)}%` }}
-                />
-                <span className="font-sans text-xs text-bark/60">{views}</span>
+                {/* The bar fills a track that leaves room for the count. */}
+                <span className="flex-1 min-w-0">
+                  <span
+                    className="block bg-rose-deep/70 h-3"
+                    style={{ width: `${Math.max(2, (views / peak) * 100)}%` }}
+                  />
+                </span>
+                <span className="font-sans text-xs text-bark/60 w-10 shrink-0 text-right">{views}</span>
               </div>
             ))}
           </div>

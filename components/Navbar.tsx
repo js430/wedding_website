@@ -43,7 +43,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close the "More" dropdown on outside click
+  // Close the "More" dropdown on outside click, and on Escape (focus goes
+  // back to the button).
   useEffect(() => {
     if (!moreOpen) return;
     const onClick = (e: MouseEvent) => {
@@ -51,9 +52,23 @@ export default function Navbar() {
         setMoreOpen(false);
       }
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMoreOpen(false);
+        moreBtnRef.current?.focus();
+      }
+    };
     window.addEventListener("mousedown", onClick);
-    return () => window.removeEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [moreOpen]);
+
+  // Hovering opens the menu. A click right after (a mouse click, or a tap on
+  // a tablet, which fires a hover first) must keep it open, not toggle it shut.
+  const hoverOpenedAt = useRef(0);
 
   return (
     <nav
@@ -83,13 +98,20 @@ export default function Navbar() {
           <li
             ref={moreRef}
             className="relative"
-            onMouseEnter={() => setMoreOpen(true)}
+            onMouseEnter={() => {
+              if (!moreOpen) hoverOpenedAt.current = Date.now();
+              setMoreOpen(true);
+            }}
             onMouseLeave={() => setMoreOpen(false)}
+            onBlur={(e) => {
+              // Tabbing out of the menu closes it.
+              if (!moreRef.current?.contains(e.relatedTarget as Node | null)) setMoreOpen(false);
+            }}
           >
             <button
               ref={moreBtnRef}
               type="button"
-              onClick={() => setMoreOpen((v) => !v)}
+              onClick={() => setMoreOpen((v) => (Date.now() - hoverOpenedAt.current < 600 ? true : !v))}
               className="nav-link flex items-center gap-1"
               aria-expanded={moreOpen}
               aria-haspopup="true"
@@ -151,6 +173,7 @@ export default function Navbar() {
           className="md:hidden text-bark"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
+          aria-expanded={menuOpen}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {menuOpen ? (

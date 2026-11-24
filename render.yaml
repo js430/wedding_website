@@ -58,14 +58,6 @@ services:
       - key: NOTION_ANALYTICS_DATABASE_ID
         sync: false
 
-      # ── Cash gift details shown to guests ─────────────────────────────────
-      - key: VENMO_HANDLE
-        sync: false
-      - key: ZELLE_EMAIL
-        sync: false
-      - key: PAYPAL_EMAIL
-        sync: false
-
       # ── Invite gate ───────────────────────────────────────────────────────
       # The ONE shared password for the whole site. The link to text guests does
       # NOT contain the password. To get it, sign in on the site with the

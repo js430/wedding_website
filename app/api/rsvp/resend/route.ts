@@ -4,6 +4,8 @@ import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { allow } from "@/lib/rate-limit";
+import { clientKey } from "@/lib/invite-guard";
+import { escapeHtml } from "@/lib/input";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,7 @@ const PER_EMAIL   = 3;   // a guest retrying is fine; a script hammering one add
 const PER_CLIENT  = 10;  // across all addresses from one IP
 
 function buildResendEmail(name: string, editUrl: string): string {
-  const greeting = name ? `Hi ${name.split(" ")[0]},` : "Hi there,";
+  const greeting = name ? `Hi ${escapeHtml(name.split(" ")[0])},` : "Hi there,";
   return `
     <!DOCTYPE html>
     <html>
@@ -40,7 +42,7 @@ function buildResendEmail(name: string, editUrl: string): string {
                   Here's the link to view or change your RSVP. You can make changes
                   until <strong>${formatDeadline()}</strong>.
                 </p>
-                <a href="${editUrl}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:12px 26px;display:inline-block;">
+                <a href="${escapeHtml(editUrl)}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:12px 26px;display:inline-block;">
                   Open my RSVP
                 </a>
                 <p style="margin:18px 0 0;font-family:sans-serif;font-size:11px;color:#8B0010;">
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid-email" }, { status: 400 });
   }
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const ip = clientKey(req);
   if (!allow(`ip:${ip}`, PER_CLIENT, WINDOW_MS) || !allow(`em:${address}`, PER_EMAIL, WINDOW_MS)) {
     // Also a 200: a distinct 429 would leak that the address is being retried.
     console.warn("[RSVP resend] rate limited", { ip });
@@ -85,10 +87,17 @@ export async function POST(req: NextRequest) {
     return ok;
   }
 
+  // Not awaited: the lookup and email run after the response goes out, so
+  // the response time doesn't reveal whether the address has an RSVP.
+  void sendEditLink(req, address);
+  return ok;
+}
+
+async function sendEditLink(req: NextRequest, address: string) {
   try {
     const notion = new Client({ auth: process.env.NOTION_TOKEN });
     const found = await notion.databases.query({
-      database_id: process.env.NOTION_DATABASE_ID,
+      database_id: process.env.NOTION_DATABASE_ID!,
       filter: { property: "Email", email: { equals: address } },
       sorts:  [{ property: "Submitted At", direction: "descending" }],
       page_size: 1,
@@ -97,7 +106,7 @@ export async function POST(req: NextRequest) {
     const page: any = found.results[0];
     if (!page) {
       console.info("[RSVP resend] no RSVP for that address");
-      return ok;
+      return;
     }
 
     const name    = page.properties?.Name?.title?.[0]?.plain_text ?? "";
@@ -105,19 +114,18 @@ export async function POST(req: NextRequest) {
     const editUrl = buildEditUrl(page.id, origin);
     if (!editUrl) {
       console.warn("[RSVP resend] REGISTRY_CLAIM_KEY not set — cannot mint link");
-      return ok;
+      return;
     }
 
-    await new Resend(process.env.RESEND_API_KEY).emails.send({
+    const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
       from:    process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>",
       to:      address,
       subject: "Your RSVP link — Katie & Jeffrey",
       html:    buildResendEmail(name, editUrl),
     });
+    if (error) console.error("[RSVP resend] email failed:", error);
   } catch (err: any) {
     // Never surface the failure: the response must not vary by outcome.
     console.error("[RSVP resend] failed:", err?.message ?? err);
   }
-
-  return ok;
 }

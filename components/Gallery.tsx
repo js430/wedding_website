@@ -91,6 +91,20 @@ export default function Gallery() {
   // Inner layers that drift as you scroll, alternating direction per photo
   const layerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [active, setActive] = useState<number | null>(null);
+  // The thumbnail that opened the lightbox, to give focus back on close.
+  const openerRef = useRef<HTMLElement | null>(null);
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  function open(i: number) {
+    openerRef.current = document.activeElement as HTMLElement | null;
+    setActive(i);
+  }
+
+  function close() {
+    setActive(null);
+    // After the exit animation starts; the thumbnail is still in the page.
+    requestAnimationFrame(() => openerRef.current?.focus());
+  }
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -104,7 +118,11 @@ export default function Gallery() {
         const rect = el.getBoundingClientRect();
         const progress = (rect.top + rect.height / 2 - vh / 2) / vh;
         const direction = i % 2 === 0 ? 1 : -1;
-        const offset = progress * 26 * direction;
+        // The layer is scaled 1.14, so it overhangs the tile by 7% of its
+        // height on each side. Keep the drift inside that, or small tiles
+        // (phones) show their edges.
+        const maxDrift = Math.min(26, rect.height * 0.06);
+        const offset = Math.max(-1, Math.min(1, progress)) * maxDrift * direction;
         el.style.transform = `translateY(${offset}px) scale(1.14)`;
       });
     };
@@ -122,11 +140,16 @@ export default function Gallery() {
     };
   }, []);
 
-  // Esc closes the lightbox
+  // Esc closes the lightbox; focus starts on its close button and Tab stays on it.
   useEffect(() => {
     if (active === null) return;
+    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActive(null);
+      if (e.key === "Escape") close();
+      if (e.key === "Tab") {
+        e.preventDefault();
+        closeRef.current?.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -148,7 +171,7 @@ export default function Gallery() {
               <Reveal key={i} delay={i * 120}>
                 <button
                   type="button"
-                  onClick={() => setActive(i)}
+                  onClick={() => open(i)}
                   className="block w-full aspect-square overflow-hidden relative group cursor-zoom-in"
                   aria-label={`View ${p.alt}`}
                 >
@@ -192,9 +215,21 @@ export default function Gallery() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={() => setActive(null)}
+            onClick={close}
+            role="dialog"
+            aria-modal="true"
+            aria-label={photos[active].caption}
             className="fixed inset-0 z-[150] bg-crimson-darkest/90 backdrop-blur-md flex flex-col items-center justify-center p-6 cursor-zoom-out"
           >
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); close(); }}
+              aria-label="Close photo"
+              className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center text-rose-blush/80 hover:text-rose-blush text-3xl leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-blush"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
             <motion.div
               initial={{ scale: 0.92, y: 18, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -216,7 +251,7 @@ export default function Gallery() {
               {photos[active].caption}
             </p>
             <p className="font-sans text-rose-blush/40 text-xs tracking-widest uppercase">
-              Click anywhere to close
+              Tap anywhere to close
             </p>
           </motion.div>
         )}

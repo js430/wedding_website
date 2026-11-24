@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdmin } from "@/lib/admin-auth";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { clientKey } from "@/lib/invite-guard";
@@ -82,12 +83,8 @@ function clientIp(req: NextRequest): { source: string; value: string } {
 }
 
 export async function GET(req: NextRequest) {
-  if (!process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "ADMIN_PASSWORD not configured" }, { status: 500 });
-  }
-  if ((req.headers.get("x-admin-password") ?? "") !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = checkAdmin(req);
+  if (denied) return denied;
 
   const [resend, rsvpDb, registryDb] = await Promise.all([
     checkResend(),
@@ -113,9 +110,6 @@ export async function GET(req: NextRequest) {
       "NOTION_TOKEN",
       "SITE_PASSWORD",
       "INVITE_SECRET",
-      "VENMO_HANDLE",
-      "ZELLE_EMAIL",
-      "PAYPAL_EMAIL",
     ].map(present),
     notes: {
       editLinks: process.env.REGISTRY_CLAIM_KEY

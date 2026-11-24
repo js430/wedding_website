@@ -33,6 +33,9 @@ export async function GET() {
         option:      p.Option?.rich_text?.[0]?.plain_text ?? "",
         // Ticked on any row of a group: its options are claimed one by one.
         multiple:    p["Allow Multiple"]?.checkbox ?? false,
+        // How many are wanted, and how many guests have claimed so far.
+        quantity:     p.Quantity?.number ?? 1,
+        claimedCount: p["Quantity Claimed"]?.number ?? null,
       };
     });
 

@@ -58,7 +58,7 @@ export default function OurStory() {
                 </div>
 
                 <Reveal delay={i * 150}>
-                  <span className="font-serif italic text-gold text-sm">{m.year}</span>
+                  <span className="font-serif italic text-gold-dark text-sm">{m.year}</span>
                   <h3 className="font-serif text-2xl text-bark mt-1 mb-2">{m.title}</h3>
                   <p className="font-sans text-bark/70 leading-relaxed">{m.body}</p>
                 </Reveal>

@@ -10,8 +10,10 @@ export async function GET(req: NextRequest) {
   if (!gateConfigured()) {
     return NextResponse.json({ password: "", host: "", link: "" }, { headers });
   }
+  // Not signed in on this device: nothing to share. A 200 with no password
+  // (rather than a 401) keeps every page's console free of a red error.
   if (!(await verifySession(req.cookies.get(SESSION_COOKIE)?.value))) {
-    return NextResponse.json({ error: "no-session" }, { status: 401, headers });
+    return NextResponse.json({ password: "", host: "", link: "" }, { headers });
   }
   const origin = siteOrigin(req);
   return NextResponse.json(

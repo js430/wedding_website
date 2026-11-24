@@ -26,7 +26,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
 
   // Blocked clients are refused before any check, so links cannot bypass the box's limit.
   const key = clientKey(req);
-  if (isBlocked(key).blocked) return redirect(req, "/gate?blocked=1");
+  const block = isBlocked(key);
+  if (block.blocked) return redirect(req, `/gate?blocked=${block.retryAfterSeconds}`);
 
   // An empty or wrongly formatted value counts as wrong.
   const { token } = await ctx.params;

@@ -56,10 +56,16 @@ export default function Intro() {
     <motion.div
       onClick={fastForward}
       role="presentation"
+      // data-lenis-prevent: the smooth-scroll library ignores wheel events here.
+      data-lenis-prevent
       className="fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest overflow-hidden"
       animate={{ opacity: phase === "fade" ? 0 : 1 }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
     >
+      {/* Hold the page still behind the intro, so the guest starts at the top.
+          A style tag (not an effect) so it applies from the first paint,
+          before the page is interactive; it goes away with the intro. */}
+      <style>{"html{overflow:hidden}"}</style>
       {/* Candlelight vignette */}
       <div
         className="absolute inset-0"

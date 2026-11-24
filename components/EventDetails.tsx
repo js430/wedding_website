@@ -49,7 +49,7 @@ function EventCard({ event: e, optional }: { event: Event; optional?: boolean })
   return (
     <div className="lift bg-ivory/80 backdrop-blur border border-rose-soft/30 hover:border-rose-soft/60 p-8 text-center relative h-full">
       {optional && (
-        <span className="absolute top-3 right-3 font-sans text-xs tracking-widest uppercase text-gold border border-gold/40 px-2 py-0.5">
+        <span className="absolute top-3 right-3 font-sans text-xs tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
           Optional · TBD
         </span>
       )}
@@ -117,7 +117,7 @@ export default function EventDetails() {
         {/* Dress code & hotel */}
         <Reveal delay={100} className="mt-12 grid md:grid-cols-2 gap-6">
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
-            <p className="font-serif italic text-gold text-sm mb-2">Dress Code</p>
+            <p className="font-serif italic text-gold-dark text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
             <p className="font-sans text-bark/60 text-sm leading-relaxed">
               Please don&apos;t wear white or red, or any shade of either:
@@ -125,7 +125,7 @@ export default function EventDetails() {
             </p>
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
-            <p className="font-serif italic text-gold text-sm mb-2">Save the Date</p>
+            <p className="font-serif italic text-gold-dark text-sm mb-2">Save the Date</p>
             <p className="font-serif text-xl text-bark mb-3">Add it to your calendar</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <a href="/api/calendar" className="btn-outline inline-block">
@@ -143,7 +143,7 @@ export default function EventDetails() {
           </div>
 
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
-            <p className="font-serif italic text-gold text-sm mb-2">Hotel Block</p>
+            <p className="font-serif italic text-gold-dark text-sm mb-2">Hotel Block</p>
             <p className="font-serif text-xl text-bark mb-2">
               <a
                 href={HOTEL_WEBSITE_URL}

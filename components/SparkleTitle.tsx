@@ -15,10 +15,14 @@ const SPARKLES = [
 export default function SparkleTitle({
   text,
   className = "",
+  as = "h2",
 }: {
   text: string;
   className?: string;
+  /** "h1" when this is the page's main title (FAQ, Guide, Registry). */
+  as?: "h1" | "h2";
 }) {
+  const Heading = as === "h1" ? motion.h1 : motion.h2;
   return (
     <div className={`relative ${className}`}>
       {/*
@@ -31,7 +35,7 @@ export default function SparkleTitle({
         transforms on individual letters, so a staggered per-letter entrance
         dropped random letters ("Registry" rendering as "Re stry").
       */}
-      <motion.h2
+      <Heading
         className="section-title"
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -39,7 +43,7 @@ export default function SparkleTitle({
         transition={{ type: "spring", damping: 15, stiffness: 180, delay: 0.1 }}
       >
         {text}
-      </motion.h2>
+      </Heading>
 
       {SPARKLES.map((s, i) => (
         <motion.span
