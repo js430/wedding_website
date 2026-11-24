@@ -6,6 +6,11 @@
  * `Group` value. The site renders each group as a single card with an option
  * picker, and claiming any one option closes the whole group.
  *
+ * Unless the group allows multiple: tick `Allow Multiple` on any of its rows
+ * and each option is claimed on its own (once each), so a guest can take
+ * one candle scent and leave the others open for someone else, or take
+ * several at once. The card closes only when every option is taken.
+ *
  * A row with a blank `Group` is a standalone gift and becomes a group of one,
  * so the rest of the page can treat everything uniformly.
  */
@@ -22,6 +27,8 @@ export interface RegistryItem {
   variant:     string;
   group:       string;
   option:      string;
+  /** The row's `Allow Multiple` checkbox. */
+  multiple?:   boolean;
 }
 
 export interface RegistryGroup {
@@ -31,8 +38,13 @@ export interface RegistryGroup {
   lead:    RegistryItem;
   /** Every option, cheapest first. Length 1 for a standalone gift. */
   options: RegistryItem[];
-  /** True once ANY option has been taken — the whole gift is then closed. */
+  /**
+   * True when the gift is closed: once ANY option is taken, or for a group
+   * that allows multiple, once EVERY option is taken.
+   */
   claimed: boolean;
+  /** Options are claimed independently (`Allow Multiple` ticked on any row). */
+  multiple: boolean;
 }
 
 /** Label for one option, falling back to price or name when Option is blank. */
@@ -54,11 +66,13 @@ export function groupItems(items: RegistryItem[]): RegistryGroup[] {
 
   return Array.from(byKey, ([key, options]) => {
     options.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+    const multiple = options.length > 1 && options.some((o) => o.multiple === true);
     return {
       key,
       lead:    options[0],
       options,
-      claimed: options.some((o) => o.claimed),
+      claimed: multiple ? options.every((o) => o.claimed) : options.some((o) => o.claimed),
+      multiple,
     };
   });
 }

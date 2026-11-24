@@ -29,7 +29,7 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
             ${item.name}
           </p>
           ${item.variant ? `<p style="margin:2px 0 0;font-family:sans-serif;font-size:12px;color:#8B0010;">Preferred: ${item.variant}</p>` : ""}
-          ${item.price ? `<p style="margin:4px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;">$${item.price.toFixed(2)}</p>` : ""}
+          ${item.price ? `<p style="margin:4px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;">$${item.price.toFixed(2)} <span style="font-size:10px;letter-spacing:0.1em;color:#8B6B5C;">MSRP</span></p>` : ""}
         </td>
         <td style="padding:12px 0 12px 16px;border-bottom:1px solid #FFB3C4;text-align:right;white-space:nowrap;">
           ${
@@ -72,6 +72,10 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
                 <p style="margin:0 0 24px;font-family:sans-serif;font-size:14px;color:#4a3728;line-height:1.6;">
                   Here are the items you saved from our registry. Each link will take you
                   directly to the retailer to complete your purchase. Thank you so much!
+                </p>
+                <p style="margin:-12px 0 24px;font-family:sans-serif;font-size:13px;color:#4a3728;line-height:1.6;">
+                  The prices listed are the retail price (MSRP), just for reference. Feel free
+                  to buy from anywhere you like. If you find a gift for less elsewhere, please do!
                 </p>
 
                 <table width="100%" cellpadding="0" cellspacing="0">
@@ -143,7 +147,11 @@ async function findAlreadyClaimed(items: ClaimItem[]): Promise<string[]> {
   return checks.filter((n): n is string => n !== null);
 }
 
-/** Close the other price-point options belonging to the same gift. */
+/**
+ * Close the other price-point options belonging to the same gift, unless
+ * the group allows multiple (`Allow Multiple` ticked on any of its rows):
+ * then each option stays open until someone claims that one.
+ */
 async function closeSiblingOptions(pageId: string, encryptedValue: string) {
   try {
     const group = await groupOf(pageId);
@@ -153,6 +161,10 @@ async function closeSiblingOptions(pageId: string, encryptedValue: string) {
       database_id: process.env.NOTION_REGISTRY_DATABASE_ID!,
       filter: { property: "Group", rich_text: { equals: group } },
     });
+
+    if (siblings.results.some((page: any) => page.properties?.["Allow Multiple"]?.checkbox === true)) {
+      return;
+    }
 
     await Promise.all(
       siblings.results
@@ -209,7 +221,8 @@ export async function POST(req: NextRequest) {
           },
         });
         // A gift offered at several price points closes entirely once one
-        // option is taken, so nobody is sent to buy the same gift twice.
+        // option is taken, so nobody is sent to buy the same gift twice
+        // (unless the group allows multiple; see closeSiblingOptions).
         await closeSiblingOptions(item.id, encryptedValue);
       })
     );
