@@ -91,6 +91,7 @@ function ItemCard({
           {shown.price !== null && (
             <>
               ${shown.price.toFixed(2)}
+              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/40 font-normal">MSRP</span>
               {hasOptions && !selected && (
                 <span className="text-bark/40 font-normal"> · {options.length} options</span>
               )}
@@ -366,9 +367,15 @@ export default function RegistryPage() {
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>
-          <p className="text-center font-sans text-bark/60 text-sm mb-10 -mt-4 max-w-lg mx-auto">
+          <p className="text-center font-sans text-bark/60 text-sm mb-5 -mt-4 max-w-lg mx-auto">
             Select the items you'd like to gift, enter your email, and we'll send
             you the purchase links — no account needed.
+          </p>
+          <p className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3">
+            <span className="font-serif italic text-gold">A note on prices:</span>{" "}
+            prices shown are the retail price (MSRP), just for reference. You&apos;re free
+            to buy any gift wherever you like, and if you find it for less elsewhere,
+            please do. We&apos;d encourage it!
           </p>
 
           {/* Filters — category, price, sort */}

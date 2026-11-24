@@ -91,7 +91,7 @@ const faqs = [
     questions: [
       {
         q: "Where are you registered?",
-        a: "Our registry is right here on this site! Visit the Registry page to browse items and have purchase links sent directly to your email.",
+        a: "Our registry is right here on this site! Visit the Registry page to browse items and have purchase links sent directly to your email. Prices shown are the retail price (MSRP), just for reference: you're welcome to buy any gift wherever you like, and if you find it for less elsewhere, we encourage it!",
       },
       {
         q: "Do you have a cash fund option?",
