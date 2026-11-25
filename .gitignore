@@ -33,3 +33,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Invitation mailing: the guest list, send log and settings stay private
+# (this repository is public). See scripts/send-invites.mjs.
+/invites/*
+!/invites/guests.example.csv
+.env.invites
