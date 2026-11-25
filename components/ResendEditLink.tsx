@@ -34,6 +34,8 @@ export default function ResendEditLink({ compact = false }: { compact?: boolean 
       <p className="font-sans text-sm text-bark/60 text-center leading-relaxed">
         If <span className="text-bark">{email}</span> is on our guest list, the
         link is on its way. Check your inbox — and your spam folder, just in case.
+        Asked a few times already? We send at most three in 15 minutes, so give
+        it a little while.
       </p>
     );
   }

@@ -46,7 +46,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[RSVP edit] retrieve failed:", err?.message ?? err);
-    return NextResponse.json({ error: "not-found" }, { status: 404 });
+    // A missing page means the link points nowhere; anything else is Notion
+    // having a moment, and the guest should just try again.
+    return err?.code === "object_not_found" || err?.code === "validation_error"
+      ? NextResponse.json({ error: "not-found" }, { status: 404 })
+      : NextResponse.json({ error: "unavailable" }, { status: 502 });
   }
 }
 
@@ -90,7 +94,7 @@ export async function POST(req: NextRequest) {
     const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
         "+1":                   { select:    { name: attendingYes && plusOne === "yes" ? "Yes" : "No" } },
-        "Guest Name":           { rich_text: [{ text: { content: attendingYes ? plusOneName : "" } }] },
+        "Guest Name":           { rich_text: [{ text: { content: bringingPlusOne ? plusOneName : "" } }] },
         Meal:                   { select:    attendingYes ? { name: mealLabel(meal) } : null },
         "Guest Meal":           { select:    bringingPlusOne ? { name: mealLabel(plusOneMeal) } : null },
         "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? dietary : "" } }] },

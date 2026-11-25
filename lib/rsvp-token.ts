@@ -51,7 +51,9 @@ export function verifyEditToken(token: string): string | null {
   const secret = process.env.REGISTRY_CLAIM_KEY;
   if (!secret || !token) return null;
 
-  const [payload, signature] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payload, signature] = parts;
   if (!payload || !signature) return null;
 
   const expected = sign(payload, secret);

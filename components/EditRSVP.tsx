@@ -22,7 +22,7 @@ interface Rsvp {
   plusOneMeal: string;
 }
 
-type Load = "loading" | "ready" | "invalid" | "missing";
+type Load = "loading" | "ready" | "invalid" | "missing" | "unavailable";
 
 export default function EditRSVP() {
   const token = useSearchParams().get("token") ?? "";
@@ -66,7 +66,7 @@ export default function EditRSVP() {
         setDeadline(data.deadline);
         setLoad("ready");
       })
-      .catch(() => setLoad("invalid"));
+      .catch((e: Error) => setLoad(Number(e.message) >= 500 || e.message === "Failed to fetch" ? "unavailable" : "invalid"));
   }, [token]);
 
   async function save(e: FormEvent) {
@@ -115,6 +115,20 @@ export default function EditRSVP() {
 
   if (load === "loading")
     return shell(<p className="text-center font-serif italic text-bark/50 py-24">Loading your RSVP…</p>);
+
+  if (load === "unavailable")
+    return shell(
+      <div className="text-center py-20">
+        <SparkleTitle text="RSVP" className="mt-8" />
+        <p role="alert" className="font-sans text-bark/60 text-sm mt-6 leading-relaxed">
+          We couldn&apos;t load your RSVP just now. Your link is fine; please try
+          again in a few minutes.
+        </p>
+        <button type="button" onClick={() => window.location.reload()} className="btn-outline mt-6">
+          Try again
+        </button>
+      </div>
+    );
 
   if (load === "missing" || load === "invalid")
     return shell(
