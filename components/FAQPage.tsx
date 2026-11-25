@@ -94,6 +94,10 @@ const faqs = [
         a: "Our registry is right here on this site! Visit the Registry page to browse items and have purchase links sent directly to your email. Prices shown are the retail price (MSRP), just for reference: you're welcome to buy any gift wherever you like, and if you find it for less elsewhere, we encourage it!",
       },
       {
+        q: "Where do we send gifts? Can we bring them to the wedding?",
+        a: "When you choose gifts on the Registry page and enter your email, we'll email you the purchase links along with our shipping address. We ask that you please don't bring large gifts to the venue; smaller gifts you're welcome to bring in person if you wish.",
+      },
+      {
         q: "Can we give cash instead of a gift?",
         a: "Of course! Please bring it with you on the day. No need to let us know ahead of time.",
       },

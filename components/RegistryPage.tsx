@@ -433,15 +433,23 @@ export default function RegistryPage() {
             <span className="text-gold text-xl">✦</span>
           </div>
           <p className="text-center font-sans text-bark/60 text-sm mb-5 -mt-4 max-w-lg mx-auto">
-            Select the items you'd like to gift, enter your email, and we'll send
-            you the purchase links — no account needed.
+            Select the items you&apos;d like to gift and enter your email. We&apos;ll send
+            you the purchase links and our shipping address, no account needed.
           </p>
-          <p className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3">
-            <span className="font-serif italic text-gold">A note on prices:</span>{" "}
-            prices shown are the retail price (MSRP), just for reference. You&apos;re free
-            to buy any gift wherever you like, and if you find it for less elsewhere,
-            please do. We&apos;d encourage it!
-          </p>
+          <div className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3 space-y-2">
+            <p>
+              <span className="font-serif italic text-gold-dark">A note on prices:</span>{" "}
+              prices shown are the retail price (MSRP), just for reference. You&apos;re free
+              to buy any gift wherever you like, and if you find it for less elsewhere,
+              please do. We&apos;d encourage it!
+            </p>
+            <p>
+              <span className="font-serif italic text-gold-dark">Shipping:</span>{" "}
+              the shipping address comes in the email with your purchase links. We ask
+              that you please don&apos;t bring large gifts to the venue; smaller gifts
+              you&apos;re welcome to bring in person if you wish.
+            </p>
+          </div>
 
           {/* Filters — category, price, sort */}
           <div className="max-w-3xl mx-auto mb-10 bg-white/50 border border-rose-soft/30 px-5 py-4">
