@@ -89,11 +89,17 @@ export interface RegistryGroup {
   shown: RegistryItem[];
 }
 
-/** Label for one option, falling back to price or name when Option is blank. */
-export function optionLabel(item: RegistryItem): string {
+/**
+ * Label for one option's button. Uses `Option` when filled in; otherwise the
+ * row's name when the options are differently named items (say, a table lamp
+ * and a floor lamp), or its price when they're the same item at several
+ * price points.
+ */
+export function optionLabel(item: RegistryItem, siblings: RegistryItem[] = [item]): string {
   if (item.option) return item.option;
-  if (item.price !== null) return `$${item.price.toFixed(2)}`;
-  return item.name;
+  const namesDiffer = new Set(siblings.map((s) => s.name.trim())).size > 1;
+  if (namesDiffer || item.price === null) return item.name;
+  return `$${item.price.toFixed(2)}`;
 }
 
 export function groupItems(items: RegistryItem[]): RegistryGroup[] {

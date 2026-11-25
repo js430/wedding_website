@@ -76,7 +76,7 @@ function ItemCard({
           <img
             key={shownImage}
             src={shownImage}
-            alt={shown.option ? `${lead.name} — ${shown.option}` : lead.name}
+            alt={shown.option ? `${shown.name || lead.name} — ${shown.option}` : shown.name || lead.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -99,8 +99,9 @@ function ItemCard({
         {/* Fixed-height header — reserves room for a two-line name and a
             two-line description whether or not this card uses it, so the
             option pickers line up across the row. */}
+        {/* The chosen option's own name and description, when it has them. */}
         <p className="font-serif text-bark text-lg leading-snug mb-1 line-clamp-2 min-h-[3.1rem]">
-          {lead.name}
+          {shown.name || lead.name}
         </p>
 
         <p className="font-sans text-rose-deep text-sm font-medium mb-2 min-h-[1.25rem]">
@@ -124,7 +125,7 @@ function ItemCard({
         )}
 
         <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 line-clamp-2 min-h-[2.85rem]">
-          {lead.description}
+          {shown.description || lead.description}
         </p>
 
         {/* Price-point options */}
@@ -153,7 +154,7 @@ function ItemCard({
                     }`}
                   >
                     {picked && <span aria-hidden="true">✓ </span>}
-                    <span className={taken ? "line-through" : ""}>{optionLabel(o)}</span>
+                    <span className={taken ? "line-through" : ""}>{optionLabel(o, pickerOptions)}</span>
                     {taken && <span className="sr-only"> (taken)</span>}
                     {picked && <span className="sr-only"> (selected)</span>}
                   </button>
