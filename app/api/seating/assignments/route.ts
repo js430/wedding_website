@@ -37,7 +37,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ assignments: [] });
   }
 
-  const response = await notion.databases.query({ database_id: SEAT_DB() });
+  let response;
+  try {
+    response = await notion.databases.query({ database_id: SEAT_DB() });
+  } catch (err: any) {
+    console.error("[Seating] assignments failed:", err?.message ?? err);
+    return NextResponse.json({ error: "unavailable" }, { status: 502 });
+  }
 
   const assignments = response.results.map((page: any) => ({
     notionPageId: page.id,

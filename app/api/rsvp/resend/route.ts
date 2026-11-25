@@ -65,7 +65,8 @@ function buildResendEmail(name: string, editUrl: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json().catch(() => ({ email: "" }));
+  const body = await req.json().catch(() => null);
+  const email = body && typeof body === "object" ? (body as { email?: unknown }).email : "";
   const address = cleanEmail(email);
 
   // Same body for every outcome below, so nothing distinguishes a hit from a miss.

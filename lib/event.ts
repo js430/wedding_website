@@ -101,7 +101,7 @@ export function buildIcs(now: Date = new Date()): string {
     "END:VEVENT",
     "END:VCALENDAR",
     ].map(fold),
-  ].join(CRLF);
+  ].join(CRLF) + CRLF;
 }
 
 /** Google Calendar prefilled-event URL, for guests who live in a browser. */

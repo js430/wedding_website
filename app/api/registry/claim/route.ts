@@ -292,7 +292,7 @@ export async function POST(req: NextRequest) {
     });
     if (taken.length) {
       return NextResponse.json(
-        { error: "already-claimed", items: taken.map((i) => i.name), ids: taken.map((i) => i.id) },
+        { error: "already-claimed", items: taken.map((i) => (i.option ? `${i.name} (${i.option})` : i.name)), ids: taken.map((i) => i.id) },
         { status: 409 },
       );
     }

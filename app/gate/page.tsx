@@ -35,7 +35,7 @@ function safeNext(raw: string | string[] | undefined): string {
 /** Seconds left on a wrong-guess block, from ?blocked=<seconds> (1 = legacy flag). */
 function blockedSeconds(raw: string | string[] | undefined): number {
   const v = Number(Array.isArray(raw) ? raw[0] : raw);
-  return Number.isFinite(v) && v > 1 ? Math.min(Math.round(v), 2 * 86400) : 3600;
+  return Number.isFinite(v) && v > 0 ? Math.min(Math.round(v), 2 * 86400) : 3600;
 }
 
 export default async function Gate({
@@ -52,7 +52,11 @@ export default async function Gate({
   // Already recognised on this device (e.g. unlocked in another tab): go on
   // to where they were headed.
   const jar = await cookies();
-  if (await verifySession(jar.get(SESSION_COOKIE)?.value)) redirect(next);
+  // Percent-encode anything outside plain ASCII: a raw "日本" can't go in the
+  // Location header (it would be a server error).
+  if (await verifySession(jar.get(SESSION_COOKIE)?.value)) {
+    redirect(next.replace(/[^\x21-\x7e]/g, (c) => encodeURIComponent(c)));
+  }
 
   const reason = params.invalid ? "invalid" : params.blocked ? "blocked" : "none";
 

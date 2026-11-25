@@ -296,7 +296,7 @@ function PlaceCard({
           href={mapUrl(name)}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors w-fit"
+          className="mt-3 font-sans text-xs tracking-widest uppercase text-bark/60 hover:text-rose-deep transition-colors w-fit"
         >
           Map ↗
         </a>

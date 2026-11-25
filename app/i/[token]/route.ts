@@ -30,7 +30,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ token: stri
   if (block.blocked) return redirect(req, `/gate?blocked=${block.retryAfterSeconds}`);
 
   // An empty or wrongly formatted value counts as wrong.
-  const { token } = await ctx.params;
+  const { token: raw } = await ctx.params;
+  // Texting apps sometimes glue a space or punctuation onto the end of a
+  // link; look at the 16-character token only, so that's not a wrong guess.
+  const token = decodeURIComponent(raw ?? "").trim().match(/^[0-9a-f]{16}/i)?.[0] ?? raw;
 
   if (!token || !(await linkTokenMatches(token))) {
     recordWrong(key);

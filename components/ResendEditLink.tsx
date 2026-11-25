@@ -46,7 +46,7 @@ export default function ResendEditLink({ compact = false }: { compact?: boolean 
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="font-sans text-xs text-bark/50 underline underline-offset-2 hover:text-rose-deep transition-colors"
+          className="font-sans text-xs text-bark/60 underline underline-offset-2 hover:text-rose-deep transition-colors"
         >
           Already RSVPed? Email me my edit link
         </button>

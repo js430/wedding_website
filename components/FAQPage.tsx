@@ -141,15 +141,13 @@ function AccordionItem({ q, a }: { q: string; a: string }) {
           ✦
         </span>
       </button>
-      {open && (
-        <div id={panelId} className="pb-4 pr-8">
-          {a.split("\n").map((line, i) => (
-            <p key={i} className="font-sans text-bark/70 text-sm leading-relaxed">
-              {line}
-            </p>
-          ))}
-        </div>
-      )}
+      <div id={panelId} role="region" aria-label={q} hidden={!open} className="pb-4 pr-8">
+        {a.split("\n").map((line, i) => (
+          <p key={i} className="font-sans text-bark/70 text-sm leading-relaxed">
+            {line}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }

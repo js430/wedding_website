@@ -46,7 +46,7 @@ function GuestCardStatic({ guest }: { guest: Guest }) {
     <div className="bg-white border border-rose-soft shadow-xl text-xs px-2 py-1.5 w-36 pointer-events-none rounded-sm">
       <p className="font-sans font-semibold text-bark truncate">{guest.name}</p>
       {guest.plusOne && guest.plusOneName && (
-        <p className="font-sans text-bark/50 truncate">+1: {guest.plusOneName}</p>
+        <p className="font-sans text-bark/60 truncate">+1: {guest.plusOneName}</p>
       )}
       {guest.dietary && (
         <p className="font-sans text-rose-deep truncate">{guest.dietary}</p>
@@ -72,7 +72,7 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
         style={style}
         {...listeners}
         {...attributes}
-        className={`w-full h-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing px-0.5 ${
+        className={`w-full h-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing touch-manipulation px-0.5 ${
           isDragging ? "opacity-0" : ""
         }`}
       >
@@ -95,13 +95,13 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
       style={style}
       {...listeners}
       {...attributes}
-      className={`bg-white border border-rose-soft/40 px-2 py-1.5 cursor-grab active:cursor-grabbing select-none ${
+      className={`bg-white border border-rose-soft/40 px-2 py-1.5 cursor-grab active:cursor-grabbing select-none touch-manipulation ${
         isDragging ? "opacity-25" : ""
       }`}
     >
       <p className="font-sans text-sm font-medium text-bark truncate">{guest.name}</p>
       {guest.plusOne && guest.plusOneName && (
-        <p className="font-sans text-bark/50 text-xs truncate">+1: {guest.plusOneName}</p>
+        <p className="font-sans text-bark/60 text-xs truncate">+1: {guest.plusOneName}</p>
       )}
       {guest.dietary && (
         <p className="font-sans text-rose-deep text-xs truncate">{guest.dietary}</p>
@@ -161,6 +161,16 @@ function CircularTable({
 }) {
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState(table.name);
+  // Typed text for the capacity box; committed (clamped 1–20) when it's a
+  // number in range, or on blur, so clearing the box to retype works.
+  const [capText, setCapText] = useState(String(table.capacity));
+  useEffect(() => setCapText(String(table.capacity)), [table.capacity]);
+  const commitCap = (text: string) => {
+    const n = Math.round(Number(text));
+    const cap = Number.isFinite(n) && text.trim() !== "" ? Math.min(20, Math.max(1, n)) : table.capacity;
+    setCapText(String(cap));
+    if (cap !== table.capacity) onCapacityChange(cap);
+  };
   // People, not cards: a guest with a +1 takes two places at the table.
   const seated = Object.values(guestMap).reduce((n, g) => n + (g.seatCount ?? 1), 0);
   const full = seated >= table.capacity;
@@ -247,19 +257,23 @@ function CircularTable({
             </button>
           )}
           <p
-            className={`font-sans text-xs mt-0.5 ${over ? "text-red-600 font-semibold" : full ? "text-rose-deep" : "text-bark/40"}`}
+            className={`font-sans text-xs mt-0.5 ${over ? "text-red-600 font-semibold" : full ? "text-rose-deep" : "text-bark/60"}`}
             title={over ? "More people than places at this table" : "People seated / places"}
           >
             {seated}/
             <input
               type="number"
-              value={table.capacity}
+              value={capText}
               min={1}
               max={20}
               onChange={(e) => {
-                const n = Math.round(Number(e.target.value));
-                if (Number.isFinite(n)) onCapacityChange(Math.min(20, Math.max(1, n)));
+                const text = e.target.value;
+                setCapText(text);
+                const n = Number(text);
+                if (text.trim() !== "" && Number.isInteger(n) && n >= 1 && n <= 20) onCapacityChange(n);
               }}
+              onBlur={(e) => commitCap(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") commitCap((e.target as HTMLInputElement).value); }}
               className="w-7 bg-transparent focus:outline-none text-xs"
               aria-label={`Places at ${table.name}`}
             />
@@ -283,7 +297,7 @@ function UnassignedPanel({ guests }: { guests: Guest[] }) {
       }`}
     >
       <div className="px-4 pt-4 pb-3 border-b border-rose-soft/20">
-        <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-0.5">Unassigned</p>
+        <p className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-0.5">Unassigned</p>
         <p className="font-serif text-3xl text-bark leading-none">{guests.length}</p>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2" data-lenis-prevent>
@@ -305,6 +319,7 @@ export default function SeatingChart() {
   const [tables,     setTables]     = useState<Table[]>([]);
   const [assignments, setAssignments] = useState<Record<string, SeatAssignment>>({});
   const [loading,    setLoading]    = useState(true);
+  const [loadError,  setLoadError]  = useState(false);
   const [saving,     setSaving]     = useState(false);
   const [activeGuest, setActiveGuest] = useState<Guest | null>(null);
 
@@ -316,9 +331,15 @@ export default function SeatingChart() {
 
   // ── Load ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem("seating_tables");
+    let stored: Table[] | null = null;
+    try {
+      const parsed = JSON.parse(localStorage.getItem("seating_tables") ?? "null");
+      if (Array.isArray(parsed) && parsed.every((t) => t && typeof t.id === "string")) stored = parsed;
+    } catch {
+      // unreadable: start from the default tables
+    }
     if (stored) {
-      setTables(JSON.parse(stored));
+      setTables(stored);
     } else {
       const defaults: Table[] = Array.from({ length: 10 }, (_, i) => ({
         id: `table-${i + 1}`, number: i + 1, name: `Table ${i + 1}`, capacity: 8,
@@ -334,6 +355,7 @@ export default function SeatingChart() {
           fetch("/api/seating/guests"),
           fetch("/api/seating/assignments"),
         ]);
+        if (!gRes.ok || !aRes.ok) throw new Error(`load failed (${gRes.status}/${aRes.status})`);
         const { guests: g } = await gRes.json();
         const { assignments: a } = await aRes.json();
         if (!Array.isArray(g) || !Array.isArray(a)) throw new Error("bad response");
@@ -343,7 +365,10 @@ export default function SeatingChart() {
           if (row.tableId && row.seatNumber) map[row.guestId] = { tableId: row.tableId, seatNumber: row.seatNumber };
         });
         setAssignments(map);
-      } catch (e) { console.error("Load failed", e); }
+      } catch (e) {
+        console.error("Load failed", e);
+        setLoadError(true);
+      }
       setLoading(false);
     })();
   }, []);
@@ -353,7 +378,8 @@ export default function SeatingChart() {
   }, [tables]);
 
   // ── Persist ─────────────────────────────────────────────────────────────
-  async function persist(guestId: string, tableId: string | null, seatNumber: number | null) {
+  /** Save one guest's seat. False (after telling the user) when it failed. */
+  async function persist(guestId: string, tableId: string | null, seatNumber: number | null): Promise<boolean> {
     setSaving(true);
     const guest     = guests.find((g) => g.id === guestId);
     const tableName = tableId ? (tables.find((t) => t.id === tableId)?.name ?? "") : null;
@@ -371,12 +397,16 @@ export default function SeatingChart() {
             : "Couldn't save that change. Reloading the chart.",
         );
         window.location.reload();
+        return false;
       }
     } catch (e) {
       console.error("Save failed", e);
       window.alert("Couldn't save that change. Check your connection and reload.");
+      setSaving(false);
+      return false;
     }
     setSaving(false);
+    return true;
   }
 
   function assign(guestId: string, tableId: string | null, seatNumber: number | null) {
@@ -416,8 +446,23 @@ export default function SeatingChart() {
         (id) => assignments[id]?.tableId === tableId && assignments[id]?.seatNumber === seatNumber && id !== guestId
       );
       if (occupantId) {
+        // Swap. The server refuses a taken seat, so save one step at a time:
+        // free the dragged guest's seat, move the occupant into it (or to
+        // unassigned), then seat the dragged guest.
         const cur = assignments[guestId];
-        assign(occupantId, cur?.tableId ?? null, cur?.seatNumber ?? null);
+        setAssignments((prev) => {
+          const next = { ...prev };
+          if (cur) next[occupantId] = cur;
+          else delete next[occupantId];
+          next[guestId] = { tableId, seatNumber };
+          return next;
+        });
+        (async () => {
+          if (cur && !(await persist(guestId, null, null))) return;
+          if (!(await persist(occupantId, cur?.tableId ?? null, cur?.seatNumber ?? null))) return;
+          await persist(guestId, tableId, seatNumber);
+        })();
+        return;
       }
 
       assign(guestId, tableId, seatNumber);
@@ -437,7 +482,9 @@ export default function SeatingChart() {
     setTables((p) => p.filter((t) => t.id !== tableId));
   }
 
-  function renameTable(tableId: string, name: string) {
+  function renameTable(tableId: string, rawName: string) {
+    const name = rawName.trim();
+    if (!name) return; // keep the old name rather than a blank one
     setTables((p) => p.map((x) => (x.id === tableId ? { ...x, name } : x)));
     // The table name is also saved on each seated guest's records.
     Object.keys(assignments)
@@ -484,6 +531,19 @@ export default function SeatingChart() {
     return (
       <div className="min-h-screen bg-rose-blush flex items-center justify-center">
         <p className="font-serif italic text-bark/60 animate-pulse">Loading guest list…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-rose-blush flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p role="alert" className="font-sans text-sm text-bark/70">
+          Couldn&apos;t load the guest list or seats just now. Nothing has been changed.
+        </p>
+        <button type="button" onClick={() => window.location.reload()} className="btn-outline">
+          Try again
+        </button>
       </div>
     );
   }

@@ -157,7 +157,7 @@ export default function EventDetails() {
             <p className="font-sans text-bark/60 text-sm mb-1">
               540 Massie Rd, Charlottesville, VA 22903
             </p>
-            <p className="font-sans text-bark/50 text-xs mb-4">
+            <p className="font-sans text-bark/60 text-xs mb-4">
               Approx. <strong className="text-bark/70">$270</strong> + taxes &amp; fees per room
             </p>
             <a

@@ -5,25 +5,32 @@ import { useRouter } from "next/navigation";
 
 export default function PasswordGate() {
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"" | "wrong" | "locked" | "failed">("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(false);
+    setError("");
 
-    const res = await fetch("/api/seating/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
+    let res: Response;
+    try {
+      res = await fetch("/api/seating/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+    } catch {
+      setError("failed");
+      setLoading(false);
+      return;
+    }
 
     if (res.ok) {
       router.refresh();
     } else {
-      setError(true);
+      setError(res.status === 429 ? "locked" : res.status === 401 ? "wrong" : "failed");
       setLoading(false);
     }
   }
@@ -40,11 +47,18 @@ export default function PasswordGate() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
+            aria-label="Seating chart password"
             autoFocus
             className="w-full border border-rose-soft/60 bg-white px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep text-center tracking-widest"
           />
           {error && (
-            <p className="text-rose-deep text-sm font-sans">Incorrect password.</p>
+            <p role="alert" className="text-rose-deep text-sm font-sans">
+              {error === "wrong"
+                ? "Incorrect password."
+                : error === "locked"
+                ? "Too many wrong tries from this network. Please wait about 15 minutes, then try again."
+                : "Couldn't check that just now. Please try again."}
+            </p>
           )}
           <button
             type="submit"

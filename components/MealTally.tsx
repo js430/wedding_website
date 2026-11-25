@@ -7,7 +7,7 @@ import type { MealTally as Tally } from "@/lib/meal-tally";
 export default function MealTally() {
   const [password, setPassword] = useState("");
   const [data,     setData]     = useState<Tally | null>(null);
-  const [state,    setState]    = useState<"idle" | "loading" | "denied" | "error">("idle");
+  const [state,    setState]    = useState<"idle" | "loading" | "denied" | "locked" | "error">("idle");
 
   async function load(e: FormEvent) {
     e.preventDefault();
@@ -15,6 +15,7 @@ export default function MealTally() {
     try {
       const res = await fetch("/api/meals", { headers: { "x-admin-password": password } });
       if (res.status === 401) { setState("denied"); return; }
+      if (res.status === 429) { setState("locked"); return; }
       if (!res.ok) throw new Error();
       setData(await res.json());
       setState("idle");
@@ -33,9 +34,11 @@ export default function MealTally() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Admin password"
+            aria-label="Admin password"
             className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
           />
           {state === "denied" && <p className="text-rose-deep text-sm font-sans text-center">Incorrect password.</p>}
+          {state === "locked" && <p role="alert" className="text-rose-deep text-sm font-sans text-center">Too many wrong tries from this network. Please wait about 15 minutes, then try again.</p>}
           {state === "error"  && <p className="text-rose-deep text-sm font-sans text-center">Could not load meal counts.</p>}
           <button type="submit" disabled={state === "loading" || !password} className="w-full btn-primary disabled:opacity-50">
             {state === "loading" ? "Loading…" : "View"}
@@ -51,7 +54,7 @@ export default function MealTally() {
   // One bordered list with a label on the left and a value on the right.
   const List = ({ title, rows }: { title: string; rows: { key: string; left: string; right: string }[] }) => (
     <section className="mb-12">
-      <h2 className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-3">{title}</h2>
+      <h2 className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">{title}</h2>
       <div className="bg-white/60 border border-rose-soft/30">
         {rows.map((r) => (
           <div key={r.key} className="flex items-start justify-between gap-4 px-5 py-3 border-b border-rose-soft/20 last:border-0">
@@ -67,7 +70,7 @@ export default function MealTally() {
     <main className="min-h-screen bg-rose-blush px-6 py-16">
       <div className="max-w-3xl mx-auto">
         <p className="font-serif text-3xl text-bark mb-1">Meal counts</p>
-        <p className="font-sans text-bark/50 text-sm mb-10">
+        <p className="font-sans text-bark/60 text-sm mb-10">
           {data.plates.toLocaleString()} plate{data.plates === 1 ? "" : "s"} from {data.rsvpsAttending.toLocaleString()} attending RSVP{data.rsvpsAttending === 1 ? "" : "s"}
         </p>
 
@@ -85,9 +88,9 @@ export default function MealTally() {
         )}
 
         <section>
-          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-3">Allergies and dietary notes</h2>
+          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">Allergies and dietary notes</h2>
           <div className="bg-white/60 border border-rose-soft/30">
-            {data.allergies.length === 0 && <p className="font-sans text-sm text-bark/40 p-5">None noted.</p>}
+            {data.allergies.length === 0 && <p className="font-sans text-sm text-bark/60 p-5">None noted.</p>}
             {data.allergies.map((a, i) => (
               <div key={`${a.name}-${i}`} className="px-5 py-3 border-b border-rose-soft/20 last:border-0">
                 <p className="font-sans text-sm text-bark">{a.name}</p>

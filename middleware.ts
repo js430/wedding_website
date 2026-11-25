@@ -14,6 +14,9 @@ const PUBLIC_PREFIXES = [
   "/gate",
   "/i/",
   "/api/invite/unlock",
+  // Answers "not signed in" with empty data, so public pages (the edit link)
+  // don't log an error asking for it.
+  "/api/invite/me",
   // Edit links, resend and calendar files carry their own auth or are harmless,
   // and arrive from email on devices that have no cookie yet.
   "/rsvp/edit",

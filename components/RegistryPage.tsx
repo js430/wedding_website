@@ -46,6 +46,14 @@ function ItemCard({
   // still open, so the card leads with its lowest available price point.
   const firstOpen = group.available[0] ?? group.shown[0] ?? lead;
   const [viewingId, setViewingId] = useState(firstOpen.id);
+  // After the registry refreshes, move off an option that's no longer open
+  // (e.g. the scent this guest just claimed) to one that is.
+  const availableKey = group.available.map((a) => a.id).join(",");
+  useEffect(() => {
+    if (!group.available.some((a) => a.id === viewingId) && group.available[0]) {
+      setViewingId(group.available[0].id);
+    }
+  }, [availableKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = pickerOptions.find((o) => o.id === (singleSelectedId ?? viewingId)) ?? firstOpen;
   const shownWanted = wanted(shown);
   const shownLeft = remaining(shown);
@@ -108,9 +116,9 @@ function ItemCard({
           {shown.price !== null && (
             <>
               ${shown.price.toFixed(2)}
-              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/40 font-normal">MSRP</span>
+              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
               {hasOptions && !singleSelectedId && (
-                <span className="text-bark/40 font-normal"> · {pickerOptions.length} options</span>
+                <span className="text-bark/60 font-normal"> · {pickerOptions.length} options</span>
               )}
             </>
           )}
@@ -131,7 +139,7 @@ function ItemCard({
         {/* Price-point options */}
         {hasOptions && !claimed && (
           <div className="mb-3">
-            <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-1.5">
+            <p className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-1.5">
               {multiple ? "Choose any" : "Choose one"}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -177,13 +185,13 @@ function ItemCard({
               href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors"
+              className="font-sans text-xs tracking-widest uppercase text-bark/60 hover:text-rose-deep transition-colors"
             >
               View Item ↗
             </a>
           )}
           {!claimed && !isOpen(shown) && (
-            <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/40 px-3 py-1.5">
+            <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/60 px-3 py-1.5">
               Taken
             </span>
           )}
@@ -204,7 +212,7 @@ function ItemCard({
           {!claimed && isOpen(shown) && (
             <button
               onClick={() => onSet(shown.id, !shownSelected)}
-              className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
+              className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-1.5 sm:gap-2 font-sans text-xs tracking-widest uppercase transition-all px-2 sm:px-3 py-1.5 border ${
                 shownSelected
                   ? "bg-rose-deep text-white border-rose-deep"
                   : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
@@ -265,7 +273,7 @@ function FilterRow({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-2">
-      <span className="font-sans text-xs tracking-widest uppercase text-bark/40 sm:w-20 sm:text-right shrink-0">
+      <span className="font-sans text-xs tracking-widest uppercase text-bark/60 sm:w-20 sm:text-right shrink-0">
         {label}
       </span>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -499,13 +507,13 @@ export default function RegistryPage() {
 
             {/* Result count */}
             <div className="flex justify-center items-center gap-2 mt-4 pt-3 border-t border-rose-soft/20">
-              <p className="font-sans text-xs text-bark/40">
+              <p className="font-sans text-xs text-bark/60">
                 {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
               </p>
               {filtersActive && (
                 <button
                   onClick={clearFilters}
-                  className="font-sans text-xs text-bark/40 underline underline-offset-2 hover:text-rose-deep transition-colors"
+                  className="font-sans text-xs text-bark/60 underline underline-offset-2 hover:text-rose-deep transition-colors"
                 >
                   Clear filters
                 </button>
@@ -515,7 +523,7 @@ export default function RegistryPage() {
 
           {/* Items grid */}
           {loading ? (
-            <p className="text-center font-serif italic text-bark/50 py-20">
+            <p className="text-center font-serif italic text-bark/60 py-20">
               Loading registry…
             </p>
           ) : loadError ? (
@@ -528,7 +536,7 @@ export default function RegistryPage() {
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center font-sans text-bark/40 py-20">
+            <p className="text-center font-sans text-bark/60 py-20">
               {filtersActive
                 ? "No gifts match these filters."
                 : "No items in this category yet."}
@@ -604,7 +612,7 @@ export default function RegistryPage() {
                 >
                   {copied ? "Copied ✓" : "Copy address"}
                 </button>
-                <p className="font-sans text-xs text-rose-blush/50 leading-snug">
+                <p className="font-sans text-xs text-rose-blush/60 leading-snug">
                   Use this at checkout as the delivery address.
                 </p>
               </div>

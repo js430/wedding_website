@@ -1,15 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 /**
  * Envelope intro: a wax-sealed envelope rises in, the seal cracks,
- * the flap lifts, and the invitation card slides out. Plays on every
- * visit and holds until the guest presses Enter. Clicking during the
- * animation fast-forwards to the opened state. Reduced-motion users
- * go straight to the site.
+ * the flap lifts, and the invitation card slides out. Holds until the
+ * guest presses Enter (the button, or the Enter/Space key). Clicking during
+ * the animation fast-forwards to the opened state.
+ *
+ * Plays once per browser tab: not again when a guest comes back to the home
+ * page from another page, and not when they follow a link to a section
+ * (/#gallery). Reduced-motion users go straight to the site.
  */
+
+const SEEN_KEY = "intro-seen";
+
+/**
+ * Runs before the first paint (inline script), so a guest who shouldn't see
+ * the intro never gets a flash of it: it marks <html> with .intro-skip,
+ * which hides the overlay and leaves the page scrollable.
+ */
+const DECIDE_SKIP = `try{var d=document.documentElement;if(location.hash||matchMedia("(prefers-reduced-motion: reduce)").matches||sessionStorage.getItem("${SEEN_KEY}"))d.classList.add("intro-skip")}catch(e){}`;
 
 const ORDER = ["closed", "sealCrack", "flapOpen", "cardOut", "fade", "done"] as const;
 type Phase = (typeof ORDER)[number];
@@ -22,19 +34,50 @@ const TIMELINE: [Phase, number][] = [
 
 export default function Intro() {
   const [phase, setPhase] = useState<Phase>("closed");
+  const enterRef = useRef<HTMLButtonElement | null>(null);
 
   // Only ever move forward — a stale timer can't rewind a fast-forward
   const advance = (p: Phase) =>
     setPhase((prev) => (ORDER.indexOf(p) > ORDER.indexOf(prev) ? p : prev));
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (document.documentElement.classList.contains("intro-skip")) {
       setPhase("done");
       return;
     }
+    try {
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      // private mode: it just plays again next time
+    }
+    // Start at the top, even if the browser restored a scroll position.
+    window.scrollTo(0, 0);
     const timers = TIMELINE.map(([p, t]) => setTimeout(() => advance(p), t));
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // Keyboard: Enter or Space skips ahead, then enters; Tab stays on the
+  // intro's button instead of reaching links hidden behind it.
+  useEffect(() => {
+    if (phase === "done" || phase === "fade") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (ORDER.indexOf(phase) >= ORDER.indexOf("cardOut")) enter();
+        else fastForward();
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        enterRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus the Enter button when it appears.
+  useEffect(() => {
+    if (phase === "cardOut") enterRef.current?.focus({ preventScroll: true });
+  }, [phase]);
 
   function fastForward() {
     advance("cardOut");
@@ -58,14 +101,16 @@ export default function Intro() {
       role="presentation"
       // data-lenis-prevent: the smooth-scroll library ignores wheel events here.
       data-lenis-prevent
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest overflow-hidden"
+      className="intro-overlay fixed inset-0 z-[100] flex items-center justify-center bg-crimson-darkest overflow-hidden"
       animate={{ opacity: phase === "fade" ? 0 : 1 }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
     >
+      {/* Decide before the first paint whether to skip (see DECIDE_SKIP). */}
+      <script dangerouslySetInnerHTML={{ __html: DECIDE_SKIP }} />
       {/* Hold the page still behind the intro, so the guest starts at the top.
           A style tag (not an effect) so it applies from the first paint,
           before the page is interactive; it goes away with the intro. */}
-      <style>{"html{overflow:hidden}"}</style>
+      <style>{"html:not(.intro-skip){overflow:hidden}html.intro-skip .intro-overlay{display:none}"}</style>
       {/* Candlelight vignette */}
       <div
         className="absolute inset-0"
@@ -159,6 +204,7 @@ export default function Intro() {
       <div className="absolute inset-x-0 bottom-14 flex justify-center">
         {cardUp ? (
           <motion.button
+            ref={enterRef}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -172,7 +218,7 @@ export default function Intro() {
             Enter
           </motion.button>
         ) : (
-          <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-rose-blush/35">
+          <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-rose-blush/60">
             Click to skip ahead
           </p>
         )}

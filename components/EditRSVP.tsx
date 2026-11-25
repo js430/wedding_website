@@ -114,7 +114,7 @@ export default function EditRSVP() {
   );
 
   if (load === "loading")
-    return shell(<p className="text-center font-serif italic text-bark/50 py-24">Loading your RSVP…</p>);
+    return shell(<p className="text-center font-serif italic text-bark/60 py-24">Loading your RSVP…</p>);
 
   if (load === "unavailable")
     return shell(
@@ -238,7 +238,7 @@ export default function EditRSVP() {
                 placeholder="Nut allergy, shellfish, etc."
                 className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep disabled:opacity-50"
               />
-              <p className="font-sans text-xs text-bark/50 mt-1.5 leading-relaxed">
+              <p className="font-sans text-xs text-bark/60 mt-1.5 leading-relaxed">
                 We can&apos;t guarantee we can accommodate every request, but we&apos;ll do our best.
               </p>
             </div>
