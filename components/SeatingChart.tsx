@@ -274,7 +274,7 @@ function CircularTable({
               }}
               onBlur={(e) => commitCap(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") commitCap((e.target as HTMLInputElement).value); }}
-              className="w-7 bg-transparent focus:outline-none text-xs"
+              className="w-7 bg-transparent focus:outline-none text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label={`Places at ${table.name}`}
             />
           </p>
