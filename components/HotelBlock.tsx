@@ -32,7 +32,7 @@ export default function HotelBlock() {
       <p className="font-sans text-bark/60 text-sm mb-1">
         540 Massie Rd, Charlottesville, VA 22903
       </p>
-      <p className="font-sans text-bark/50 text-xs mb-5">
+      <p className="font-sans text-bark/60 text-xs mb-5">
         Approx. <strong className="text-bark/70">$270</strong> + taxes &amp; fees per room
       </p>
 
@@ -56,13 +56,13 @@ export default function HotelBlock() {
           href={HOTEL_WEBSITE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors"
+          className="font-sans text-xs tracking-widest uppercase text-bark/60 hover:text-rose-deep transition-colors"
         >
           Hotel website ↗
         </a>
       </p>
 
-      <p className="font-sans text-bark/50 text-xs mt-5 leading-relaxed">
+      <p className="font-sans text-bark/60 text-xs mt-5 leading-relaxed">
         There&apos;s a room for every guest — just book by{" "}
         <strong className="text-bark/70">{HOTEL_BLOCK_DEADLINE}</strong> to get
         our block rate.

@@ -15,13 +15,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ guests: [] });
   }
 
-  const response = await notion.databases.query({
+  let response;
+  try {
+    response = await notion.databases.query({
     database_id: process.env.NOTION_DATABASE_ID,
     filter: {
       property: "Attending",
       select: { equals: "Yes" },
     },
   });
+  } catch (err: any) {
+    console.error("[Seating] guest list failed:", err?.message ?? err);
+    return NextResponse.json({ error: "unavailable" }, { status: 502 });
+  }
 
   const guests = response.results.map((page: any) => {
     const props = page.properties;

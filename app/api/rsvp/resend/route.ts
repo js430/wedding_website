@@ -5,7 +5,7 @@ import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { allow } from "@/lib/rate-limit";
 import { clientKey } from "@/lib/invite-guard";
-import { escapeHtml } from "@/lib/input";
+import { cleanEmail, escapeHtml } from "@/lib/input";
 
 export const dynamic = "force-dynamic";
 
@@ -65,13 +65,14 @@ function buildResendEmail(name: string, editUrl: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json().catch(() => ({ email: "" }));
-  const address = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const body = await req.json().catch(() => null);
+  const email = body && typeof body === "object" ? (body as { email?: unknown }).email : "";
+  const address = cleanEmail(email);
 
   // Same body for every outcome below, so nothing distinguishes a hit from a miss.
   const ok = NextResponse.json({ ok: true });
 
-  if (!address || !address.includes("@")) {
+  if (!address) {
     return NextResponse.json({ error: "invalid-email" }, { status: 400 });
   }
 

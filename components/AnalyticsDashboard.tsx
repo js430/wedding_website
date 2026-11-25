@@ -8,7 +8,7 @@ interface Row { date: string; path: string; views: number }
 export default function AnalyticsDashboard() {
   const [password, setPassword] = useState("");
   const [rows,     setRows]     = useState<Row[] | null>(null);
-  const [state,    setState]    = useState<"idle" | "loading" | "denied" | "error">("idle");
+  const [state,    setState]    = useState<"idle" | "loading" | "denied" | "locked" | "error">("idle");
 
   async function load(e: FormEvent) {
     e.preventDefault();
@@ -16,6 +16,7 @@ export default function AnalyticsDashboard() {
     try {
       const res = await fetch("/api/analytics", { headers: { "x-admin-password": password } });
       if (res.status === 401) { setState("denied"); return; }
+      if (res.status === 429) { setState("locked"); return; }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setRows(data.rows ?? []);
@@ -35,9 +36,11 @@ export default function AnalyticsDashboard() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Admin password"
+            aria-label="Admin password"
             className="w-full border border-rose-soft/60 bg-white/80 px-4 py-2.5 font-sans text-sm text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
           />
           {state === "denied" && <p className="text-rose-deep text-sm font-sans text-center">Incorrect password.</p>}
+          {state === "locked" && <p role="alert" className="text-rose-deep text-sm font-sans text-center">Too many wrong tries from this network. Please wait about 15 minutes, then try again.</p>}
           {state === "error"  && <p className="text-rose-deep text-sm font-sans text-center">Could not load analytics.</p>}
           <button type="submit" disabled={state === "loading" || !password} className="w-full btn-primary disabled:opacity-50">
             {state === "loading" ? "Loading…" : "View"}
@@ -62,14 +65,14 @@ export default function AnalyticsDashboard() {
     <main className="min-h-screen bg-rose-blush px-6 py-16">
       <div className="max-w-3xl mx-auto">
         <p className="font-serif text-3xl text-bark mb-1">Site analytics</p>
-        <p className="font-sans text-bark/50 text-sm mb-10">
+        <p className="font-sans text-bark/60 text-sm mb-10">
           {total.toLocaleString()} page view{total === 1 ? "" : "s"} recorded
         </p>
 
         <section className="mb-12">
-          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-3">By page</h2>
+          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">By page</h2>
           <div className="bg-white/60 border border-rose-soft/30">
-            {paths.length === 0 && <p className="font-sans text-sm text-bark/40 p-5">Nothing recorded yet.</p>}
+            {paths.length === 0 && <p className="font-sans text-sm text-bark/60 p-5">Nothing recorded yet.</p>}
             {paths.map(([path, views]) => (
               <div key={path} className="flex items-center justify-between gap-3 px-5 py-3 border-b border-rose-soft/20 last:border-0">
                 <span className="font-sans text-sm text-bark min-w-0 break-all">{path}</span>
@@ -80,12 +83,12 @@ export default function AnalyticsDashboard() {
         </section>
 
         <section>
-          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-3">Last 30 days</h2>
+          <h2 className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">Last 30 days</h2>
           <div className="bg-white/60 border border-rose-soft/30 p-5 space-y-1.5">
-            {days.length === 0 && <p className="font-sans text-sm text-bark/40">Nothing recorded yet.</p>}
+            {days.length === 0 && <p className="font-sans text-sm text-bark/60">Nothing recorded yet.</p>}
             {days.map(([date, views]) => (
               <div key={date} className="flex items-center gap-3">
-                <span className="font-sans text-xs text-bark/50 w-24 shrink-0">{date}</span>
+                <span className="font-sans text-xs text-bark/60 w-24 shrink-0">{date}</span>
                 {/* The bar fills a track that leaves room for the count. */}
                 <span className="flex-1 min-w-0">
                   <span

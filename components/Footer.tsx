@@ -14,11 +14,11 @@ export default function Footer() {
         March 27, 2027 · Charlottesville, VA
       </p>
       <div className="h-px w-24 mx-auto mb-6 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
-      <p className="font-sans text-xs text-ivory/40">
+      <p className="font-sans text-xs text-ivory/60">
         Made with love · {new Date().getFullYear()}
       </p>
       <div className="mt-4">
-        <InviteDevices className="font-sans text-xs text-rose-blush/50 underline underline-offset-4 decoration-rose-blush/30 hover:text-rose-blush/80 transition-colors" />
+        <InviteDevices className="font-sans text-xs text-rose-blush/60 underline underline-offset-4 decoration-rose-blush/30 hover:text-rose-blush/80 transition-colors" />
       </div>
     </footer>
   );

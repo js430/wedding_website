@@ -89,11 +89,17 @@ export interface RegistryGroup {
   shown: RegistryItem[];
 }
 
-/** Label for one option, falling back to price or name when Option is blank. */
-export function optionLabel(item: RegistryItem): string {
+/**
+ * Label for one option's button. Uses `Option` when filled in; otherwise the
+ * row's name when the options are differently named items (say, a table lamp
+ * and a floor lamp), or its price when they're the same item at several
+ * price points.
+ */
+export function optionLabel(item: RegistryItem, siblings: RegistryItem[] = [item]): string {
   if (item.option) return item.option;
-  if (item.price !== null) return `$${item.price.toFixed(2)}`;
-  return item.name;
+  const namesDiffer = new Set(siblings.map((s) => s.name.trim())).size > 1;
+  if (namesDiffer || item.price === null) return item.name;
+  return `$${item.price.toFixed(2)}`;
 }
 
 export function groupItems(items: RegistryItem[]): RegistryGroup[] {
@@ -141,10 +147,10 @@ export interface PriceRange {
 
 /** Budget brackets offered to guests. `max: Infinity` is the open top end. */
 export const PRICE_RANGES: PriceRange[] = [
-  { id: "u50",     label: "Under $50",  min: 0,   max: 50 },
-  { id: "50-100",  label: "$50–$100",   min: 50,  max: 100 },
+  { id: "u100",    label: "<$100",      min: 0,   max: 100 },
   { id: "100-250", label: "$100–$250",  min: 100, max: 250 },
-  { id: "250+",    label: "$250+",      min: 250, max: Infinity },
+  { id: "250-500", label: "$250–$500",  min: 250, max: 500 },
+  { id: "500+",    label: "$500+",      min: 500, max: Infinity },
 ];
 
 /**
@@ -153,8 +159,8 @@ export const PRICE_RANGES: PriceRange[] = [
  * price points, not only its cheapest.
  */
 export function groupInRange(group: RegistryGroup, range: PriceRange): boolean {
-  // Upper bound exclusive, so a $50 gift sits in "$50–$100" only, not in
-  // "Under $50" too.
+  // Upper bound exclusive, so a $100 gift sits in "$100–$250" only, not in
+  // "<$100" too.
   return group.options.some(
     (o) => o.price !== null && o.price >= range.min && o.price < range.max
   );

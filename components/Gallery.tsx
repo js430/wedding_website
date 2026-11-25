@@ -152,7 +152,14 @@ export default function Gallery() {
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    // Hold the page still behind the photo.
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      root.style.overflow = previous;
+    };
   }, [active]);
 
   return (
@@ -217,6 +224,7 @@ export default function Gallery() {
             transition={{ duration: 0.3 }}
             onClick={close}
             role="dialog"
+            data-lenis-prevent
             aria-modal="true"
             aria-label={photos[active].caption}
             className="fixed inset-0 z-[150] bg-crimson-darkest/90 backdrop-blur-md flex flex-col items-center justify-center p-6 cursor-zoom-out"
@@ -250,7 +258,7 @@ export default function Gallery() {
             <p className="font-script text-3xl text-gold mb-1">
               {photos[active].caption}
             </p>
-            <p className="font-sans text-rose-blush/40 text-xs tracking-widest uppercase">
+            <p className="font-sans text-rose-blush/60 text-xs tracking-widest uppercase">
               Tap anywhere to close
             </p>
           </motion.div>

@@ -147,7 +147,7 @@ export default function GatePage({
           </p>
         </section>
 
-        <p className="mt-8 font-sans text-xs text-bark/50 leading-relaxed">
+        <p className="mt-8 font-sans text-xs text-bark/60 leading-relaxed">
           Still stuck? Reach out to Katie or Jeffrey.
         </p>
       </div>

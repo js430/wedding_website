@@ -113,6 +113,10 @@ function buildEmail(guestName: string, items: ClaimItem[]): string {
                         Enter this as the delivery address at checkout. Most retailers
                         ask for it on the shipping step, before payment.
                       </p>
+                      <p style="margin:8px 0 0;font-family:sans-serif;font-size:12px;line-height:1.5;color:#4a3728;">
+                        We ask that you please don't bring large gifts to the venue.
+                        Smaller gifts you're welcome to bring in person if you wish.
+                      </p>
                     </td>
                   </tr>
                 </table>
@@ -288,7 +292,7 @@ export async function POST(req: NextRequest) {
     });
     if (taken.length) {
       return NextResponse.json(
-        { error: "already-claimed", items: taken.map((i) => i.name), ids: taken.map((i) => i.id) },
+        { error: "already-claimed", items: taken.map((i) => (i.option ? `${i.name} (${i.option})` : i.name)), ids: taken.map((i) => i.id) },
         { status: 409 },
       );
     }

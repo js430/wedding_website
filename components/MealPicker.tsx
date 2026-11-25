@@ -42,7 +42,7 @@ export default function MealPicker({ legend, value, onChange, disabled, idPrefix
             >
               <span className="block text-sm">{m.label}</span>
               {m.note && (
-                <span className={`block text-xs mt-0.5 ${selected ? "text-white/80" : "text-bark/50"}`}>
+                <span className={`block text-xs mt-0.5 ${selected ? "text-white/80" : "text-bark/60"}`}>
                   {m.note}
                 </span>
               )}
@@ -52,7 +52,7 @@ export default function MealPicker({ legend, value, onChange, disabled, idPrefix
 
         <p
           id={`${idPrefix}-special-heading`}
-          className="font-sans text-xs tracking-widest uppercase text-bark/50 pt-3"
+          className="font-sans text-xs tracking-widest uppercase text-bark/60 pt-3"
         >
           Special meals
         </p>

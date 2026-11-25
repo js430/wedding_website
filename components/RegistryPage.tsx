@@ -46,6 +46,14 @@ function ItemCard({
   // still open, so the card leads with its lowest available price point.
   const firstOpen = group.available[0] ?? group.shown[0] ?? lead;
   const [viewingId, setViewingId] = useState(firstOpen.id);
+  // After the registry refreshes, move off an option that's no longer open
+  // (e.g. the scent this guest just claimed) to one that is.
+  const availableKey = group.available.map((a) => a.id).join(",");
+  useEffect(() => {
+    if (!group.available.some((a) => a.id === viewingId) && group.available[0]) {
+      setViewingId(group.available[0].id);
+    }
+  }, [availableKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const shown = pickerOptions.find((o) => o.id === (singleSelectedId ?? viewingId)) ?? firstOpen;
   const shownWanted = wanted(shown);
   const shownLeft = remaining(shown);
@@ -76,7 +84,7 @@ function ItemCard({
           <img
             key={shownImage}
             src={shownImage}
-            alt={shown.option ? `${lead.name} — ${shown.option}` : lead.name}
+            alt={shown.option ? `${shown.name || lead.name} — ${shown.option}` : shown.name || lead.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -99,17 +107,18 @@ function ItemCard({
         {/* Fixed-height header — reserves room for a two-line name and a
             two-line description whether or not this card uses it, so the
             option pickers line up across the row. */}
+        {/* The chosen option's own name and description, when it has them. */}
         <p className="font-serif text-bark text-lg leading-snug mb-1 line-clamp-2 min-h-[3.1rem]">
-          {lead.name}
+          {shown.name || lead.name}
         </p>
 
         <p className="font-sans text-rose-deep text-sm font-medium mb-2 min-h-[1.25rem]">
           {shown.price !== null && (
             <>
               ${shown.price.toFixed(2)}
-              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/40 font-normal">MSRP</span>
+              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
               {hasOptions && !singleSelectedId && (
-                <span className="text-bark/40 font-normal"> · {pickerOptions.length} options</span>
+                <span className="text-bark/60 font-normal"> · {pickerOptions.length} options</span>
               )}
             </>
           )}
@@ -124,13 +133,13 @@ function ItemCard({
         )}
 
         <p className="font-sans text-bark/60 text-sm leading-relaxed mb-3 line-clamp-2 min-h-[2.85rem]">
-          {lead.description}
+          {shown.description || lead.description}
         </p>
 
         {/* Price-point options */}
         {hasOptions && !claimed && (
           <div className="mb-3">
-            <p className="font-sans text-xs tracking-widest uppercase text-bark/50 mb-1.5">
+            <p className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-1.5">
               {multiple ? "Choose any" : "Choose one"}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -153,7 +162,7 @@ function ItemCard({
                     }`}
                   >
                     {picked && <span aria-hidden="true">✓ </span>}
-                    <span className={taken ? "line-through" : ""}>{optionLabel(o)}</span>
+                    <span className={taken ? "line-through" : ""}>{optionLabel(o, pickerOptions)}</span>
                     {taken && <span className="sr-only"> (taken)</span>}
                     {picked && <span className="sr-only"> (selected)</span>}
                   </button>
@@ -176,13 +185,13 @@ function ItemCard({
               href={shown.link.match(/^https?:\/\//) ? shown.link : `https://${shown.link}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-sans text-xs tracking-widest uppercase text-bark/50 hover:text-rose-deep transition-colors"
+              className="font-sans text-xs tracking-widest uppercase text-bark/60 hover:text-rose-deep transition-colors"
             >
               View Item ↗
             </a>
           )}
           {!claimed && !isOpen(shown) && (
-            <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/40 px-3 py-1.5">
+            <span className="ml-auto font-sans text-xs tracking-widest uppercase text-bark/60 px-3 py-1.5">
               Taken
             </span>
           )}
@@ -203,7 +212,7 @@ function ItemCard({
           {!claimed && isOpen(shown) && (
             <button
               onClick={() => onSet(shown.id, !shownSelected)}
-              className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-2 font-sans text-xs tracking-widest uppercase transition-all px-3 py-1.5 border ${
+              className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-1.5 sm:gap-2 font-sans text-xs tracking-widest uppercase transition-all px-2 sm:px-3 py-1.5 border ${
                 shownSelected
                   ? "bg-rose-deep text-white border-rose-deep"
                   : "border-rose-soft/50 text-bark/60 hover:border-rose-deep hover:text-rose-deep"
@@ -264,7 +273,7 @@ function FilterRow({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-2">
-      <span className="font-sans text-xs tracking-widest uppercase text-bark/40 sm:w-20 sm:text-right shrink-0">
+      <span className="font-sans text-xs tracking-widest uppercase text-bark/60 sm:w-20 sm:text-right shrink-0">
         {label}
       </span>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -432,15 +441,23 @@ export default function RegistryPage() {
             <span className="text-gold text-xl">✦</span>
           </div>
           <p className="text-center font-sans text-bark/60 text-sm mb-5 -mt-4 max-w-lg mx-auto">
-            Select the items you'd like to gift, enter your email, and we'll send
-            you the purchase links — no account needed.
+            Select the items you&apos;d like to gift and enter your email. We&apos;ll send
+            you the purchase links and our shipping address, no account needed.
           </p>
-          <p className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3">
-            <span className="font-serif italic text-gold">A note on prices:</span>{" "}
-            prices shown are the retail price (MSRP), just for reference. You&apos;re free
-            to buy any gift wherever you like, and if you find it for less elsewhere,
-            please do. We&apos;d encourage it!
-          </p>
+          <div className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3 space-y-2">
+            <p>
+              <span className="font-serif italic text-gold-dark">A note on prices:</span>{" "}
+              prices shown are the retail price (MSRP), just for reference. You&apos;re free
+              to buy any gift wherever you like, and if you find it for less elsewhere,
+              please do. We&apos;d encourage it!
+            </p>
+            <p>
+              <span className="font-serif italic text-gold-dark">Shipping:</span>{" "}
+              the shipping address comes in the email with your purchase links. We ask
+              that you please don&apos;t bring large gifts to the venue; smaller gifts
+              you&apos;re welcome to bring in person if you wish.
+            </p>
+          </div>
 
           {/* Filters — category, price, sort */}
           <div className="max-w-3xl mx-auto mb-10 bg-white/50 border border-rose-soft/30 px-5 py-4">
@@ -490,13 +507,13 @@ export default function RegistryPage() {
 
             {/* Result count */}
             <div className="flex justify-center items-center gap-2 mt-4 pt-3 border-t border-rose-soft/20">
-              <p className="font-sans text-xs text-bark/40">
+              <p className="font-sans text-xs text-bark/60">
                 {filtered.length} {filtered.length === 1 ? "gift" : "gifts"}
               </p>
               {filtersActive && (
                 <button
                   onClick={clearFilters}
-                  className="font-sans text-xs text-bark/40 underline underline-offset-2 hover:text-rose-deep transition-colors"
+                  className="font-sans text-xs text-bark/60 underline underline-offset-2 hover:text-rose-deep transition-colors"
                 >
                   Clear filters
                 </button>
@@ -506,7 +523,7 @@ export default function RegistryPage() {
 
           {/* Items grid */}
           {loading ? (
-            <p className="text-center font-serif italic text-bark/50 py-20">
+            <p className="text-center font-serif italic text-bark/60 py-20">
               Loading registry…
             </p>
           ) : loadError ? (
@@ -519,7 +536,7 @@ export default function RegistryPage() {
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center font-sans text-bark/40 py-20">
+            <p className="text-center font-sans text-bark/60 py-20">
               {filtersActive
                 ? "No gifts match these filters."
                 : "No items in this category yet."}
@@ -595,7 +612,7 @@ export default function RegistryPage() {
                 >
                   {copied ? "Copied ✓" : "Copy address"}
                 </button>
-                <p className="font-sans text-xs text-rose-blush/50 leading-snug">
+                <p className="font-sans text-xs text-rose-blush/60 leading-snug">
                   Use this at checkout as the delivery address.
                 </p>
               </div>
