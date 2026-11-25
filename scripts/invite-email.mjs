@@ -45,12 +45,19 @@ function googleCalendarUrl() {
  * @param {string} o.link      The site's invite link (signs the guest in), e.g. https://www.jeffandkatie2027.com/i/abcd…
  * @param {string} o.password  The site password, for opening the site on another device
  * @param {string} o.siteUrl   e.g. https://www.jeffandkatie2027.com
+ * @param {string} [o.unsubscribeUrl]  Adds an opt-out link to the footer (Resend Broadcasts
+ *                                     pass "{{{RESEND_UNSUBSCRIBE_URL}}}")
  */
-export function buildInviteEmail({ name, link, password, siteUrl }) {
+export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl }) {
   const host = siteUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const calendarUrl = `${siteUrl.replace(/\/+$/, "")}/api/calendar`;
   const subject = "You're invited: Katie & Jeffrey · March 27, 2027";
   const preheader = `Join us in Charlottesville on ${WEDDING.dateLine}. Kindly reply by ${WEDDING.rsvpBy}.`;
+  // Resend placeholders ({{{…}}}) pass through escaping untouched.
+  const optOutHtml = unsubscribeUrl
+    ? `<br><a href="${esc(unsubscribeUrl)}" style="color:#6b4f45;text-decoration:underline;">Prefer not to get wedding emails?</a>`
+    : "";
+  const optOutText = unsubscribeUrl ? `\nPrefer not to get wedding emails? ${unsubscribeUrl}` : "";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -154,7 +161,7 @@ export function buildInviteEmail({ name, link, password, siteUrl }) {
         <!-- Footer -->
         <tr>
           <td style="background:#FEE8EC;padding:18px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6b4f45;">
-            Questions? Just reply to this email.
+            Questions? Just reply to this email.${optOutHtml}
           </td>
         </tr>
       </table>
@@ -182,7 +189,7 @@ export function buildInviteEmail({ name, link, password, siteUrl }) {
     "We can't wait to celebrate with you.",
     "With love, Katie & Jeffrey",
     "",
-    "Questions? Just reply to this email.",
+    `Questions? Just reply to this email.${optOutText}`,
   ].join("\n");
 
   return { subject, html, text };
