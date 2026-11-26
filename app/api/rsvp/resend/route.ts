@@ -31,7 +31,7 @@ function buildResendEmail(name: string, editUrl: string): { html: string; text: 
   ].join("\n");
   const first = name.trim().split(/\s+/)[0];
   return {
-    html: emailLayout({ kicker: "Katie & Jeffrey", title: "Your RSVP link", preheader: `View or change your RSVP until ${formatDeadline()}.`, bodyHtml }),
+    html: emailLayout({ kicker: "Katie & Jeffrey", title: "Your personal link", preheader: `View or change your RSVP until ${formatDeadline()}.`, bodyHtml }),
     text: [
       `Hi ${first || "there"},`,
       "",
