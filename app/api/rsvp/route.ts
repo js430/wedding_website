@@ -89,7 +89,7 @@ function buildRSVPEmail(data: {
                   ${rowsHtml}
                 </table>
                 <p style="margin:0 0 8px;font-family:sans-serif;font-size:13px;color:#4a3728;">
-                  <strong>When:</strong> Saturday, March 27, 2027 · Doors open at 4:00 PM, Ceremony at 5:00 PM
+                  <strong>When:</strong> Saturday, March 27, 2027 · Doors open at 4:30 PM, Ceremony at 5:00 PM
                 </p>
                 <p style="margin:0 0 18px;font-family:sans-serif;font-size:13px;color:#4a3728;">
                   <strong>Where:</strong> The Forum Hotel, 540 Massie Rd, Charlottesville, VA 22903

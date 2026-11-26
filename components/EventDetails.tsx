@@ -11,7 +11,7 @@ const events = [
     time: "5:00 PM",
     venue: "The Forum Hotel",
     address: "540 Massie Rd, Charlottesville, VA 22903",
-    notes: "Doors open at 4:00 PM. The ceremony will be held outdoors — we recommend flat shoes for the grass.",
+    notes: "Doors open at 4:30 PM. The ceremony will be held outdoors — we recommend flat shoes for the grass.",
     mapUrl: "https://maps.google.com/?q=540+Massie+Rd+Charlottesville+VA+22903",
   },
   {

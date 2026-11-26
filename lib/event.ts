@@ -6,15 +6,15 @@
 export const EVENT = {
   title:    "Katie & Jeffrey's Wedding",
   /** Doors open; the ceremony begins at 5:00 PM. */
-  start:    "2027-03-27T16:00:00",
+  start:    "2027-03-27T16:30:00",
   end:      "2027-03-27T23:00:00",
   timeZone: "America/New_York",
   venue:    "The Forum Hotel",
   address:  "540 Massie Rd, Charlottesville, VA 22903",
-  details:  "Doors open at 4:00 PM, ceremony at 5:00 PM. We can't wait to celebrate with you!",
+  details:  "Doors open at 4:30 PM, ceremony at 5:00 PM. We can't wait to celebrate with you!",
 } as const;
 
-/** "20270327T160000" — local time, paired with a TZID in the VEVENT. */
+/** "20270327T163000" — local time, paired with a TZID in the VEVENT. */
 function stamp(iso: string): string {
   return iso.replace(/[-:]/g, "").replace(".000", "");
 }

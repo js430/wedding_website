@@ -9,12 +9,12 @@
 const WEDDING = {
   dateLine: "Saturday, March 27, 2027",
   // Non-breaking spaces keep "5:00 PM" together on narrow screens.
-  timeLine: "Doors open at 4:00\u00a0PM · Ceremony at 5:00\u00a0PM",
+  timeLine: "Doors open at 4:30\u00a0PM · Ceremony at 5:00\u00a0PM",
   venue: "The Forum Hotel",
   address: "540 Massie Rd, Charlottesville, VA 22903",
   rsvpBy: "January 27, 2027",
   // For the Google Calendar link (local time, America/New_York).
-  gcal: { start: "20270327T160000", end: "20270327T230000", tz: "America/New_York" },
+  gcal: { start: "20270327T163000", end: "20270327T230000", tz: "America/New_York" },
 };
 
 /** Escape text for HTML (names come from your guest list). */
@@ -34,7 +34,7 @@ function googleCalendarUrl() {
     dates: `${WEDDING.gcal.start}/${WEDDING.gcal.end}`,
     ctz: WEDDING.gcal.tz,
     location: `${WEDDING.venue}, ${WEDDING.address}`,
-    details: "Doors open at 4:00 PM, ceremony at 5:00 PM. We can't wait to celebrate with you!",
+    details: "Doors open at 4:30 PM, ceremony at 5:00 PM. We can't wait to celebrate with you!",
   });
   return `https://calendar.google.com/calendar/render?${p}`;
 }
