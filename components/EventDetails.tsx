@@ -120,8 +120,7 @@ export default function EventDetails() {
             <p className="font-serif italic text-gold-dark text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
             <p className="font-sans text-bark/60 text-sm leading-relaxed">
-              Please don&apos;t wear white or red, or any shade of either:
-              no ivory, cream or champagne, and no crimson, burgundy or maroon.
+              We kindly ask that you avoid shades of white, red and pink.
             </p>
           </div>
           <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
