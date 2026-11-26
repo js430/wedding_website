@@ -15,9 +15,10 @@
  *   NOTION_DATABASE_ID=…
  *
  * For each host row with "+1" = Yes and no +1 row of its own yet, it creates
- * the +1's row (Name, Attending, Meal, Guest Of = host email, Table and Seat
- * copied) and then clears the host's Guest Name / Guest Meal. Safe to run
- * again: hosts that already have a +1 row are skipped.
+ * the +1's row (Name, Attending, Meal, Guest Of = host's name, Table and Seat
+ * copied) and then clears the host's Guest Name / Guest Meal. +1 rows whose
+ * Guest Of still holds the host's email are switched to the host's name.
+ * Safe to run again: anything already done is skipped.
  */
 
 import { Client } from "@notionhq/client";
@@ -55,28 +56,41 @@ const asType = (type, v) => type === "rich_text"
 const typeOf = (key) => pages.find((p) => p.properties?.[key])?.properties[key].type ?? "select";
 
 const guestOf = (p) => text(p.properties?.["Guest Of"]).trim().toLowerCase();
+const emailOf = (p) => String(p.properties?.Email?.email ?? "").trim().toLowerCase();
+const nameOf = (p) => text(p.properties?.Name).trim();
 const hasOwnRow = new Set(pages.map(guestOf).filter(Boolean));
-const todo = pages.filter((p) =>
-  !guestOf(p) &&
+const hosts = pages.filter((p) => !guestOf(p));
+const todo = hosts.filter((p) =>
   choice(p.properties?.["+1"]) === "Yes" &&
-  !hasOwnRow.has(String(p.properties?.Email?.email ?? "").trim().toLowerCase()),
+  !hasOwnRow.has(nameOf(p).toLowerCase()) &&
+  !hasOwnRow.has(emailOf(p)),
 );
+// +1 rows from before "Guest Of" showed names: point them at the host's name.
+const hostByEmail = new Map(hosts.filter((h) => emailOf(h)).map((h) => [emailOf(h), h]));
+const relabel = pages
+  .filter((p) => guestOf(p).includes("@") && hostByEmail.has(guestOf(p)) && nameOf(hostByEmail.get(guestOf(p))))
+  .map((p) => ({ row: p, name: nameOf(hostByEmail.get(guestOf(p))) }));
 
-console.log(`\n${pages.length} rows; ${todo.length} +1(s) to move to their own row.${apply ? "" : " (dry run: nothing changes)"}\n`);
+console.log(`\n${pages.length} rows; ${todo.length} +1(s) to move to their own row, ${relabel.length} "Guest Of" email(s) to change to a name.${apply ? "" : " (dry run: nothing changes)"}\n`);
+
+for (const { row, name } of relabel) {
+  console.log(`  ${apply ? "✓" : "→"} ${nameOf(row)}: Guest Of ${guestOf(row)} → ${name}`);
+  if (apply) await notion.pages.update({ page_id: row.id, properties: { "Guest Of": { rich_text: [{ text: { content: name } }] } } });
+}
 
 let done = 0;
 for (const host of todo) {
   const p = host.properties;
   const hostName = text(p.Name);
   const email = String(p.Email?.email ?? "").trim().toLowerCase();
-  if (!email) {
-    console.log(`  – skipped ${hostName || host.id}: no email to link the +1 to`);
+  if (!hostName.trim()) {
+    console.log(`  – skipped ${host.id}: no name to link the +1 to`);
     continue;
   }
   const firstName = hostName.trim().split(/\s+/)[0] || "Guest";
   const guestName = text(p["Guest Name"]).trim() || `${firstName}'s guest`;
   const meal = choice(p["Guest Meal"]) || null;
-  console.log(`  ${apply ? "✓" : "→"} ${guestName}${meal ? ` (${meal})` : " (no meal chosen)"}, guest of ${hostName} <${email}>`);
+  console.log(`  ${apply ? "✓" : "→"} ${guestName}${meal ? ` (${meal})` : " (no meal chosen)"}, guest of ${hostName}${email ? ` <${email}>` : ""}`);
   if (!apply) continue;
 
   await notion.pages.create({
@@ -85,7 +99,7 @@ for (const host of todo) {
       Name:           { title:     [{ text: { content: guestName } }] },
       Attending:      asType(typeOf("Attending"), choice(p.Attending) === "Yes" ? "Yes" : "No"),
       Meal:           asType(typeOf("Meal"), meal),
-      "Guest Of":     { rich_text: [{ text: { content: email } }] },
+      "Guest Of":     { rich_text: [{ text: { content: hostName.trim() } }] },
       "Submitted At": { date:      p["Submitted At"]?.date?.start ? { start: p["Submitted At"].date.start } : null },
       ...("Table" in p ? { Table: { rich_text: text(p.Table) ? [{ text: { content: text(p.Table) } }] : [] } } : {}),
       ...("Seat" in p ? { Seat: { number: p.Seat?.number ?? null } } : {}),
@@ -101,4 +115,4 @@ for (const host of todo) {
   done++;
 }
 
-console.log(apply ? `\nMoved ${done}.\n` : "\nRun again with --apply to make these changes.\n");
+console.log(apply ? `\nMoved ${done}, renamed ${relabel.length}.\n` : "\nRun again with --apply to make these changes.\n");

@@ -6,9 +6,14 @@ import type { Client } from "@notionhq/client";
  * same Meal column.
  *
  * The +1's row has: Name (their name, or "Alex's guest" when left blank),
- * Attending = Yes, Meal, and "Guest Of" = the email of the guest who
- * brought them. No Email of its own, so it never matches the one-row-per-
- * email lookup. The host's row keeps "+1" = Yes/No.
+ * Attending = Yes, Meal, and "Guest Of" = the name of the guest who brought
+ * them ("Jeffrey Shi"). No Email of its own, so it never matches the
+ * one-row-per-email lookup. The host's row keeps "+1" = Yes/No.
+ *
+ * A +1's row is found by the host's name, or by their email (what "Guest Of"
+ * held before it showed names; such rows switch to the name when next saved).
+ * Two guests with exactly the same name would share +1 rows, so give them
+ * distinguishable names (a middle initial) if that ever happens.
  *
  * Needs a Text property named "Guest Of" in the RSVP database. Without it
  * the site falls back to the older layout (the +1's name and meal in the
@@ -22,7 +27,7 @@ export const LEGACY_GUEST_MEAL = "Guest Meal";
 
 const text = (p: any): string => (p?.rich_text ?? p?.title ?? []).map((t: any) => t.plain_text ?? "").join("");
 
-/** The host email a +1's row points at ("" for a host's own row). */
+/** Who a +1's row points at, lower-cased: a host name, or an email on older rows ("" for a host's own row). */
 export function guestOfKey(page: any): string {
   return text(page?.properties?.[GUEST_OF]).trim().toLowerCase();
 }
@@ -34,6 +39,25 @@ export function isGuestRow(page: any): boolean {
 /** Lower-cased email on a host row ("" if none). */
 export function hostKey(page: any): string {
   return String(page?.properties?.Email?.email ?? "").trim().toLowerCase();
+}
+
+/** The host's name as written on their row. */
+export function hostName(page: any): string {
+  return text(page?.properties?.Name).trim();
+}
+
+/**
+ * Every value a +1's "Guest Of" may hold for this host, exactly as stored:
+ * their name, and their email for rows saved before names were used.
+ */
+export function hostRefs(...values: (string | null | undefined)[]): string[] {
+  return Array.from(new Set(values.map((v) => (v ?? "").trim()).filter(Boolean)));
+}
+
+/** Whether a +1's row belongs to this host (by name, or by email on older rows). */
+export function belongsTo(guestRow: any, host: any): boolean {
+  const k = guestOfKey(guestRow);
+  return k !== "" && (k === hostName(host).toLowerCase() || k === hostKey(host));
 }
 
 /**
@@ -115,19 +139,20 @@ export async function writeTolerant<T>(
 }
 
 /**
- * The +1 rows belonging to a host. `supported` is false when the database
- * has no "Guest Of" column yet (then the caller keeps the older layout).
+ * The +1 rows belonging to a host, matched on any of `refs` (see hostRefs).
+ * `supported` is false when the database has no "Guest Of" column yet (then
+ * the caller keeps the older layout).
  */
 export async function findGuestRows(
   notion: Client,
   databaseId: string,
-  key: string,
+  refs: string[],
 ): Promise<{ supported: boolean; rows: any[] }> {
-  if (!key) return { supported: true, rows: [] };
+  if (!refs.length) return { supported: true, rows: [] };
   try {
     const res = await notion.databases.query({
       database_id: databaseId,
-      filter: { property: GUEST_OF, rich_text: { equals: key } },
+      filter: { or: refs.map((r) => ({ property: GUEST_OF, rich_text: { equals: r } })) },
     });
     return { supported: true, rows: res.results };
   } catch (err: any) {
@@ -157,7 +182,6 @@ export async function syncGuestRow(
   notion: Client,
   databaseId: string,
   existing: any[],
-  key: string,
   hostName: string,
   plusOne: PlusOne,
 ): Promise<void> {
@@ -174,7 +198,7 @@ export async function syncGuestRow(
     Name:           { title:     [{ text: { content: plusOne.name.trim() || `${firstName}'s guest` } }] },
     Attending:      { select:    { name: "Yes" } },
     Meal:           { select:    plusOne.mealLabel ? { name: plusOne.mealLabel } : null },
-    [GUEST_OF]:     { rich_text: [{ text: { content: key } }] },
+    [GUEST_OF]:     { rich_text: [{ text: { content: hostName.trim() } }] },
     "Submitted At": { date:      { start: new Date().toISOString() } },
   };
   await writeTolerant(properties, [], (props) =>
