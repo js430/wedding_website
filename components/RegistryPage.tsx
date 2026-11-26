@@ -440,11 +440,28 @@ export default function RegistryPage() {
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>
-          <p className="text-center font-sans text-bark/60 text-sm mb-5 -mt-4 max-w-lg mx-auto">
-            Select the items you&apos;d like to gift and enter your email. We&apos;ll send
-            you the purchase links and our shipping address, no account needed.
-          </p>
-          <div className="text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3 space-y-2">
+          {/* Two ways to give, side by side, so cash isn't buried at the bottom */}
+          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto -mt-4 mb-10">
+            <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
+              <h2 className="font-serif text-xl text-bark mb-2">Choose a gift</h2>
+              <p className="font-sans text-bark/70 text-sm leading-relaxed mb-4">
+                Pick from our registry below and enter your email. We&apos;ll send you the
+                purchase links and our shipping address, no account needed.
+              </p>
+              <a href="#gifts" className="btn-outline inline-block mt-auto self-center">
+                Browse the registry ↓
+              </a>
+            </div>
+            <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
+              <h2 className="font-serif text-xl text-bark mb-2">Give cash</h2>
+              <p className="font-sans text-bark/70 text-sm leading-relaxed">
+                If you&apos;d rather give cash, you&apos;re welcome to bring it with you on
+                the day. No need to let us know ahead of time.
+              </p>
+            </div>
+          </div>
+
+          <div id="gifts" className="scroll-mt-24 text-center font-sans text-bark/70 text-sm leading-relaxed mb-10 max-w-lg mx-auto border border-gold/30 bg-white/50 px-5 py-3 space-y-2">
             <p>
               <span className="font-serif italic text-gold-dark">A note on prices:</span>{" "}
               prices shown are the retail price (MSRP), just for reference. You&apos;re free
@@ -555,20 +572,6 @@ export default function RegistryPage() {
               ))}
             </div>
           )}
-          {/* Cash gifts: on the day only */}
-          <div className="mt-20 border-t border-rose-soft/40 pt-16 text-center">
-            <h2 className="font-serif text-3xl text-bark mb-2">Cash Gifts</h2>
-            <div className="flex items-center justify-center gap-3 mb-6" aria-hidden="true">
-              <span className="block h-px w-12 bg-gold" />
-              <span className="text-gold">✦</span>
-              <span className="block h-px w-12 bg-gold" />
-            </div>
-            <p className="font-sans text-bark/70 text-sm leading-relaxed max-w-md mx-auto">
-              If you&apos;d rather give cash, you&apos;re welcome to bring it with you on
-              the day. No need to let us know ahead of time.
-            </p>
-          </div>
-
         </div>
       </main>
 
