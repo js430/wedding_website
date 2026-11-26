@@ -6,6 +6,7 @@ import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
 import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { googleCalendarUrl } from "@/lib/event";
+import { C, button, card, details, emailLayout, eventBlock, eyebrow, greeting, para, signoff } from "@/lib/email-layout";
 import { isValidMeal, mealLabel } from "@/lib/meals";
 import { cleanEmail, cleanText, escapeHtml, readJson, withLock } from "@/lib/input";
 import { allow } from "@/lib/rate-limit";
@@ -33,110 +34,83 @@ function buildRSVPEmail(data: {
   editUrl: string;
   noUpdates: boolean;
   icsUrl: string;
-}): string {
+}): { html: string; text: string } {
   const attending = data.attending === "yes";
+  const bringing  = attending && data.plusOne === "yes";
+  const guestName = data.plusOneName.trim();
+  const guestOf   = guestName ? `${guestName.split(/\s+/)[0]}'s meal` : "Your guest's meal";
 
   const rows = [
-    { label: "Attending",   value: attending ? "Joyfully Accepts ✓" : "Regretfully Declines" },
-    ...(attending && data.plusOne === "yes" ? [
-      { label: "+1",        value: data.plusOneName || "Yes" },
-    ] : []),
-    ...(attending && data.meal ? [
-      { label: "Your meal", value: mealLabel(data.meal) },
-    ] : []),
-    ...(attending && data.plusOne === "yes" && data.plusOneMeal ? [
-      { label: "Guest's meal", value: mealLabel(data.plusOneMeal) },
-    ] : []),
-    ...(attending && data.dietary ? [
-      { label: "Allergies", value: data.dietary },
-    ] : []),
-    ...(data.message ? [
-      { label: "Message",   value: data.message },
-    ] : []),
+    { label: "Your reply", value: attending ? "Joyfully accepts" : "Regretfully declines" },
+    ...(bringing ? [{ label: "Bringing", value: guestName || "A guest" }] : []),
+    ...(attending && data.meal ? [{ label: "Your meal", value: mealLabel(data.meal) }] : []),
+    ...(bringing && data.plusOneMeal ? [{ label: guestOf, value: mealLabel(data.plusOneMeal) }] : []),
+    ...(attending && data.dietary ? [{ label: "Allergies & dietary needs", value: data.dietary }] : []),
+    ...(data.message ? [{ label: "Your note to us", value: data.message }] : []),
   ];
 
-  const rowsHtml = rows.map(r => `
-    <tr>
-      <td style="padding:8px 0;font-family:sans-serif;font-size:13px;color:#8B0010;width:120px;vertical-align:top;">${r.label}</td>
-      <td style="padding:8px 0;font-family:sans-serif;font-size:13px;color:#1E0008;vertical-align:top;">${escapeHtml(r.value)}</td>
-    </tr>
-  `).join("");
+  const intro = attending
+    ? "We're so happy you'll be celebrating with us! Here's what we have down for you."
+    : "Thank you for letting us know. We're sorry you can't make it, and we'll be thinking of you on the day.";
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="margin:0;padding:0;background:#FEE8EC;font-family:sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;padding:40px 20px;">
-        <tr><td align="center">
-          <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;max-width:560px;width:100%;">
-            <tr>
-              <td style="background:#1E0008;padding:32px;text-align:center;">
-                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Katie &amp; Jeffrey</p>
-                <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">
-                  ${attending ? "RSVP Confirmed" : "We'll Miss You"}
-                </h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:32px;">
-                <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:18px;color:#1E0008;">Hi ${escapeHtml(data.name)},</p>
-                <p style="margin:0 0 24px;font-family:sans-serif;font-size:14px;color:#4a3728;line-height:1.6;">
-                  ${attending
-                    ? "We're so excited to celebrate with you on March 27, 2027! Here's a summary of your RSVP:"
-                    : "Thank you for letting us know. We're sorry you can't make it, but we appreciate you taking the time to respond."}
-                </p>
-                ${attending ? `
-                <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #FFB3C4;border-bottom:1px solid #FFB3C4;margin-bottom:24px;">
-                  ${rowsHtml}
-                </table>
-                <p style="margin:0 0 8px;font-family:sans-serif;font-size:13px;color:#4a3728;">
-                  <strong>When:</strong> Saturday, March 27, 2027 · Doors open at 4:30 PM, Ceremony at 5:00 PM
-                </p>
-                <p style="margin:0 0 18px;font-family:sans-serif;font-size:13px;color:#4a3728;">
-                  <strong>Where:</strong> The Forum Hotel, 540 Massie Rd, Charlottesville, VA 22903
-                </p>
-                <p style="margin:0;">
-                  <a href="${escapeHtml(data.icsUrl)}" style="font-family:sans-serif;font-size:12px;color:#8B0010;text-decoration:underline;margin-right:14px;">Add to Apple/Outlook</a>
-                  <a href="${googleCalendarUrl()}" style="font-family:sans-serif;font-size:12px;color:#8B0010;text-decoration:underline;">Add to Google Calendar</a>
-                </p>` : ""}
-                ${data.editUrl ? `
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;background:#FEE8EC;border:1px solid #FFB3C4;">
-                  <tr>
-                    <td style="padding:20px 24px;text-align:center;">
-                      <p style="margin:0 0 14px;font-family:sans-serif;font-size:13px;line-height:1.6;color:#4a3728;">
-                        Need to change your answer? You can update this RSVP yourself
-                        until <strong>${formatDeadline()}</strong>.
-                      </p>
-                      <a href="${escapeHtml(data.editUrl)}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:10px 22px;display:inline-block;">
-                        Edit my RSVP
-                      </a>
-                      <p style="margin:14px 0 0;font-family:sans-serif;font-size:11px;color:#8B0010;">
-                        This link is just for you — please don't forward it.
-                      </p>
-                    </td>
-                  </tr>
-                </table>` : `
-                <p style="margin:24px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;text-align:center;">
-                  Need to make a change? Reach out to us directly.
-                </p>`}
-                <p style="margin:24px 0 0;font-family:sans-serif;font-size:12px;line-height:1.6;color:#4a3728;text-align:center;">
-                  ${data.noUpdates
-                    ? "You've opted out of wedding update emails, so we'll only email you about your RSVP. Changed your mind? Use the Edit my RSVP link above."
-                    : "We'll send any major updates and news about the wedding to this email address. Rather not get them? Use the Edit my RSVP link above to opt out."}
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="background:#FEE8EC;padding:20px;text-align:center;">
-                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA</p>
-              </td>
-            </tr>
-          </table>
-        </td></tr>
-      </table>
-    </body>
-    </html>
-  `;
+  const updates = data.noUpdates
+    ? "You've opted out of wedding update emails, so we'll only write about your RSVP. Changed your mind? You can switch them back on from your RSVP."
+    : "We'll send any big updates about the wedding to this address. Rather not get them? You can opt out from your RSVP.";
+
+  const editBox = data.editUrl
+    ? card(`
+        ${eyebrow(attending ? "Plans change?" : "Change of heart?")}
+        ${para(`You can update your RSVP any time until <strong style="color:${C.darkest};">${escapeHtml(formatDeadline())}</strong>.`, { margin: "0 0 18px" })}
+        ${button(data.editUrl, "Edit my RSVP")}
+        ${para("This link is just for you, so please don't forward it.", { size: 12, color: C.muted, margin: "14px 0 0" })}
+      `)
+    : para("Need to make a change? Just reply to this email and we'll sort it out.");
+
+  const bodyHtml = [
+    greeting(data.name),
+    para(intro, { margin: "0 0 24px" }),
+    details(rows),
+    attending ? eventBlock({ icsUrl: data.icsUrl, googleUrl: googleCalendarUrl() }) : "",
+    editBox,
+    para(updates, { size: 13, color: C.muted, margin: "4px 0 0" }),
+    signoff(),
+  ].join("\n");
+
+  const html = emailLayout({
+    kicker: "RSVP received",
+    title: attending ? "You're on the list!" : "We'll miss you",
+    preheader: attending
+      ? "Your RSVP is confirmed. See you on Saturday, March 27, 2027!"
+      : "Thank you for letting us know.",
+    bodyHtml,
+  });
+
+  const first = data.name.trim().split(/\s+/)[0];
+  const text = [
+    `Hi ${first || "there"},`,
+    "",
+    intro,
+    "",
+    ...rows.map((r) => `${r.label}: ${r.value}`),
+    ...(attending ? [
+      "",
+      "Saturday, March 27, 2027",
+      "Doors open at 4:30 PM · Ceremony at 5:00 PM",
+      "The Forum Hotel, 540 Massie Rd, Charlottesville, VA 22903",
+      `Add to your calendar: ${data.icsUrl}`,
+    ] : []),
+    "",
+    ...(data.editUrl
+      ? [`You can update your RSVP until ${formatDeadline()}:`, data.editUrl, "(This link is just for you, so please don't forward it.)"]
+      : ["Need to make a change? Just reply to this email."]),
+    "",
+    updates,
+    "",
+    "With love,",
+    "Katie & Jeffrey",
+  ].join("\n");
+
+  return { html, text };
 }
 
 export async function POST(req: NextRequest) {
@@ -260,9 +234,9 @@ export async function POST(req: NextRequest) {
         from,
         to:      email,
         subject: attending === "yes"
-          ? "You're on the list! RSVP confirmed — Katie & Jeffrey 💍"
-          : "RSVP received — Katie & Jeffrey",
-        html: buildRSVPEmail({
+          ? "You're on the list! See you March 27 💍"
+          : "We received your RSVP",
+        ...buildRSVPEmail({
           name, attending, plusOne, plusOneName, meal: meal as string, plusOneMeal: plusOneMeal as string,
           dietary, message, editUrl, icsUrl,
           // Only claim an opt-out that was actually recorded.

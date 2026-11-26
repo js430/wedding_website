@@ -55,116 +55,120 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
   const preheader = `Join us in Charlottesville on ${WEDDING.dateLine}. Kindly reply by ${WEDDING.rsvpBy}.`;
   // Resend placeholders ({{{…}}}) pass through escaping untouched.
   const optOutHtml = unsubscribeUrl
-    ? `<br><a href="${esc(unsubscribeUrl)}" style="color:#6b4f45;text-decoration:underline;">Prefer not to get wedding emails?</a>`
+    ? `<br><a href="${esc(unsubscribeUrl)}" style="color:#8B0010;text-decoration:underline;">Prefer not to get wedding emails?</a>`
     : "";
   const optOutText = unsubscribeUrl ? `\nPrefer not to get wedding emails? ${unsubscribeUrl}` : "";
 
+  // Same look as the site's own emails (lib/email-layout.ts).
+  const SERIF = "'Playfair Display', Georgia, 'Times New Roman', serif";
+  const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>${esc(subject)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#FEE8EC;">
+<body style="margin:0;padding:0;background:#FEE8EC;-webkit-text-size-adjust:100%;">
   <!-- Preview text shown next to the subject in the inbox -->
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${esc(preheader)}&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;padding:32px 12px;">
-    <tr><td align="center">
-      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#FFFFFF;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;">
+    <tr><td align="center" style="padding:32px 12px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="width:100%;max-width:560px;background:#FFFFFF;border-radius:16px;overflow:hidden;border-collapse:separate;">
 
         <!-- Header -->
         <tr>
-          <td style="background:#1E0008;padding:40px 24px;text-align:center;">
-            <p style="margin:0 0 10px;font-family:Georgia,serif;font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#c9a838;">
+          <td style="background:#1E0008;padding:46px 24px 40px;text-align:center;">
+            <p style="margin:0 0 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:0.32em;text-transform:uppercase;color:#c9a838;">
               You&rsquo;re invited
             </p>
-            <p style="margin:0;font-family:Georgia,serif;font-style:italic;font-size:40px;line-height:1.15;color:#FEE8EC;">
+            <p style="margin:0;font-family:${SERIF};font-style:italic;font-size:44px;line-height:1.15;color:#FEE8EC;">
               Katie &amp; Jeffrey
             </p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px auto 0;"><tr><td style="width:48px;height:1px;background:#c9a838;font-size:0;line-height:0;">&nbsp;</td></tr></table>
           </td>
         </tr>
 
         <!-- Body -->
         <tr>
-          <td style="padding:36px 32px 8px;text-align:center;">
-            <p style="margin:0 0 18px;font-family:Georgia,serif;font-size:18px;color:#1E0008;">
+          <td style="padding:38px 28px 10px;text-align:center;">
+            <p style="margin:0 0 16px;font-family:${SERIF};font-size:22px;line-height:1.3;color:#1E0008;">
               Dear ${esc(name)},
             </p>
-            <p style="margin:0 0 28px;font-family:Georgia,serif;font-size:17px;line-height:1.6;color:#4a3728;">
+            <p style="margin:0 0 30px;font-family:${SERIF};font-size:18px;line-height:1.65;color:#3d2a22;">
               Together with our families, we joyfully invite you to celebrate our wedding.
             </p>
 
             <!-- Details -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8C9A0;border-bottom:1px solid #E8C9A0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;border-radius:12px;">
               <tr>
-                <td style="padding:22px 8px;text-align:center;">
-                  <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:#8B0010;">
+                <td style="padding:26px 16px;text-align:center;">
+                  <p style="margin:0 0 6px;font-family:${SANS};font-size:12px;font-weight:bold;letter-spacing:0.2em;text-transform:uppercase;color:#8B0010;">
                     ${esc(WEDDING.dateLine)}
                   </p>
-                  <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a3728;">
-                    ${esc(WEDDING.timeLine)}
+                  <p style="margin:0 0 18px;font-family:${SANS};font-size:14px;line-height:1.6;color:#3d2a22;">
+                    ${WEDDING.timeLine.split(" · ").map((t) => `<span style="white-space:nowrap;">${esc(t)}</span>`).join(" &middot; ")}
                   </p>
-                  <p style="margin:0;font-family:Georgia,serif;font-size:18px;color:#1E0008;">
+                  <p style="margin:0;font-family:${SERIF};font-size:20px;line-height:1.4;color:#1E0008;">
                     ${esc(WEDDING.venue)}
                   </p>
-                  <p style="margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a3728;">
-                    ${esc(WEDDING.address)}
+                  <p style="margin:4px 0 0;font-family:${SANS};font-size:14px;line-height:1.6;color:#3d2a22;">
+                    ${esc(WEDDING.address).replace(/, ([^,]+, [A-Z]{2} \d{5})$/, ', <span style="white-space:nowrap;">$1</span>')}
                   </p>
                 </td>
               </tr>
             </table>
 
             <!-- Button -->
-            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:30px auto 12px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:32px auto 14px;border-collapse:separate;">
               <tr>
-                <td style="background:#CC1428;">
-                  <a href="${esc(link)}" style="display:inline-block;padding:14px 30px;font-family:Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#FFFFFF;text-decoration:none;">
+                <td style="background:#CC1428;border-radius:999px;">
+                  <a href="${esc(link)}" style="display:inline-block;padding:15px 32px;font-family:${SANS};font-size:13px;font-weight:bold;letter-spacing:0.14em;text-transform:uppercase;color:#FFFFFF;text-decoration:none;border-radius:999px;">
                     View invitation &amp; RSVP
                   </a>
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#4a3728;">
-              Kindly reply by <strong>${esc(WEDDING.rsvpBy)}</strong>.
+            <p style="margin:0 0 30px;font-family:${SANS};font-size:14px;color:#3d2a22;">
+              Kindly reply by <strong style="color:#1E0008;">${esc(WEDDING.rsvpBy)}</strong>
             </p>
 
             <!-- Password, for opening the site somewhere else -->
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;border:1px solid #FFB3C4;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #F4CDD5;border-radius:12px;border-collapse:separate;">
               <tr>
-                <td style="padding:18px 20px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#4a3728;">
-                  Our website is just for our guests. The button above lets you right in.
-                  On another device, go to <strong>${esc(host)}</strong> and enter the password
-                  <strong style="color:#8B0010;letter-spacing:0.05em;">${esc(password)}</strong>
+                <td style="padding:18px 20px;text-align:center;font-family:${SANS};font-size:13px;line-height:1.65;color:#7a5c52;">
+                  Our website is just for our guests, and the button above lets you right in.
+                  On another device, go to <strong style="color:#1E0008;">${esc(host)}</strong> and enter the password
+                  <strong style="color:#8B0010;letter-spacing:0.04em;white-space:nowrap;">${esc(password)}</strong>
                 </td>
               </tr>
             </table>
 
             <!-- Calendar -->
-            <p style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B0010;">
-              <a href="${esc(calendarUrl)}" style="color:#8B0010;text-decoration:underline;">Add to Apple/Outlook calendar</a>
+            <p style="margin:24px 0 0;font-family:${SANS};font-size:13px;line-height:1.6;color:#8B0010;">
+              <a href="${esc(calendarUrl)}" style="color:#8B0010;text-decoration:underline;">Add to Apple / Outlook</a>
               &nbsp;&middot;&nbsp;
               <a href="${esc(googleCalendarUrl())}" style="color:#8B0010;text-decoration:underline;">Add to Google Calendar</a>
             </p>
 
-            <p style="margin:32px 0 6px;font-family:Georgia,serif;font-size:17px;line-height:1.6;color:#4a3728;">
+            <p style="margin:34px 0 4px;font-family:${SERIF};font-size:18px;line-height:1.6;color:#3d2a22;">
               We can&rsquo;t wait to celebrate with you.
             </p>
-            <p style="margin:0 0 32px;font-family:Georgia,serif;font-style:italic;font-size:20px;color:#8B0010;">
+            <p style="margin:0 0 34px;font-family:${SERIF};font-style:italic;font-size:24px;color:#8B0010;">
               With love, Katie &amp; Jeffrey
             </p>
           </td>
         </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#FEE8EC;padding:18px 24px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#6b4f45;">
-            Questions? Just reply to this email.${optOutHtml}
-          </td>
-        </tr>
       </table>
+
+      <!-- Footer -->
+      <p style="margin:20px 0 0;font-family:${SANS};font-size:12px;line-height:1.6;color:#8B0010;text-align:center;">
+        Questions? Just reply to this email.${optOutHtml}
+      </p>
     </td></tr>
   </table>
 </body>
@@ -182,7 +186,7 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
     `View the invitation and RSVP (kindly reply by ${WEDDING.rsvpBy}):`,
     link,
     "",
-    `Our website is just for our guests. The link above lets you right in. On another device, go to ${host} and enter the password: ${password}`,
+    `Our website is just for our guests, and the link above lets you right in. On another device, go to ${host} and enter the password: ${password}`,
     "",
     `Add to your calendar: ${calendarUrl}`,
     "",

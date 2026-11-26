@@ -4,6 +4,7 @@ import { Resend } from "resend";
 import { encrypt } from "@/lib/encrypt";
 import { SHIPPING_LINES } from "@/lib/shipping";
 import { cleanEmail, cleanText, escapeHtml, readJson, withLock } from "@/lib/input";
+import { C, SANS, SERIF, button, card, emailLayout, eyebrow, greeting, para, signoff } from "@/lib/email-layout";
 import { allow } from "@/lib/rate-limit";
 import { clientKey } from "@/lib/invite-guard";
 import { bought, remaining, wanted, type RegistryItem } from "@/lib/registry";
@@ -35,113 +36,71 @@ function safeLink(raw: string): string {
   }
 }
 
-function buildEmail(guestName: string, items: ClaimItem[]): string {
-  const itemRows = items
-    .map(
-      (item) => `
-      <tr>
-        <td style="padding:12px 0;border-bottom:1px solid #FFB3C4;">
-          <p style="margin:0;font-family:Georgia,serif;font-size:16px;color:#1E0008;">
-            ${escapeHtml(item.name)}${item.option ? ` <span style="font-family:sans-serif;font-size:13px;color:#8B0010;">(${escapeHtml(item.option)})</span>` : ""}
-          </p>
-          ${item.qty > 1 ? `<p style="margin:2px 0 0;font-family:sans-serif;font-size:13px;color:#1E0008;">Quantity: <strong>${item.qty}</strong></p>` : ""}
-          ${item.variant ? `<p style="margin:2px 0 0;font-family:sans-serif;font-size:12px;color:#8B0010;">Preferred: ${escapeHtml(item.variant)}</p>` : ""}
-          ${item.price ? `<p style="margin:4px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;">$${item.price.toFixed(2)} <span style="font-size:10px;letter-spacing:0.1em;color:#8B6B5C;">MSRP</span></p>` : ""}
-        </td>
-        <td style="padding:12px 0 12px 16px;border-bottom:1px solid #FFB3C4;text-align:right;white-space:nowrap;">
-          ${
-            item.link
-              ? `<a href="${escapeHtml(item.link)}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:8px 16px;display:inline-block;">View Item</a>`
-              : ""
-          }
-        </td>
-      </tr>
-    `
-    )
-    .join("");
+function buildEmail(guestName: string, items: ClaimItem[]): { html: string; text: string } {
+  const money = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const detailLine = (item: ClaimItem) =>
+    [item.option, item.variant ? (item.variant.includes(":") ? item.variant : `Preferred: ${item.variant}`) : "", item.qty > 1 ? `Quantity: ${item.qty}` : ""].filter(Boolean);
 
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="margin:0;padding:0;background:#FEE8EC;font-family:sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;padding:40px 20px;">
-        <tr><td align="center">
-          <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;max-width:560px;width:100%;">
+  const itemRows = items.map((item, i) => `
+    <tr>
+      <td style="padding:16px 0;${i ? `border-top:1px solid ${C.line};` : ""}vertical-align:middle;">
+        <p style="margin:0;font-family:${SERIF};font-size:17px;line-height:1.4;color:${C.darkest};">${escapeHtml(item.name)}</p>
+        ${detailLine(item).map((d) => `<p style="margin:3px 0 0;font-family:${SANS};font-size:13px;line-height:1.5;color:${C.muted};">${escapeHtml(d)}</p>`).join("")}
+        ${item.price ? `<p style="margin:5px 0 0;font-family:${SANS};font-size:14px;color:${C.dark};">${money(item.price)} <span style="font-size:11px;letter-spacing:0.08em;color:${C.muted};">retail price</span></p>` : ""}
+      </td>
+      <td style="padding:16px 0 16px 14px;${i ? `border-top:1px solid ${C.line};` : ""}text-align:right;vertical-align:middle;white-space:nowrap;">
+        ${item.link ? button(item.link, "Shop", { small: true, outline: true }) : ""}
+      </td>
+    </tr>`).join("");
 
-            <!-- Header -->
-            <tr>
-              <td style="background:#1E0008;padding:32px;text-align:center;">
-                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">
-                  Katie &amp; Jeffrey
-                </p>
-                <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">
-                  Your Registry Picks
-                </h1>
-              </td>
-            </tr>
+  const msrp = "Prices shown are the retail price (MSRP), just for reference. You're welcome to buy anywhere, and if you find it for less, please do!";
+  const venue = "Please don't bring large gifts to the venue. Smaller ones are welcome in person if you'd like.";
 
-            <!-- Body -->
-            <tr>
-              <td style="padding:32px;">
-                <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:18px;color:#1E0008;">
-                  Hi ${escapeHtml(guestName)},
-                </p>
-                <p style="margin:0 0 24px;font-family:sans-serif;font-size:14px;color:#4a3728;line-height:1.6;">
-                  Here are the items you saved from our registry. Each link will take you
-                  directly to the retailer to complete your purchase. Thank you so much!
-                </p>
-                <p style="margin:-12px 0 24px;font-family:sans-serif;font-size:13px;color:#4a3728;line-height:1.6;">
-                  The prices listed are the retail price (MSRP), just for reference. Feel free
-                  to buy from anywhere you like. If you find a gift for less elsewhere, please do!
-                </p>
+  const bodyHtml = [
+    greeting(guestName),
+    para("Thank you so much for your generosity! Here's everything you picked from our registry. Each link takes you straight to the store.", { margin: "0 0 22px" }),
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">${itemRows}</table>`,
+    para(msrp, { size: 13, color: C.muted, margin: "0 0 24px" }),
+    card(`
+      ${eyebrow("Ship gifts to")}
+      <p style="margin:0 0 14px;font-family:${SERIF};font-size:18px;line-height:1.5;color:${C.darkest};">${SHIPPING_LINES.map(escapeHtml).join("<br>")}</p>
+      ${para("Enter this as the delivery address at checkout (most stores ask on the shipping step, before payment).", { size: 13, margin: "0 0 8px" })}
+      ${para(venue, { size: 13, margin: "0" })}
+    `),
+    para("Questions about anything? Just reply to this email.", { size: 14, margin: "0" }),
+    signoff(),
+  ].join("\n");
 
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  ${itemRows}
-                </table>
+  const first = guestName.trim().split(/\s+/)[0];
+  const text = [
+    `Hi ${first || "there"},`,
+    "",
+    "Thank you so much for your generosity! Here's everything you picked from our registry:",
+    "",
+    ...items.flatMap((item) => [
+      `• ${item.name}`,
+      ...detailLine(item).map((d) => `  ${d}`),
+      ...(item.price ? [`  ${money(item.price)} (retail price)`] : []),
+      ...(item.link ? [`  ${item.link}`] : []),
+      "",
+    ]),
+    msrp,
+    "",
+    "Ship gifts to:",
+    ...SHIPPING_LINES,
+    "",
+    venue,
+    "",
+    "Questions about anything? Just reply to this email.",
+    "",
+    "With love,",
+    "Katie & Jeffrey",
+  ].join("\n");
 
-                <!-- Shipping address -->
-                <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 0;background:#FEE8EC;border:1px solid #FFB3C4;">
-                  <tr>
-                    <td style="padding:20px 24px;">
-                      <p style="margin:0 0 10px;font-family:sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8B0010;">
-                        Ship gifts to
-                      </p>
-                      <p style="margin:0;font-family:Georgia,serif;font-size:16px;line-height:1.55;color:#1E0008;">
-                        ${SHIPPING_LINES.join('<br />')}
-                      </p>
-                      <p style="margin:12px 0 0;font-family:sans-serif;font-size:12px;line-height:1.5;color:#4a3728;">
-                        Enter this as the delivery address at checkout. Most retailers
-                        ask for it on the shipping step, before payment.
-                      </p>
-                      <p style="margin:8px 0 0;font-family:sans-serif;font-size:12px;line-height:1.5;color:#4a3728;">
-                        We ask that you please don't bring large gifts to the venue.
-                        Smaller gifts you're welcome to bring in person if you wish.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-
-                <p style="margin:28px 0 0;font-family:sans-serif;font-size:13px;color:#8B0010;text-align:center;">
-                  If you have any questions, don't hesitate to reach out.
-                </p>
-              </td>
-            </tr>
-
-            <!-- Footer -->
-            <tr>
-              <td style="background:#FEE8EC;padding:20px;text-align:center;">
-                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">
-                  Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA
-                </p>
-              </td>
-            </tr>
-
-          </table>
-        </td></tr>
-      </table>
-    </body>
-    </html>
-  `;
+  return {
+    html: emailLayout({ kicker: "Thank you", title: "Your registry picks", preheader: "Your gift links and our shipping address.", bodyHtml }),
+    text,
+  };
 }
 
 const MAX_ITEMS = 25;
@@ -348,8 +307,8 @@ export async function POST(req: NextRequest) {
       const { error } = await resendClient().emails.send({
         from:    fromAddress,
         to:      email,
-        subject: "Your picks from Katie & Jeffrey's Registry 💍",
-        html:    buildEmail(guestName, items),
+        subject: "Your registry picks 💍",
+        ...buildEmail(guestName, items),
       });
       if (error) console.error("[Registry] Email error:", error);
       else sent = true;
