@@ -3,7 +3,8 @@ import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
-import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
+import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
+import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { googleCalendarUrl } from "@/lib/event";
 import { isValidMeal, mealLabel } from "@/lib/meals";
 import { cleanEmail, cleanText, escapeHtml, readJson, withLock } from "@/lib/input";
@@ -202,25 +203,41 @@ export async function POST(req: NextRequest) {
         console.warn("[RSVP] duplicate check failed:", err?.message ?? err);
       }
 
+      // A +1 gets their own row (see lib/rsvp-party.ts), linked by this email.
+      const party = await findGuestRows(notion, databaseId, email);
+      const guestMealLabel = plusOne === "yes" ? mealLabel(plusOneMeal as string) : null;
+
       const properties: Record<string, any> = {
         Name:                   { title:     [{ text: { content: name } }] },
         Email:                  { email },
         Attending:              { select:    { name: attending === "yes" ? "Yes" : "No" } },
         "+1":                   { select:    { name: plusOne === "yes" ? "Yes" : "No" } },
-        "Guest Name":           { rich_text: [{ text: { content: plusOneName } }] },
         Meal:                   { select:    attending === "yes" ? { name: mealLabel(meal as string) } : null },
-        "Guest Meal":           { select:    plusOne === "yes" ? { name: mealLabel(plusOneMeal as string) } : null },
         "Dietary Restrictions": { rich_text: [{ text: { content: dietary } }] },
         Message:                { rich_text: [{ text: { content: message } }] },
         "Submitted At":         { date:      { start: new Date().toISOString() } },
         [UPDATES_OPT_OUT]:      { checkbox:  noUpdates },
+        // With separate +1 rows these older columns are cleared; without the
+        // "Guest Of" column they still hold the +1, as before.
+        [LEGACY_GUEST_NAME]:    { rich_text: party.supported ? [] : [{ text: { content: plusOneName } }] },
+        [LEGACY_GUEST_MEAL]:    { select:    party.supported ? null : guestMealLabel ? { name: guestMealLabel } : null },
       };
 
-      return withOptionalOptOut(properties, (props) =>
+      const written = await writeTolerant(properties, [UPDATES_OPT_OUT, LEGACY_GUEST_NAME, LEGACY_GUEST_MEAL], (props) =>
         existingId
           ? notion.pages.update({ page_id: existingId, properties: props })
           : notion.pages.create({ parent: { database_id: databaseId }, properties: props }),
       );
+
+      if (party.supported) {
+        await syncGuestRow(notion, databaseId, party.rows, email, name, {
+          bringing: plusOne === "yes",
+          name: plusOneName,
+          mealLabel: guestMealLabel,
+        });
+      }
+
+      return { value: written.value, optOutSaved: !written.dropped.includes(UPDATES_OPT_OUT) };
     });
   } catch (err: any) {
     console.error("[RSVP] Saving to Notion failed:", err?.message ?? err);

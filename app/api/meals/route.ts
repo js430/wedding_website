@@ -38,6 +38,8 @@ export async function GET(req: NextRequest) {
           mealLabel:      p.Meal?.select?.name ?? "",
           guestMealLabel: p["Guest Meal"]?.select?.name ?? "",
           dietary:        text(p["Dietary Restrictions"]),
+          email:          String(p.Email?.email ?? "").trim().toLowerCase(),
+          guestOf:        text(p["Guest Of"]).trim().toLowerCase(),
         });
       }
       cursor = res.has_more ? (res.next_cursor ?? undefined) : undefined;

@@ -1,9 +1,17 @@
 import { MEAL_OPTIONS } from "@/lib/meals";
 
-/** One RSVP row from Notion, flattened. Kept separate so counting needs no database. */
+/**
+ * One RSVP row from Notion, flattened. Kept separate so counting needs no
+ * database. A +1 normally has a row of their own (guestOf = the host's
+ * email); older rows may instead carry the +1 in guestName/guestMealLabel.
+ */
 export interface RsvpRow {
   name: string; attending: boolean; plusOne: boolean; guestName: string;
   mealLabel: string; guestMealLabel: string; dietary: string;
+  /** Host row: its email. */
+  email?: string;
+  /** +1 row: the host's email; "" for a host row. */
+  guestOf?: string;
 }
 
 export interface MealTally {
@@ -32,11 +40,18 @@ export function tallyMeals(rows: RsvpRow[]): MealTally {
     else other.set(l, (other.get(l) ?? 0) + 1);
   }
 
+  // Hosts whose +1 has a row of their own: their older +1 columns are ignored.
+  const hasOwnRow = new Set(rows.filter((r) => r.guestOf).map((r) => r.guestOf!.toLowerCase()));
+
   for (const row of rows) {
     if (!row.attending) continue;
+    if (row.guestOf) {
+      plate(row.mealLabel, row.name, "plus-one");
+      continue;
+    }
     rsvpsAttending++;
     plate(row.mealLabel, row.name, "guest");
-    if (row.plusOne) {
+    if (row.plusOne && !hasOwnRow.has((row.email ?? "").toLowerCase())) {
       plate(row.guestMealLabel, row.guestName.trim() || `${row.name}'s guest`, "plus-one");
     }
     const note = row.dietary.trim();
