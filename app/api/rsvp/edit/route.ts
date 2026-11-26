@@ -3,7 +3,7 @@ import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
 import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
-import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostKey, readChoice, readPlusOne, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
+import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostKey, hostName, hostRefs, readChoice, readPlusOne, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { withLock } from "@/lib/input";
 import { cleanText, readJson } from "@/lib/input";
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   try {
     const notion = notionClient();
     const page = await notion.pages.retrieve({ page_id: pageId });
-    const party = await findGuestRows(notion, process.env.NOTION_DATABASE_ID!, hostKey(page) || pageId);
+    const party = await findGuestRows(notion, process.env.NOTION_DATABASE_ID!, hostRefs(hostName(page), hostKey(page)));
     return NextResponse.json({
       rsvp:     readRsvp(page, party.rows[0]),
       closed:   editingClosed(),
@@ -100,12 +100,12 @@ export async function POST(req: NextRequest) {
     const databaseId = process.env.NOTION_DATABASE_ID!;
     const host: any = await notion.pages.retrieve({ page_id: pageId });
     const key = hostKey(host) || pageId;
-    const hostName = host.properties?.Name?.title?.[0]?.plain_text ?? "";
+    const name = hostName(host);
     const guestMealLabel = bringingPlusOne ? mealLabel(plusOneMeal) : null;
 
     // Same lock as the RSVP form, so an edit and a resubmission take turns.
     await withLock(`rsvp:${key}`, async () => {
-      const party = await findGuestRows(notion, databaseId, key);
+      const party = await findGuestRows(notion, databaseId, hostRefs(name, hostKey(host)));
       const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
         "+1":                   { select:    { name: bringingPlusOne ? "Yes" : "No" } },
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         notion.pages.update({ page_id: pageId, properties: props }),
       );
       if (party.supported) {
-        await syncGuestRow(notion, databaseId, party.rows, key, hostName, {
+        await syncGuestRow(notion, databaseId, party.rows, name, {
           bringing: bringingPlusOne,
           name: plusOneName,
           mealLabel: guestMealLabel,

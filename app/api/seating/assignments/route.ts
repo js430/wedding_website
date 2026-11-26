@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
 import { cleanText, readJson, withLock } from "@/lib/input";
-import { findGuestRows, hostKey, readChoice } from "@/lib/rsvp-party";
+import { findGuestRows, hostKey, hostName, hostRefs, readChoice } from "@/lib/rsvp-party";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ async function syncToRSVP(
   });
   // Their +1's own row (if any) sits at the same table.
   try {
-    const party = await findGuestRows(notion, RSVP_DB(), hostKey(host));
+    const party = await findGuestRows(notion, RSVP_DB(), hostRefs(hostName(host), hostKey(host)));
     await Promise.all(party.rows.map((p: any) => notion.pages.update({ page_id: p.id, properties })));
   } catch (err: any) {
     console.warn("[Seating] couldn't copy the table to a +1's row:", err?.message ?? err);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
-import { guestOfKey, hostKey, isGuestRow, readPlusOne } from "@/lib/rsvp-party";
+import { guestOfKey, hostKey, hostName, isGuestRow, readPlusOne } from "@/lib/rsvp-party";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const guests = pages.filter((page) => !isGuestRow(page)).map((page) => {
     const props = page.properties;
-    const plus = readPlusOne(page, plusOneRows.get(hostKey(page)));
+    const plus = readPlusOne(page, plusOneRows.get(hostName(page).toLowerCase()) ?? plusOneRows.get(hostKey(page)));
     return {
       id: page.id,
       name: props.Name?.title?.[0]?.plain_text ?? "Unknown",

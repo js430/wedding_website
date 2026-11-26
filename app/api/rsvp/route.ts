@@ -4,7 +4,7 @@ import { Client } from "@notionhq/client";
 import { Resend } from "resend";
 import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
-import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
+import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostName, hostRefs, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { googleCalendarUrl } from "@/lib/event";
 import { C, button, card, details, emailLayout, eventBlock, eyebrow, greeting, para, signoff } from "@/lib/email-layout";
 import { isValidMeal, mealLabel } from "@/lib/meals";
@@ -164,6 +164,7 @@ export async function POST(req: NextRequest) {
   try {
     saved = await withLock(`rsvp:${email}`, async () => {
       let existingId: string | null = null;
+      let priorName = "";
       try {
         const prior = await notion.databases.query({
           database_id: databaseId,
@@ -171,14 +172,16 @@ export async function POST(req: NextRequest) {
           page_size: 1,
         });
         existingId = prior.results[0]?.id ?? null;
+        priorName = hostName(prior.results[0]);
       } catch (err: any) {
         // A lookup failure must not cost the guest their RSVP — fall through
         // and create a row, accepting a possible duplicate.
         console.warn("[RSVP] duplicate check failed:", err?.message ?? err);
       }
 
-      // A +1 gets their own row (see lib/rsvp-party.ts), linked by this email.
-      const party = await findGuestRows(notion, databaseId, email);
+      // A +1 gets their own row (see lib/rsvp-party.ts), linked by the guest's
+      // name (or email, on older rows); the earlier name finds it after a rename.
+      const party = await findGuestRows(notion, databaseId, hostRefs(name, priorName, email));
       const guestMealLabel = plusOne === "yes" ? mealLabel(plusOneMeal as string) : null;
 
       const properties: Record<string, any> = {
@@ -204,7 +207,7 @@ export async function POST(req: NextRequest) {
       );
 
       if (party.supported) {
-        await syncGuestRow(notion, databaseId, party.rows, email, name, {
+        await syncGuestRow(notion, databaseId, party.rows, name, {
           bringing: plusOne === "yes",
           name: plusOneName,
           mealLabel: guestMealLabel,
