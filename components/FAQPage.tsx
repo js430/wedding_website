@@ -78,7 +78,7 @@ const faqs = [
     questions: [
       {
         q: "What is the dress code?",
-        a: "Business Formal. Please don't wear white or red, or any shade of either: no ivory, cream or champagne, and no crimson, burgundy or maroon.",
+        a: "Business Formal. We kindly ask that you avoid shades of white, red and pink.",
       },
       {
         q: "Can I wear heels?",
