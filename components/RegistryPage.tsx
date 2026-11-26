@@ -445,8 +445,13 @@ export default function RegistryPage() {
             <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
               <h2 className="font-serif text-xl text-bark mb-2">Choose a gift</h2>
               <p className="font-sans text-bark/70 text-sm leading-relaxed mb-4">
-                Pick from our registry below and enter your email. We&apos;ll send you the
-                purchase links and our shipping address, no account needed.
+                Pick from our registry below, then enter your name and email and press{" "}
+                <strong className="font-semibold text-bark">Send to Email</strong>. We&apos;ll
+                send you the purchase links and our shipping address, no account needed.
+              </p>
+              <p className="font-sans text-bark/70 text-sm leading-relaxed mb-4">
+                <strong className="font-semibold text-bark">That&apos;s what claims a gift.</strong>{" "}
+                Until you press it, your picks stay open for other guests.
               </p>
               <a href="#gifts" className="btn-outline inline-block mt-auto self-center">
                 Browse the registry ↓
@@ -666,6 +671,14 @@ export default function RegistryPage() {
                 </button>
               </div>
             </div>
+            {/* Selecting only fills the basket; the claim happens on submit. */}
+            {status !== "error" && taken.length === 0 && (
+              <p className="text-rose-blush/80 text-xs font-sans mt-2 text-center">
+                Not claimed yet: press <strong className="font-semibold text-rose-blush">Send to Email</strong> to
+                claim {basketCount === 1 ? "this gift" : "these gifts"}. Until then, another guest could choose{" "}
+                {basketCount === 1 ? "it" : "them"} first.
+              </p>
+            )}
             {status === "error" && (
               <p role="alert" className="text-red-300 text-xs font-sans mt-2 text-center">
                 {errorMsg || "Something went wrong. Please try again."}
