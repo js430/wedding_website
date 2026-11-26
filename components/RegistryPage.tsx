@@ -62,8 +62,12 @@ function ItemCard({
 
   function chooseOption(id: string) {
     setViewingId(id);
-    // Switching options of a one-of gift while in the basket swaps it over.
-    if (singleSelectedId) onSet(id, true);
+    // Switching options of a one-of gift while in the basket swaps it over,
+    // keeping the quantity (capped at what the new option has left).
+    if (singleSelectedId) {
+      onQty(id, qtyOf(singleSelectedId));
+      onSet(id, true);
+    }
   }
 
   return (
@@ -201,7 +205,7 @@ function ItemCard({
               <select
                 value={qtyOf(shown.id)}
                 onChange={(e) => onQty(shown.id, Number(e.target.value))}
-                className="border border-rose-soft/50 bg-white/80 px-1.5 py-1 text-xs text-bark focus:outline-none focus:border-rose-deep"
+                className="border border-rose-soft/50 bg-white/80 px-1.5 py-1 text-xs text-bark focus:outline-none focus:border-rose-deep focus-visible:ring-2 focus-visible:ring-rose-deep/40"
               >
                 {Array.from({ length: shownLeft }, (_, n) => n + 1).map((n) => (
                   <option key={n} value={n}>{n}</option>
@@ -211,7 +215,9 @@ function ItemCard({
           )}
           {!claimed && isOpen(shown) && (
             <button
+              type="button"
               onClick={() => onSet(shown.id, !shownSelected)}
+              aria-pressed={shownSelected}
               className={`${shownSelected && shownLeft > 1 ? "" : "ml-auto "}flex items-center gap-1.5 sm:gap-2 font-sans text-xs tracking-widest uppercase transition-all px-2 sm:px-3 py-1.5 border ${
                 shownSelected
                   ? "bg-rose-deep text-white border-rose-deep"
@@ -228,6 +234,9 @@ function ItemCard({
                 )}
               </span>
               {shownSelected ? "Selected" : "Select"}
+              <span className="sr-only">
+                {" "}{shown.name || lead.name}{shown.option ? ` (${shown.option})` : ""}
+              </span>
             </button>
           )}
           </div>
@@ -347,6 +356,21 @@ export default function RegistryPage() {
     return Math.max(1, Math.min(qty[id] ?? 1, left || 1));
   }
   const basketCount = Array.from(selected).reduce((n, id) => n + qtyOf(id), 0);
+  const barOpen = selected.size > 0 || status === "success" || taken.length > 0;
+  /** What's in the basket, by name, so picks hidden by a filter aren't a mystery. */
+  const pickNames = Array.from(selected).flatMap((id) => {
+    const i = byId.get(id);
+    if (!i) return [];
+    const label = i.option ? `${i.name} (${i.option})` : i.name;
+    return [qtyOf(id) > 1 ? `${label} ×${qtyOf(id)}` : label];
+  });
+
+  function clearPicks() {
+    setSelected(new Set());
+    setQty({});
+    setTaken([]);
+    if (status === "error") setStatus("idle");
+  }
 
   function clearFilters() {
     setFilter("All");
@@ -390,7 +414,15 @@ export default function RegistryPage() {
         // Someone claimed one of these while this page was open. Refresh, and
         // keep the guest's other picks that are still available.
         const data = await res.json().catch(() => ({}));
-        setTaken(data.items ?? []);
+        const details: { label: string; left: number }[] = Array.isArray(data.details)
+          ? data.details
+          : (data.items ?? []).map((label: string) => ({ label, left: 0 }));
+        const gone = details.filter((d) => d.left <= 0).map((d) => d.label);
+        const fewer = details.filter((d) => d.left > 0);
+        setTaken([
+          ...(gone.length ? [`Just chosen by another guest: ${gone.join(", ")}.`] : []),
+          ...fewer.map((d) => `Only ${d.left} left of ${d.label}, so your quantity is now ${d.left}.`),
+        ]);
         const fresh = await fetchItems();
         if (fresh) {
           setItems(fresh);
@@ -518,7 +550,7 @@ export default function RegistryPage() {
                   id="registry-sort"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortMode)}
-                  className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep"
+                  className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep focus-visible:ring-2 focus-visible:ring-rose-deep/40"
                 >
                   <option value="featured">Featured</option>
                   <option value="price-asc">Price: low to high</option>
@@ -583,14 +615,15 @@ export default function RegistryPage() {
       {/* Sticky claim bar */}
       <div
         className={`fixed bottom-0 left-0 right-0 bg-crimson-darkest border-t border-rose-soft/20 transition-all duration-300 ${
-          selected.size > 0 || status === "success" || taken.length > 0
-            ? "translate-y-0"
-            : "translate-y-full"
+          barOpen ? "translate-y-0" : "translate-y-full"
         }`}
+        // Off-screen when closed: keep keyboard and screen readers out too.
+        inert={!barOpen}
+        aria-hidden={!barOpen}
       >
         {status === "success" ? (
           <div className="max-w-5xl mx-auto px-6 py-5">
-            <p className="font-serif text-rose-blush text-lg text-center mb-4">
+            <p role="status" className="font-serif text-rose-blush text-lg text-center mb-4">
               💌 Check your inbox — your picks are on their way!
             </p>
 
@@ -636,12 +669,28 @@ export default function RegistryPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-6 py-4">
-            <div className="flex flex-col md:flex-row items-center gap-3">
-              <p className="font-sans text-rose-blush/70 text-sm shrink-0">
-                {basketCount} item{basketCount !== 1 ? "s" : ""} selected
-              </p>
-              <div className="flex flex-col sm:flex-row flex-1 gap-3 w-full">
+          <form onSubmit={handleSubmit} className="max-w-5xl mx-auto px-5 sm:px-6 py-3 sm:py-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-2.5 sm:gap-3">
+              <div className="flex items-baseline justify-between md:justify-start gap-3 min-w-0 md:max-w-[16rem]">
+                <p className="font-sans text-rose-blush/80 text-sm min-w-0">
+                  <span className="whitespace-nowrap">{basketCount} item{basketCount !== 1 ? "s" : ""} selected</span>
+                  {pickNames.length > 0 && (
+                    <span className="block truncate text-rose-blush/60 text-xs" title={pickNames.join(", ")}>
+                      {pickNames.join(", ")}
+                    </span>
+                  )}
+                </p>
+                {selected.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearPicks}
+                    className="shrink-0 font-sans text-xs tracking-widest uppercase text-rose-blush/70 underline underline-offset-4 hover:text-rose-blush"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:flex sm:flex-row flex-1 gap-2.5 sm:gap-3 w-full">
                 <input
                   type="text"
                   value={name}
@@ -650,7 +699,7 @@ export default function RegistryPage() {
                   aria-label="Your name"
                   autoComplete="name"
                   required
-                  className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/30 px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft"
+                  className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/50 px-3 sm:px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft focus-visible:ring-2 focus-visible:ring-rose-soft/60"
                 />
                 <input
                   type="email"
@@ -660,12 +709,12 @@ export default function RegistryPage() {
                   aria-label="Your email"
                   autoComplete="email"
                   required
-                  className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/30 px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft"
+                  className="flex-1 min-w-0 bg-white/10 border border-rose-soft/30 text-rose-blush placeholder-rose-blush/50 px-3 sm:px-4 py-2.5 font-sans text-sm focus:outline-none focus:border-rose-soft focus-visible:ring-2 focus-visible:ring-rose-soft/60"
                 />
                 <button
                   type="submit"
-                  disabled={status === "submitting" || !name || !email}
-                  className="shrink-0 w-full sm:w-auto bg-rose-deep text-white font-sans text-xs tracking-widest uppercase px-6 py-2.5 hover:bg-crimson-dark transition-colors disabled:opacity-50"
+                  disabled={status === "submitting" || !name || !email || basketCount === 0}
+                  className="col-span-2 shrink-0 w-full sm:w-auto bg-rose-deep text-white font-sans text-xs tracking-widest uppercase px-6 py-2.5 hover:bg-crimson-dark transition-colors disabled:opacity-50"
                 >
                   {status === "submitting" ? "Sending…" : "Send to Email"}
                 </button>
@@ -674,9 +723,15 @@ export default function RegistryPage() {
             {/* Selecting only fills the basket; the claim happens on submit. */}
             {status !== "error" && taken.length === 0 && (
               <p className="text-rose-blush/80 text-xs font-sans mt-2 text-center">
-                Not claimed yet: press <strong className="font-semibold text-rose-blush">Send to Email</strong> to
-                claim {basketCount === 1 ? "this gift" : "these gifts"}. Until then, another guest could choose{" "}
-                {basketCount === 1 ? "it" : "them"} first.
+                {/* Short on phones, where the bar's height matters most. */}
+                <span className="sm:hidden">
+                  Not claimed until you press <strong className="font-semibold text-rose-blush">Send to Email</strong>.
+                </span>
+                <span className="hidden sm:inline">
+                  Not claimed yet: press <strong className="font-semibold text-rose-blush">Send to Email</strong> to
+                  claim {basketCount === 1 ? "this gift" : "these gifts"}. Until then, another guest could choose{" "}
+                  {basketCount === 1 ? "it" : "them"} first.
+                </span>
               </p>
             )}
             {status === "error" && (
@@ -685,9 +740,9 @@ export default function RegistryPage() {
               </p>
             )}
             {taken.length > 0 && (
-              <p className="text-rose-soft text-xs font-sans mt-2 text-center">
-                Just taken by another guest: {taken.join(", ")}. The registry has
-                been refreshed; your other picks are still selected.
+              <p role="status" className="text-rose-soft text-xs font-sans mt-2 text-center">
+                {taken.join(" ")} The registry has been refreshed
+                {selected.size > 0 ? ", so please check your picks and press Send to Email again." : "."}
               </p>
             )}
           </form>
