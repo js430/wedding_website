@@ -37,8 +37,33 @@ export function hostKey(page: any): string {
 }
 
 /**
- * Run a Notion write, dropping any of `optional` that Notion reports as a
- * property that doesn't exist, and retrying. Returns which were dropped.
+ * A choice column's value, whether the column is a Select ("Sea Bass"), a
+ * Status, or plain Text. Lets the database owner change a column's type
+ * without breaking the site.
+ */
+export function readChoice(prop: any): string {
+  return (prop?.select?.name ?? prop?.status?.name ?? text(prop)).trim();
+}
+
+/** Re-shape one property value to the type Notion says the column has. */
+function convert(value: any, to: string): any | undefined {
+  const s: string =
+    value?.select !== undefined ? (value.select?.name ?? "") :
+    value?.rich_text !== undefined ? value.rich_text.map((t: any) => t.text?.content ?? "").join("") :
+    undefined as any;
+  if (s === undefined) return undefined;
+  if (to === "rich_text") return { rich_text: s ? [{ text: { content: s } }] : [] };
+  if (to === "select") return { select: s ? { name: s.replace(/,/g, " ") } : null };
+  return undefined;
+}
+
+/**
+ * Run a Notion write and retry it, adapting to the database as it is:
+ * - drops any of `optional` that Notion reports as a property that doesn't
+ *   exist (returned in `dropped`);
+ * - when Notion says a Select column is really Text (or the reverse), sends
+ *   that value in the column's actual type.
+ * Anything else is thrown as before.
  */
 export async function writeTolerant<T>(
   properties: Record<string, any>,
@@ -47,18 +72,34 @@ export async function writeTolerant<T>(
 ): Promise<{ value: T; dropped: string[] }> {
   const props = { ...properties };
   const dropped: string[] = [];
-  for (;;) {
+  for (let attempt = 0; attempt < 8; attempt++) {
     try {
       return { value: await write(props), dropped };
     } catch (err: any) {
       const message = String(err?.message ?? "");
-      const key = optional.find((k) => k in props && message.includes(k));
-      if (!key) throw err;
-      console.warn(`[RSVP] Notion has no "${key}" column; saved without it.`);
-      delete props[key];
-      dropped.push(key);
+      let changed = false;
+      // Notion lists every problem in one message: "Meal is expected to be rich_text. X is not a property that exists."
+      for (const sentence of message.split(/\.\s+|\.$/)) {
+        const m = sentence.trim().match(/^(.+?) is expected to be (\w+)$/);
+        if (!m || !(m[1] in props)) continue;
+        const next = convert(props[m[1]], m[2]);
+        if (next === undefined) continue;
+        console.warn(`[RSVP] Notion's "${m[1]}" column is ${m[2]}; saved it as ${m[2]}.`);
+        props[m[1]] = next;
+        changed = true;
+      }
+      for (const key of optional) {
+        if (key in props && message.includes(`${key} is not a property`)) {
+          console.warn(`[RSVP] Notion has no "${key}" column; saved without it.`);
+          delete props[key];
+          dropped.push(key);
+          changed = true;
+        }
+      }
+      if (!changed) throw err;
     }
   }
+  return { value: await write(props), dropped };
 }
 
 /**
@@ -124,8 +165,11 @@ export async function syncGuestRow(
     [GUEST_OF]:     { rich_text: [{ text: { content: key } }] },
     "Submitted At": { date:      { start: new Date().toISOString() } },
   };
-  if (first) await notion.pages.update({ page_id: first.id, properties });
-  else await notion.pages.create({ parent: { database_id: databaseId }, properties });
+  await writeTolerant(properties, [], (props) =>
+    first
+      ? notion.pages.update({ page_id: first.id, properties: props })
+      : notion.pages.create({ parent: { database_id: databaseId }, properties: props }),
+  );
 }
 
 /**
@@ -139,11 +183,11 @@ export function readPlusOne(host: any, guestRow: any | undefined): { bringing: b
     const name = text(g.Name);
     // "Alex's guest" is the placeholder for a +1 with no name given.
     const firstName = text(p.Name).trim().split(/\s+/)[0] || "Guest";
-    return { bringing: true, name: name === `${firstName}'s guest` ? "" : name, mealLabel: g.Meal?.select?.name ?? "" };
+    return { bringing: true, name: name === `${firstName}'s guest` ? "" : name, mealLabel: readChoice(g.Meal) };
   }
   return {
-    bringing: p["+1"]?.select?.name === "Yes",
+    bringing: readChoice(p["+1"]) === "Yes",
     name: text(p[LEGACY_GUEST_NAME]),
-    mealLabel: p[LEGACY_GUEST_MEAL]?.select?.name ?? "",
+    mealLabel: readChoice(p[LEGACY_GUEST_MEAL]),
   };
 }

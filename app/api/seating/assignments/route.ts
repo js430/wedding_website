@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
 import { cleanText, readJson, withLock } from "@/lib/input";
-import { findGuestRows, hostKey } from "@/lib/rsvp-party";
+import { findGuestRows, hostKey, readChoice } from "@/lib/rsvp-party";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         if (!rsvp || plain(rsvp.parent?.database_id ?? "") !== plain(RSVP_DB())) {
           return NextResponse.json({ error: "Unknown guest" }, { status: 404 });
         }
-        if (rsvp.properties?.Attending?.select?.name !== "Yes") {
+        if (readChoice(rsvp.properties?.Attending) !== "Yes") {
           return NextResponse.json({ error: "Guest is not attending" }, { status: 400 });
         }
         guestName = rsvp.properties?.Name?.title?.[0]?.plain_text ?? "";
