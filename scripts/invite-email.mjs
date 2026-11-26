@@ -59,10 +59,10 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
     : "";
   const optOutText = unsubscribeUrl ? `\nPrefer not to get wedding emails? ${unsubscribeUrl}` : "";
 
-  // Same look as the site's own emails (lib/email-layout.ts).
-  const SCRIPT = "'Pinyon Script', 'Snell Roundhand', 'Bodoni Moda', 'Bodoni 72', Didot, Georgia, serif";
-  const SERIF = "'Bodoni Moda', 'Bodoni 72', Didot, 'Palatino Linotype', Palatino, Georgia, serif";
-  const SANS = "'Hanken Grotesk', 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
+    // Palatino: built into Windows, macOS and iOS (see lib/email-layout.ts).
+  const SERIF = "'Palatino Linotype', Palatino, 'Book Antiqua', 'TeX Gyre Pagella', P052, 'URW Palladio L', serif";
+  const SCRIPT = SERIF;
+  const SANS = SERIF;
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,7 +71,6 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>${esc(subject)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:#FEE8EC;-webkit-text-size-adjust:100%;">
   <!-- Preview text shown next to the subject in the inbox -->
@@ -87,7 +86,7 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
             <p style="margin:0 0 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:0.32em;text-transform:uppercase;color:#c9a838;">
               You&rsquo;re invited
             </p>
-            <p style="margin:0;font-family:${SCRIPT};font-size:44px;line-height:1.15;color:#FEE8EC;">
+            <p style="margin:0;font-family:${SCRIPT};font-style:italic;font-size:42px;line-height:1.15;color:#FEE8EC;">
               Katie &amp; Jeffrey
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px auto 0;"><tr><td style="width:48px;height:1px;background:#c9a838;font-size:0;line-height:0;">&nbsp;</td></tr></table>
@@ -162,7 +161,7 @@ export function buildInviteEmail({ name, link, password, siteUrl, unsubscribeUrl
             <p style="margin:0 0 2px;font-family:${SANS};font-size:15px;line-height:1.6;color:#3d2a22;">
               With love,
             </p>
-            <p style="margin:0 0 34px;font-family:${SCRIPT};font-size:34px;line-height:1.2;color:#8B0010;white-space:nowrap;">
+            <p style="margin:0 0 34px;font-family:${SCRIPT};font-style:italic;font-size:28px;line-height:1.3;color:#8B0010;white-space:nowrap;">
               Katie &amp; Jeffrey
             </p>
           </td>

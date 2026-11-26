@@ -21,12 +21,13 @@ export const C = {
   muted:    "#7a5c52",
 };
 
-// Each family names a Google font first (Apple Mail, iOS Mail, Outlook for Mac
-// load it), then a similar font already on iPhones and Macs (used even by
-// Gmail, which ignores web fonts), then a safe default.
-export const SCRIPT = "'Pinyon Script', 'Snell Roundhand', 'Bodoni Moda', 'Bodoni 72', Didot, Georgia, serif";
-export const SERIF  = "'Bodoni Moda', 'Bodoni 72', Didot, 'Palatino Linotype', Palatino, Georgia, serif";
-export const SANS   = "'Hanken Grotesk', 'Avenir Next', Avenir, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
+// Palatino ships with Windows ("Palatino Linotype"), macOS and iOS
+// ("Palatino"): the same design everywhere, and no web font needed (Gmail
+// ignores those). Its italic stands in for a script. Android falls back to
+// its own serif.
+export const SERIF  = "'Palatino Linotype', Palatino, 'Book Antiqua', 'TeX Gyre Pagella', P052, 'URW Palladio L', serif";
+export const SCRIPT = SERIF; // set in italic for titles and names
+export const SANS   = SERIF; // one family throughout
 
 const multiline = (s: string) => escapeHtml(s).replace(/\r?\n/g, "<br>");
 
@@ -38,7 +39,7 @@ export function greeting(name: string): string {
 
 /** A body paragraph. `html` is inserted as is (escape anything from guests). */
 export function para(html: string, o: { size?: number; color?: string; align?: "left" | "center"; margin?: string } = {}): string {
-  return `<p style="margin:${o.margin ?? "0 0 18px"};font-family:${SANS};font-size:${o.size ?? 15}px;line-height:1.7;color:${o.color ?? C.ink};text-align:${o.align ?? "left"};">${html}</p>`;
+  return `<p style="margin:${o.margin ?? "0 0 18px"};font-family:${SANS};font-size:${o.size ?? 16}px;line-height:1.65;color:${o.color ?? C.ink};text-align:${o.align ?? "left"};">${html}</p>`;
 }
 
 /** Small uppercase label, e.g. above a card. */
@@ -94,7 +95,7 @@ export function eventBlock(o: { icsUrl: string; googleUrl: string }): string {
 /** "With love, Katie & Jeffrey" */
 export function signoff(): string {
   return `<p style="margin:30px 0 0;font-family:${SANS};font-size:15px;line-height:1.6;color:${C.ink};">With love,</p>
-    <p style="margin:4px 0 0;font-family:${SCRIPT};font-size:32px;line-height:1.2;color:${C.dark};">Katie &amp; Jeffrey</p>`;
+    <p style="margin:4px 0 0;font-family:${SCRIPT};font-style:italic;font-size:26px;line-height:1.3;color:${C.dark};">Katie &amp; Jeffrey</p>`;
 }
 
 /**
@@ -110,7 +111,6 @@ export function emailLayout(o: { title: string; kicker: string; preheader: strin
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>${escapeHtml(o.title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Hanken+Grotesk:wght@400;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:${C.blush};-webkit-text-size-adjust:100%;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(o.preheader)}&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;</div>
@@ -120,7 +120,7 @@ export function emailLayout(o: { title: string; kicker: string; preheader: strin
         <tr>
           <td style="background:${C.darkest};padding:40px 28px 36px;text-align:center;">
             <p style="margin:0 0 12px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:0.32em;text-transform:uppercase;color:${C.gold};">${escapeHtml(o.kicker)}</p>
-            <h1 style="margin:0;font-family:${SCRIPT};font-weight:normal;font-size:44px;line-height:1.15;color:${C.blush};">${escapeHtml(o.title)}</h1>
+            <h1 style="margin:0;font-family:${SCRIPT};font-style:italic;font-weight:normal;font-size:38px;line-height:1.2;color:${C.blush};">${escapeHtml(o.title)}</h1>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px auto 0;"><tr><td style="width:48px;height:1px;background:${C.gold};font-size:0;line-height:0;">&nbsp;</td></tr></table>
           </td>
         </tr>
