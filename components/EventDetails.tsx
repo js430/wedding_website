@@ -55,9 +55,11 @@ function EventCard({ event: e, optional }: { event: Event; optional?: boolean })
       )}
       <div className="text-4xl mb-4">{e.icon}</div>
       <h3 className="font-serif text-2xl text-bark mb-1">{e.type}</h3>
-      <p className="font-sans text-rose-deep text-sm tracking-widest uppercase mb-5">
-        <span className="whitespace-nowrap">March 27, 2027</span> ·{" "}
-        <span className="whitespace-nowrap">{e.time}</span>
+      {/* Date and time on their own lines: a long time ("Following the
+          ceremony") wraps inside the card instead of running past its edge. */}
+      <p className="font-sans text-rose-deep text-sm tracking-widest uppercase mb-5 break-words">
+        <span className="block">March 27, 2027</span>
+        <span className="block">{e.time}</span>
       </p>
       <div className="h-px bg-gold/40 mb-5" />
       <p className="font-serif text-lg text-bark mb-1">{e.venue}</p>

@@ -286,8 +286,8 @@ function PlaceCard({
             ✦ {highlight}
           </span>
         )}
-        <div className="flex items-start justify-between gap-3 mb-1">
-          <p className="font-serif text-lg text-bark leading-snug">{name}</p>
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 mb-1">
+          <p className="font-serif text-lg text-bark leading-snug min-w-0">{name}</p>
           <span className="shrink-0 font-sans text-[12px] tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 whitespace-nowrap">
             {meta}
           </span>

@@ -559,7 +559,7 @@ export default function RegistryPage() {
                 : "No items in this category yet."}
             </p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 min-[375px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               {filtered.map((group) => (
                 <ItemCard
                   key={group.key}
