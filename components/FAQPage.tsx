@@ -42,6 +42,10 @@ const faqs = [
         q: "What is the schedule for the evening?",
         a: "4:30 PM — Doors open\n5:00 PM — Ceremony\nFollowing the ceremony — Cocktail hour on the outdoor patio\n7:00 PM — Reception (dinner & dancing)\nLater — After party at The Corner (optional, TBD: decided on the day depending on interest and timing)",
       },
+      {
+        q: "Can I bring my kids?",
+        a: "We love your little ones, but unless you've already discussed it with us, our celebration is adults only. We hope this gives you a chance to enjoy a night out!",
+      },
     ],
   },
   {
