@@ -6,6 +6,7 @@ import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
 import { allow } from "@/lib/rate-limit";
 import { clientKey } from "@/lib/invite-guard";
 import { cleanEmail, escapeHtml } from "@/lib/input";
+import { C, button, emailLayout, greeting, para, signoff } from "@/lib/email-layout";
 
 export const dynamic = "force-dynamic";
 
@@ -20,48 +21,29 @@ const WINDOW_MS   = 15 * 60 * 1000;
 const PER_EMAIL   = 3;   // a guest retrying is fine; a script hammering one address is not
 const PER_CLIENT  = 10;  // across all addresses from one IP
 
-function buildResendEmail(name: string, editUrl: string): string {
-  const greeting = name ? `Hi ${escapeHtml(name.split(" ")[0])},` : "Hi there,";
-  return `
-    <!DOCTYPE html>
-    <html>
-    <body style="margin:0;padding:0;background:#FEE8EC;font-family:sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#FEE8EC;padding:40px 20px;">
-        <tr><td align="center">
-          <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;max-width:560px;width:100%;">
-            <tr>
-              <td style="background:#1E0008;padding:32px;text-align:center;">
-                <p style="margin:0;font-family:Georgia,serif;font-style:italic;color:#c9a838;font-size:13px;letter-spacing:0.2em;">Katie &amp; Jeffrey</p>
-                <h1 style="margin:8px 0 0;font-family:Georgia,serif;color:#FEE8EC;font-size:28px;font-weight:normal;">Your RSVP Link</h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:32px;text-align:center;">
-                <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:18px;color:#1E0008;text-align:left;">${greeting}</p>
-                <p style="margin:0 0 24px;font-family:sans-serif;font-size:14px;color:#4a3728;line-height:1.6;text-align:left;">
-                  Here's the link to view or change your RSVP. You can make changes
-                  until <strong>${formatDeadline()}</strong>.
-                </p>
-                <a href="${escapeHtml(editUrl)}" style="background:#CC1428;color:#FEE8EC;font-family:sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;padding:12px 26px;display:inline-block;">
-                  Open my RSVP
-                </a>
-                <p style="margin:18px 0 0;font-family:sans-serif;font-size:11px;color:#8B0010;">
-                  This link is just for you — please don't forward it. If you didn't
-                  ask for it, you can ignore this email.
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td style="background:#FEE8EC;padding:20px;text-align:center;">
-                <p style="margin:0;font-family:sans-serif;font-size:12px;color:#8B0010;">Katie &amp; Jeffrey · March 27, 2027 · Charlottesville, VA</p>
-              </td>
-            </tr>
-          </table>
-        </td></tr>
-      </table>
-    </body>
-    </html>
-  `;
+function buildResendEmail(name: string, editUrl: string): { html: string; text: string } {
+  const bodyHtml = [
+    greeting(name),
+    para(`Here's your personal link to view or change your RSVP. You can make changes any time until <strong style="color:${C.darkest};">${escapeHtml(formatDeadline())}</strong>.`, { margin: "0 0 26px" }),
+    `<div style="text-align:center;">${button(editUrl, "Open my RSVP")}</div>`,
+    para("This link is just for you, so please don't forward it. If you didn't ask for it, you can safely ignore this email.", { size: 13, color: C.muted, align: "center", margin: "22px 0 0" }),
+    signoff(),
+  ].join("\n");
+  const first = name.trim().split(/\s+/)[0];
+  return {
+    html: emailLayout({ kicker: "Katie & Jeffrey", title: "Your personal link", preheader: `View or change your RSVP until ${formatDeadline()}.`, bodyHtml }),
+    text: [
+      `Hi ${first || "there"},`,
+      "",
+      `Here's your personal link to view or change your RSVP. You can make changes until ${formatDeadline()}:`,
+      editUrl,
+      "",
+      "This link is just for you, so please don't forward it. If you didn't ask for it, you can ignore this email.",
+      "",
+      "With love,",
+      "Katie & Jeffrey",
+    ].join("\n"),
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -121,8 +103,8 @@ async function sendEditLink(req: NextRequest, address: string) {
     const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
       from:    process.env.REGISTRY_FROM_EMAIL ?? "Katie & Jeffrey <onboarding@resend.dev>",
       to:      address,
-      subject: "Your RSVP link — Katie & Jeffrey",
-      html:    buildResendEmail(name, editUrl),
+      subject: "Your RSVP link",
+      ...buildResendEmail(name, editUrl),
     });
     if (error) console.error("[RSVP resend] email failed:", error);
   } catch (err: any) {

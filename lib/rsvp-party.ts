@@ -47,13 +47,15 @@ export function readChoice(prop: any): string {
 
 /** Re-shape one property value to the type Notion says the column has. */
 function convert(value: any, to: string): any | undefined {
-  const s: string =
+  const s: string | undefined =
     value?.select !== undefined ? (value.select?.name ?? "") :
     value?.rich_text !== undefined ? value.rich_text.map((t: any) => t.text?.content ?? "").join("") :
-    undefined as any;
+    value?.checkbox !== undefined ? (value.checkbox ? "Yes" : "") :
+    undefined;
   if (s === undefined) return undefined;
   if (to === "rich_text") return { rich_text: s ? [{ text: { content: s } }] : [] };
   if (to === "select") return { select: s ? { name: s.replace(/,/g, " ") } : null };
+  if (to === "checkbox") return { checkbox: /^(yes|true|y|1|x)$/i.test(s.trim()) };
   return undefined;
 }
 
@@ -61,8 +63,9 @@ function convert(value: any, to: string): any | undefined {
  * Run a Notion write and retry it, adapting to the database as it is:
  * - drops any of `optional` that Notion reports as a property that doesn't
  *   exist (returned in `dropped`);
- * - when Notion says a Select column is really Text (or the reverse), sends
- *   that value in the column's actual type.
+ * - when Notion says a column has another type (Select, Text, Checkbox),
+ *   sends that value in the column's actual type; an optional column of a
+ *   type it can't fill is dropped.
  * Anything else is thrown as before.
  */
 export async function writeTolerant<T>(
@@ -83,7 +86,16 @@ export async function writeTolerant<T>(
         const m = sentence.trim().match(/^(.+?) is expected to be (\w+)$/);
         if (!m || !(m[1] in props)) continue;
         const next = convert(props[m[1]], m[2]);
-        if (next === undefined) continue;
+        if (next === undefined) {
+          // A column of a type we can't write: skip it if it's optional.
+          if (optional.includes(m[1])) {
+            console.warn(`[RSVP] Notion's "${m[1]}" column is ${m[2]}, which the site can't fill; saved without it.`);
+            delete props[m[1]];
+            dropped.push(m[1]);
+            changed = true;
+          }
+          continue;
+        }
         console.warn(`[RSVP] Notion's "${m[1]}" column is ${m[2]}; saved it as ${m[2]}.`);
         props[m[1]] = next;
         changed = true;
