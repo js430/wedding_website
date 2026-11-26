@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 /** Shown for any address that isn't a page on the site. */
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-rose-blush flex items-center justify-center px-6 py-16">
+    <main id="main" className="min-h-screen bg-rose-blush flex items-center justify-center px-6 py-16">
       <div className="max-w-md text-center">
         <p className="text-gold text-xl mb-4" aria-hidden="true">✦</p>
         <h1 className="font-script text-5xl sm:text-6xl text-bark leading-tight">Katie &amp; Jeffrey</h1>

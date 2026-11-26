@@ -76,7 +76,7 @@ function ItemCard({
         selected
           ? "border-rose-deep shadow-md"
           : claimed
-          ? "border-rose-soft/20 opacity-60"
+          ? "border-rose-soft/20 opacity-80"
           : "border-rose-soft/30 hover:border-rose-soft"
       } bg-white/70`}
     >
@@ -120,7 +120,7 @@ function ItemCard({
           {shown.price !== null && (
             <>
               ${shown.price.toFixed(2)}
-              <span className="ml-1 text-[12px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
+              <span className="ml-1 text-[13px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
               {hasOptions && !singleSelectedId && (
                 <span className="text-bark/60 font-normal"> · {pickerOptions.length} options</span>
               )}
@@ -464,7 +464,7 @@ export default function RegistryPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-rose-blush pt-24 pb-32 px-6">
+      <main id="main" className="min-h-screen bg-rose-blush pt-24 pb-32 px-4 min-[360px]:px-6">
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
@@ -474,7 +474,7 @@ export default function RegistryPage() {
           </div>
           {/* Two ways to give, side by side, so cash isn't buried at the bottom */}
           <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto -mt-4 mb-10">
-            <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
+            <div className="min-w-0 bg-white/60 border border-rose-soft/40 px-4 min-[360px]:px-6 py-5 text-center flex flex-col">
               <h2 className="font-serif text-xl text-bark mb-2">Choose a gift</h2>
               <p className="font-sans text-bark/70 text-sm leading-relaxed mb-4">
                 Pick from our registry below, then enter your name and email and press{" "}
@@ -485,11 +485,11 @@ export default function RegistryPage() {
                 <strong className="font-semibold text-bark">That&apos;s what claims a gift.</strong>{" "}
                 Until you press it, your picks stay open for other guests.
               </p>
-              <a href="#gifts" className="btn-outline inline-block mt-auto self-center">
+              <a href="#gifts" className="btn-outline inline-block mt-auto self-center max-w-full px-5 min-[360px]:px-8">
                 Browse the registry ↓
               </a>
             </div>
-            <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
+            <div className="min-w-0 bg-white/60 border border-rose-soft/40 px-4 min-[360px]:px-6 py-5 text-center flex flex-col">
               <h2 className="font-serif text-xl text-bark mb-2">Give cash</h2>
               <p className="font-sans text-bark/70 text-sm leading-relaxed">
                 If you&apos;d rather give cash, you&apos;re welcome to bring it with you on
@@ -548,9 +548,10 @@ export default function RegistryPage() {
               <FilterRow label="Sort">
                 <select
                   id="registry-sort"
+                  aria-label="Sort gifts"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortMode)}
-                  className="font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep focus-visible:ring-2 focus-visible:ring-rose-deep/40"
+                  className="max-w-full font-sans text-xs text-bark/70 bg-white/80 border border-rose-soft/50 px-3 py-1.5 focus:outline-none focus:border-rose-deep focus-visible:ring-2 focus-visible:ring-rose-deep/40"
                 >
                   <option value="featured">Featured</option>
                   <option value="price-asc">Price: low to high</option>

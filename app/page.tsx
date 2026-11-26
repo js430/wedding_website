@@ -13,7 +13,7 @@ export default function Home() {
     <>
       <Intro />
       <Navbar />
-      <main>
+      <main id="main">
         <Hero />
         <OurStory />
         <Ornament />

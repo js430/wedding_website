@@ -66,12 +66,64 @@ export default function Navbar() {
     };
   }, [moreOpen]);
 
+  // Phone menu: Escape or a tap outside closes it, and the page behind
+  // doesn't scroll while it's open.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    const onDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+    };
+  }, [menuOpen]);
+
+  const focusFirstOnOpen = useRef(false);
+  useEffect(() => {
+    if (moreOpen && focusFirstOnOpen.current) {
+      focusFirstOnOpen.current = false;
+      moreRef.current?.querySelector<HTMLElement>(":scope > ul a, :scope > ul button")?.focus();
+    }
+  }, [moreOpen]);
+
+  /** Arrow keys in the "More" menu: down/up move between its links. */
+  function onMoreKeyDown(e: React.KeyboardEvent<HTMLLIElement>) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const links = Array.from(moreRef.current?.querySelectorAll<HTMLElement>(":scope > ul a, :scope > ul button") ?? []);
+    e.preventDefault();
+    if (!moreOpen) {
+      // Open, and focus the first link once the menu has rendered (below).
+      focusFirstOnOpen.current = true;
+      setMoreOpen(true);
+      return;
+    }
+    if (!links.length) return;
+    const at = links.indexOf(document.activeElement as HTMLElement);
+    const step = e.key === "ArrowDown" ? 1 : -1;
+    const next = at < 0 ? (step > 0 ? 0 : links.length - 1) : (at + step + links.length) % links.length;
+    links[next].focus();
+  }
+
   // Hovering opens the menu. A click right after (a mouse click, or a tap on
   // a tablet, which fires a hover first) must keep it open, not toggle it shut.
   const hoverOpenedAt = useRef(0);
 
   return (
     <nav
+      ref={navRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled ? "bg-rose-blush/95 backdrop-blur shadow-sm py-3" : "bg-transparent py-5"
       }`}
@@ -103,6 +155,7 @@ export default function Navbar() {
               setMoreOpen(true);
             }}
             onMouseLeave={() => setMoreOpen(false)}
+            onKeyDown={onMoreKeyDown}
             onBlur={(e) => {
               // Tabbing out of the menu closes it.
               if (!moreRef.current?.contains(e.relatedTarget as Node | null)) setMoreOpen(false);
@@ -114,7 +167,6 @@ export default function Navbar() {
               onClick={() => setMoreOpen((v) => (Date.now() - hoverOpenedAt.current < 600 ? true : !v))}
               className="nav-link flex items-center gap-1"
               aria-expanded={moreOpen}
-              aria-haspopup="true"
             >
               More
               <svg
@@ -187,7 +239,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-rose-blush backdrop-blur border-t border-rose-soft/40">
+        <div className="md:hidden bg-rose-blush backdrop-blur border-t border-rose-soft/40 max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain">
           <ul className="flex flex-col items-center gap-5 py-6">
             {[...primaryLinks, ...moreLinks].map((l) => (
               <li key={l.href}>

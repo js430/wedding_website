@@ -11,7 +11,7 @@ const SPARKLES = Array.from({ length: 18 }, (_, i) => ({
 
 export default function Sparkles() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none motion-reduce:hidden" aria-hidden="true">
       {SPARKLES.map((s, i) => (
         <span
           key={i}

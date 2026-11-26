@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
-import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
+import { buildEditUrl, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
 import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostName, hostRefs, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { googleCalendarUrl } from "@/lib/event";
@@ -53,9 +53,11 @@ function buildRSVPEmail(data: {
     ? "We're so happy you'll be celebrating with us! Here's what we have down for you."
     : "Thank you for letting us know. We're sorry you can't make it, and we'll be thinking of you on the day.";
 
+  // Without an edit link (after the deadline) changes go by reply instead.
+  const where = data.editUrl ? "from your RSVP" : "by replying to this email";
   const updates = data.noUpdates
-    ? "You've opted out of wedding update emails, so we'll only write about your RSVP. Changed your mind? You can switch them back on from your RSVP."
-    : "We'll send any big updates about the wedding to this address. Rather not get them? You can opt out from your RSVP.";
+    ? `You've opted out of wedding update emails, so we'll only write about your RSVP. Changed your mind? You can switch them back on ${where}.`
+    : `We'll send any big updates about the wedding to this address. Rather not get them? You can opt out ${where}.`;
 
   const editBox = data.editUrl
     ? card(`
@@ -229,7 +231,8 @@ export async function POST(req: NextRequest) {
     // Links must be absolute in email; prefer the configured site URL and fall
     // back to the origin this request arrived on.
     const origin  = publicOrigin(req);
-    const editUrl = buildEditUrl(saved.value.id, origin);
+    // Past the edit deadline the link would only open a read-only page.
+    const editUrl = editingClosed() ? "" : buildEditUrl(saved.value.id, origin);
     const icsUrl  = `${origin}/api/calendar`;
 
     try {
@@ -261,5 +264,5 @@ export async function POST(req: NextRequest) {
     emailed = false;
   }
 
-  return NextResponse.json({ ok: true, emailed });
+  return NextResponse.json({ ok: true, emailed, editable: !editingClosed() });
 }

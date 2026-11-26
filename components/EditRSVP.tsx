@@ -106,7 +106,7 @@ export default function EditRSVP() {
   const shell = (children: React.ReactNode) => (
     <>
       <Navbar />
-      <main className="min-h-screen bg-rose-blush pt-24 pb-32 px-6">
+      <main id="main" className="min-h-screen bg-rose-blush pt-24 pb-32 px-4 min-[360px]:px-6">
         <div className="max-w-xl mx-auto">{children}</div>
       </main>
       <Footer />
@@ -119,7 +119,7 @@ export default function EditRSVP() {
   if (load === "unavailable")
     return shell(
       <div className="text-center py-20">
-        <SparkleTitle text="RSVP" className="mt-8" />
+        <SparkleTitle as="h1" text="RSVP" className="mt-8" />
         <p role="alert" className="font-sans text-bark/60 text-sm mt-6 leading-relaxed">
           We couldn&apos;t load your RSVP just now. Your link is fine; please try
           again in a few minutes.
@@ -133,7 +133,7 @@ export default function EditRSVP() {
   if (load === "missing" || load === "invalid")
     return shell(
       <div className="text-center py-20">
-        <SparkleTitle text="RSVP" className="mt-8" />
+        <SparkleTitle as="h1" text="RSVP" className="mt-8" />
         <p className="font-sans text-bark/60 text-sm mt-6 leading-relaxed">
           This link isn&apos;t valid — it may have been copied incompletely, or
           cut in half by an email app. We can send you a fresh one.
@@ -162,12 +162,12 @@ export default function EditRSVP() {
 
   return shell(
     <>
-      <SparkleTitle text="Your RSVP" className="mt-8" />
+      <SparkleTitle as="h1" text="Your RSVP" className="mt-8" />
       <div className="section-divider"><span className="text-gold text-xl">✦</span></div>
 
       <p className="text-center font-sans text-bark/60 text-sm mb-8 -mt-2">
         {closed
-          ? `Changes closed on ${deadline}. Here's what we have for you — reply to our email if something needs fixing.`
+          ? `Changes closed at the end of ${deadline}. Here's what we have for you — reply to our email if something needs fixing.`
           : `Hi ${name.split(" ")[0] || "there"} — update anything below. You can make changes until ${deadline}.`}
       </p>
 

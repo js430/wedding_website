@@ -4,6 +4,7 @@ import { useState, useId } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SparkleTitle from "./SparkleTitle";
+import { HOTEL_BOOKING_URL } from "./HotelBlock";
 
 const faqs = [
   {
@@ -40,7 +41,7 @@ const faqs = [
       },
       {
         q: "What is the schedule for the evening?",
-        a: "4:30 PM — Doors open\n5:00 PM — Ceremony\nFollowing the ceremony — Cocktail hour on the outdoor patio\n7:00 PM — Reception (dinner & dancing)\nLater — After party at The Corner (optional, TBD: decided on the day depending on interest and timing)",
+        a: "4:30 PM — Doors open\n5:00 PM — Ceremony\nFollowing the ceremony — Cocktail hour on the outdoor patio\n7:00 PM or later — Reception (dinner & dancing)\nLater — After party at The Corner (optional, TBD: decided on the day depending on interest and timing)",
       },
       {
         q: "Can I bring my kids?",
@@ -122,6 +123,46 @@ const faqs = [
   },
 ];
 
+/**
+ * Phrases in the answers that name another part of the site become links,
+ * so a guest reading "the Registry page" can go straight there.
+ */
+const LINKS: { phrase: string; href: string; external?: boolean }[] = [
+  { phrase: "Guide to Charlottesville page", href: "/guide" },
+  { phrase: "Registry page", href: "/registry" },
+  { phrase: "Book a Room link", href: HOTEL_BOOKING_URL, external: true },
+  { phrase: "RSVP section", href: "/#rsvp" },
+  { phrase: "RSVP form", href: "/#rsvp" },
+];
+
+function linkify(line: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  let rest = line;
+  for (;;) {
+    let first: { at: number; link: (typeof LINKS)[number] } | null = null;
+    for (const link of LINKS) {
+      const at = rest.indexOf(link.phrase);
+      if (at >= 0 && (!first || at < first.at)) first = { at, link };
+    }
+    if (!first) break;
+    const { at, link } = first;
+    if (at) out.push(rest.slice(0, at));
+    out.push(
+      <a
+        key={out.length}
+        href={link.href}
+        {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        className="text-rose-deep underline decoration-rose-soft underline-offset-4 hover:text-crimson-dark"
+      >
+        {link.phrase}
+      </a>,
+    );
+    rest = rest.slice(at + link.phrase.length);
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
 function AccordionItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -134,17 +175,17 @@ function AccordionItem({ q, a }: { q: string; a: string }) {
         aria-controls={panelId}
         className="w-full text-left py-4 flex items-center justify-between gap-4 group"
       >
-        <span className="font-serif text-bark text-lg group-hover:text-rose-deep transition-colors">
+        <span className="min-w-0 break-words font-serif text-bark text-lg group-hover:text-rose-deep transition-colors">
           {q}
         </span>
-        <span aria-hidden="true" className={`shrink-0 text-gold transition-transform duration-200 ${open ? "rotate-45" : ""}`}>
+        <span aria-hidden="true" className={`shrink-0 text-gold-dark transition-transform duration-200 ${open ? "rotate-45" : ""}`}>
           ✦
         </span>
       </button>
       <div id={panelId} role="region" aria-label={q} hidden={!open} className="pb-4 pr-8">
         {a.split("\n").map((line, i) => (
           <p key={i} className="font-sans text-bark/70 text-sm leading-relaxed">
-            {line}
+            {linkify(line)}
           </p>
         ))}
       </div>
@@ -156,7 +197,7 @@ export default function FAQPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-rose-blush pt-24 pb-20 px-6">
+      <main id="main" className="min-h-screen bg-rose-blush pt-24 pb-20 px-4 min-[360px]:px-6">
         <div className="max-w-2xl mx-auto">
           <SparkleTitle as="h1" text="FAQ" className="mt-8" />
           <div className="section-divider">
@@ -169,9 +210,9 @@ export default function FAQPage() {
           <div className="space-y-10">
             {faqs.map((section) => (
               <div key={section.category}>
-                <h3 className="font-sans text-xs tracking-widest uppercase text-rose-deep mb-3">
+                <h2 className="font-sans text-xs tracking-widest uppercase text-rose-deep mb-3">
                   {section.category}
-                </h3>
+                </h2>
                 <div className="bg-white/60 border border-rose-soft/30 px-6">
                   {section.questions.map((item) => (
                     <AccordionItem key={item.q} q={item.q} a={item.a} />

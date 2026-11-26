@@ -16,9 +16,14 @@ export default function RSVP() {
   const [plusOne, setPlusOne] = useState<"yes" | "no" | "">("");
   const [meal, setMeal] = useState("");
   const [plusOneMeal, setPlusOneMeal] = useState("");
+  // Kept in state (not just the inputs) so switching between "just me",
+  // "with a +1" and "declines" doesn't throw away what was typed; only the
+  // answers that apply to the final choice are sent.
+  const [plusOneName, setPlusOneName] = useState("");
+  const [dietary, setDietary] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   // What the guest just sent, for the thank-you message.
-  const [sent, setSent] = useState<{ attending: "yes" | "no"; emailed: boolean; email: string } | null>(null);
+  const [sent, setSent] = useState<{ attending: "yes" | "no"; emailed: boolean; email: string; editable: boolean } | null>(null);
 
   const needsMeal = attending === "yes" && !meal;
   const needsGuestMeal = attending === "yes" && plusOne === "yes" && !plusOneMeal;
@@ -36,9 +41,9 @@ export default function RSVP() {
       plusOne,
       meal: attending === "yes" ? meal : "",
       plusOneMeal: attending === "yes" && plusOne === "yes" ? plusOneMeal : "",
-      plusOneName: (form.elements.namedItem("plusOneName") as HTMLInputElement)?.value ?? "",
-      // Only on the page when accepting; a declining guest has no dietary field.
-      dietary: (form.elements.namedItem("dietary") as HTMLInputElement | null)?.value ?? "",
+      plusOneName: attending === "yes" && plusOne === "yes" ? plusOneName : "",
+      // Only asked when accepting; a declining guest sends none.
+      dietary: attending === "yes" ? dietary : "",
       message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
       noUpdates: (form.elements.namedItem("noUpdates") as HTMLInputElement).checked,
     };
@@ -64,7 +69,7 @@ export default function RSVP() {
         throw new Error("Request failed");
       }
       const result = await res.json().catch(() => ({}));
-      setSent({ attending: attending === "yes" ? "yes" : "no", emailed: result?.emailed !== false, email: data.email.trim() });
+      setSent({ attending: attending === "yes" ? "yes" : "no", emailed: result?.emailed !== false, email: data.email.trim(), editable: result?.editable !== false });
       setStatus("success");
 
       // Celebrate a yes with palette-colored confetti
@@ -117,6 +122,11 @@ export default function RSVP() {
                     {sent.email ? <> to <strong>{sent.email}</strong></> : null}. You can request
                     your edit link below in a little while.
                   </p>
+                ) : sent?.editable === false ? (
+                  <p className="mt-4 font-sans text-xs leading-relaxed text-bark/60">
+                    A confirmation is on its way to your inbox. Need to change something?
+                    Just reply to that email.
+                  </p>
                 ) : (
                   <p className="mt-4 font-sans text-xs leading-relaxed text-bark/60">
                     A confirmation is on its way to your inbox, with a link to change your
@@ -135,6 +145,8 @@ export default function RSVP() {
                     id="rsvp-name"
                     required
                     type="text"
+                    maxLength={200}
+                    autoComplete="name"
                     placeholder="Jane Smith"
                     className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
                   />
@@ -149,6 +161,8 @@ export default function RSVP() {
                     id="rsvp-email"
                     required
                     type="email"
+                    maxLength={254}
+                    autoComplete="email"
                     placeholder="jane@example.com"
                     aria-describedby="rsvp-email-note"
                     className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
@@ -176,8 +190,6 @@ export default function RSVP() {
                   onChange={(a, p) => {
                     setAttending(a);
                     setPlusOne(p);
-                    if (a === "no") setMeal("");
-                    if (p === "no") setPlusOneMeal("");
                   }}
                 />
 
@@ -192,6 +204,9 @@ export default function RSVP() {
                           name="plusOneName"
                           id="rsvp-plusOneName"
                           type="text"
+                          maxLength={200}
+                          value={plusOneName}
+                          onChange={(e) => setPlusOneName(e.target.value)}
                           placeholder="Guest's full name"
                           className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
                         />
@@ -222,6 +237,9 @@ export default function RSVP() {
                         name="dietary"
                         id="rsvp-dietary"
                         type="text"
+                        maxLength={1000}
+                        value={dietary}
+                        onChange={(e) => setDietary(e.target.value)}
                         placeholder="Nut allergy, shellfish, etc."
                         className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep"
                       />
@@ -240,6 +258,7 @@ export default function RSVP() {
                     name="message"
                     id="rsvp-message"
                     rows={3}
+                    maxLength={2000}
                     placeholder="Share a kind word..."
                     className="w-full border border-rose-soft/60 bg-ivory/80 px-4 py-3 font-sans text-bark placeholder-bark/30 focus:outline-none focus:border-rose-deep resize-none"
                   />
@@ -251,9 +270,13 @@ export default function RSVP() {
                   </p>
                 )}
 
-                {(needsMeal || needsGuestMeal) && (
+                {(!attending || needsMeal || needsGuestMeal) && (
                   <p className="font-sans text-xs text-bark/60 text-center">
-                    {needsMeal ? "Choose a meal to continue." : "Choose a meal for your guest to continue."}
+                    {!attending
+                      ? "Let us know whether you'll attend to continue."
+                      : needsMeal
+                      ? "Choose a meal to continue."
+                      : "Choose a meal for your guest to continue."}
                   </p>
                 )}
 

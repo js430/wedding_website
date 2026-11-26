@@ -94,6 +94,14 @@ export default function Gallery() {
   // The thumbnail that opened the lightbox, to give focus back on close.
   const openerRef = useRef<HTMLElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const prevRef = useRef<HTMLButtonElement | null>(null);
+  const nextRef = useRef<HTMLButtonElement | null>(null);
+  const touchX = useRef<number | null>(null);
+
+  /** Next (+1) or previous (-1) photo, wrapping around. */
+  function step(d: number) {
+    setActive((a) => (a === null ? a : (a + d + photos.length) % photos.length));
+  }
 
   function open(i: number) {
     openerRef.current = document.activeElement as HTMLElement | null;
@@ -140,15 +148,21 @@ export default function Gallery() {
     };
   }, []);
 
-  // Esc closes the lightbox; focus starts on its close button and Tab stays on it.
+  // Esc closes the lightbox, the arrow keys move between photos; focus
+  // starts on the close button and Tab cycles through the lightbox's buttons.
+  const isOpen = active !== null;
   useEffect(() => {
-    if (active === null) return;
+    if (!isOpen) return;
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
+      if (e.key === "ArrowRight") step(1);
+      if (e.key === "ArrowLeft") step(-1);
       if (e.key === "Tab") {
         e.preventDefault();
-        closeRef.current?.focus();
+        const order = [closeRef.current, prevRef.current, nextRef.current].filter(Boolean) as HTMLElement[];
+        const at = order.indexOf(document.activeElement as HTMLElement);
+        order[(at + (e.shiftKey ? -1 : 1) + order.length) % order.length]?.focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -160,7 +174,7 @@ export default function Gallery() {
       window.removeEventListener("keydown", onKey);
       root.style.overflow = previous;
     };
-  }, [active]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section id="gallery" className="py-24 px-6 bg-rose-soft/20">
@@ -223,6 +237,16 @@ export default function Gallery() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={close}
+            onTouchStart={(e) => { touchX.current = e.touches[0]?.clientX ?? null; }}
+            onTouchEnd={(e) => {
+              // A sideways swipe moves between photos instead of closing.
+              const start = touchX.current;
+              touchX.current = null;
+              const end = e.changedTouches[0]?.clientX;
+              if (start === null || end === undefined || Math.abs(end - start) < 50) return;
+              e.preventDefault();
+              step(end < start ? 1 : -1);
+            }}
             role="dialog"
             data-lenis-prevent
             aria-modal="true"
@@ -237,6 +261,24 @@ export default function Gallery() {
               className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center text-rose-blush/80 hover:text-rose-blush text-3xl leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-blush"
             >
               <span aria-hidden="true">×</span>
+            </button>
+            <button
+              ref={prevRef}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); step(-1); }}
+              aria-label="Previous photo"
+              className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-crimson-darkest/40 text-rose-blush/80 hover:text-rose-blush text-3xl leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-blush"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              ref={nextRef}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); step(1); }}
+              aria-label="Next photo"
+              className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-crimson-darkest/40 text-rose-blush/80 hover:text-rose-blush text-3xl leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-blush"
+            >
+              <span aria-hidden="true">›</span>
             </button>
             <motion.div
               initial={{ scale: 0.92, y: 18, opacity: 0 }}
@@ -258,8 +300,8 @@ export default function Gallery() {
             <p className="font-script text-3xl text-gold mb-1">
               {photos[active].caption}
             </p>
-            <p className="font-sans text-rose-blush/60 text-xs tracking-widest uppercase">
-              Tap anywhere to close
+            <p className="font-sans text-rose-blush/60 text-xs tracking-widest uppercase text-center">
+              {active + 1} of {photos.length} · Swipe or use the arrows · Tap to close
             </p>
           </motion.div>
         )}

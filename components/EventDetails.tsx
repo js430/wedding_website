@@ -47,7 +47,7 @@ type Event = (typeof events)[number];
 
 function EventCard({ event: e, optional }: { event: Event; optional?: boolean }) {
   return (
-    <div className="lift bg-ivory/80 backdrop-blur border border-rose-soft/30 hover:border-rose-soft/60 p-8 text-center relative h-full">
+    <div className="lift bg-ivory/80 backdrop-blur border border-rose-soft/30 hover:border-rose-soft/60 p-5 min-[360px]:p-8 text-center relative h-full">
       {optional && (
         <span className="inline-block mb-3 font-sans text-xs tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
           Optional · TBD
@@ -57,7 +57,7 @@ function EventCard({ event: e, optional }: { event: Event; optional?: boolean })
       <h3 className="font-serif text-2xl text-bark mb-1">{e.type}</h3>
       {/* Date and time on their own lines: a long time ("Following the
           ceremony") wraps inside the card instead of running past its edge. */}
-      <p className="font-sans text-rose-deep text-sm tracking-widest uppercase mb-5 break-words">
+      <p className="font-sans text-rose-deep text-sm tracking-wider uppercase mb-5 break-words">
         <span className="block">March 27, 2027</span>
         <span className="block">{e.time}</span>
       </p>
@@ -71,7 +71,7 @@ function EventCard({ event: e, optional }: { event: Event; optional?: boolean })
         rel="noopener noreferrer"
         className="btn-outline inline-block"
       >
-        View Map
+        View Map<span className="sr-only"> for the {e.type}</span>
       </a>
     </div>
   );
@@ -96,7 +96,7 @@ export default function EventDetails() {
         </Reveal>
 
         {/* Main 3 events */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 [&>*]:min-w-0">
           {events.slice(0, 3).map((e, i) => (
             <Reveal key={e.type} delay={i * 150} className="h-full">
               <Tilt className="h-full">
@@ -118,33 +118,33 @@ export default function EventDetails() {
         </div>
 
         {/* Dress code & hotel */}
-        <Reveal delay={100} className="mt-12 grid md:grid-cols-2 gap-6">
-          <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
+        <Reveal delay={100} className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6 [&>*]:min-w-0">
+          <div className="p-4 min-[360px]:p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold-dark text-sm mb-2">Dress Code</p>
             <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
             <p className="font-sans text-bark/60 text-sm leading-relaxed">
               We kindly ask that you avoid shades of white, red and pink.
             </p>
           </div>
-          <div className="p-6 border border-gold/30 bg-ivory/50 text-center mb-6">
+          <div className="p-4 min-[360px]:p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold-dark text-sm mb-2">Save the Date</p>
             <p className="font-serif text-xl text-bark mb-3">Add it to your calendar</p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <a href="/api/calendar" className="btn-outline inline-block">
-                Apple / Outlook (.ics)
+            <div className="flex flex-col gap-2 items-stretch max-w-xs mx-auto">
+              <a href="/api/calendar" className="btn-outline inline-block px-3 text-xs">
+                Apple / Outlook
               </a>
               <a
                 href={googleCalendarUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-outline inline-block"
+                className="btn-outline inline-block px-3 text-xs"
               >
                 Google Calendar ↗
               </a>
             </div>
           </div>
 
-          <div className="p-6 border border-gold/30 bg-ivory/50 text-center">
+          <div className="p-4 min-[360px]:p-6 border border-gold/30 bg-ivory/50 text-center md:col-span-2 lg:col-span-1">
             <p className="font-serif italic text-gold-dark text-sm mb-2">Hotel Block</p>
             <p className="font-serif text-xl text-bark mb-2">
               <a

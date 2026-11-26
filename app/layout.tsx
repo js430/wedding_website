@@ -66,6 +66,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${lato.variable} ${tangerine.variable}`}
     >
       <body>
+        <a href="#main" className="skip-link">Skip to content</a>
         <PageView />
         <SmoothScroll />
         {children}

@@ -26,7 +26,7 @@ export default function MealTally() {
 
   if (data === null) {
     return (
-      <main className="min-h-screen bg-rose-blush flex items-center justify-center px-6">
+      <main id="main" className="min-h-screen bg-rose-blush flex items-center justify-center px-6">
         <form onSubmit={load} className="w-full max-w-sm bg-white/70 border border-rose-soft/40 p-8 space-y-4">
           <p className="font-serif text-2xl text-bark text-center">Meal counts</p>
           <input
@@ -67,7 +67,7 @@ export default function MealTally() {
   );
 
   return (
-    <main className="min-h-screen bg-rose-blush px-6 py-16">
+    <main id="main" className="min-h-screen bg-rose-blush px-6 py-16">
       <div className="max-w-3xl mx-auto">
         <p className="font-serif text-3xl text-bark mb-1">Meal counts</p>
         <p className="font-sans text-bark/60 text-sm mb-10">
