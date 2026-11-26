@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
-import { UPDATES_OPT_OUT, withOptionalOptOut } from "@/lib/rsvp-updates";
+import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
+import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostKey, readPlusOne, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
+import { withLock } from "@/lib/input";
 import { cleanText, readJson } from "@/lib/input";
 
 export const dynamic = "force-dynamic";
@@ -12,16 +14,17 @@ function notionClient() {
 }
 
 /** Pull the RSVP fields the guest is allowed to see and change. */
-function readRsvp(page: any) {
+function readRsvp(page: any, guestRow?: any) {
   const p = page.properties;
+  const plus = readPlusOne(page, guestRow);
   return {
     name:        p.Name?.title?.[0]?.plain_text ?? "",
     email:       p.Email?.email ?? "",
     attending:   p.Attending?.select?.name === "Yes" ? "yes" : "no",
-    plusOne:     p["+1"]?.select?.name === "Yes" ? "yes" : "no",
-    plusOneName: p["Guest Name"]?.rich_text?.[0]?.plain_text ?? "",
+    plusOne:     plus.bringing ? "yes" : "no",
+    plusOneName: plus.name,
     meal:        labelToId(p.Meal?.select?.name ?? ""),
-    plusOneMeal: labelToId(p["Guest Meal"]?.select?.name ?? ""),
+    plusOneMeal: labelToId(plus.mealLabel),
     dietary:     p["Dietary Restrictions"]?.rich_text?.[0]?.plain_text ?? "",
     message:     p.Message?.rich_text?.[0]?.plain_text ?? "",
     noUpdates:   p[UPDATES_OPT_OUT]?.checkbox === true,
@@ -38,9 +41,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const page = await notionClient().pages.retrieve({ page_id: pageId });
+    const notion = notionClient();
+    const page = await notion.pages.retrieve({ page_id: pageId });
+    const party = await findGuestRows(notion, process.env.NOTION_DATABASE_ID!, hostKey(page) || pageId);
     return NextResponse.json({
-      rsvp:     readRsvp(page),
+      rsvp:     readRsvp(page, party.rows[0]),
       closed:   editingClosed(),
       deadline: formatDeadline(),
     });
@@ -91,20 +96,38 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const properties: Record<string, any> = {
+    const notion = notionClient();
+    const databaseId = process.env.NOTION_DATABASE_ID!;
+    const host: any = await notion.pages.retrieve({ page_id: pageId });
+    const key = hostKey(host) || pageId;
+    const hostName = host.properties?.Name?.title?.[0]?.plain_text ?? "";
+    const guestMealLabel = bringingPlusOne ? mealLabel(plusOneMeal) : null;
+
+    // Same lock as the RSVP form, so an edit and a resubmission take turns.
+    await withLock(`rsvp:${key}`, async () => {
+      const party = await findGuestRows(notion, databaseId, key);
+      const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },
-        "+1":                   { select:    { name: attendingYes && plusOne === "yes" ? "Yes" : "No" } },
-        "Guest Name":           { rich_text: [{ text: { content: bringingPlusOne ? plusOneName : "" } }] },
+        "+1":                   { select:    { name: bringingPlusOne ? "Yes" : "No" } },
         Meal:                   { select:    attendingYes ? { name: mealLabel(meal) } : null },
-        "Guest Meal":           { select:    bringingPlusOne ? { name: mealLabel(plusOneMeal) } : null },
         "Dietary Restrictions": { rich_text: [{ text: { content: attendingYes ? dietary : "" } }] },
         Message:                { rich_text: [{ text: { content: message } }] },
         "Submitted At":         { date:      { start: new Date().toISOString() } },
         [UPDATES_OPT_OUT]:      { checkbox:  noUpdates === true },
-    };
-    await withOptionalOptOut(properties, (props) =>
-      notionClient().pages.update({ page_id: pageId, properties: props }),
-    );
+        [LEGACY_GUEST_NAME]:    { rich_text: party.supported || !bringingPlusOne ? [] : [{ text: { content: plusOneName } }] },
+        [LEGACY_GUEST_MEAL]:    { select:    party.supported || !guestMealLabel ? null : { name: guestMealLabel } },
+      };
+      await writeTolerant(properties, [UPDATES_OPT_OUT, LEGACY_GUEST_NAME, LEGACY_GUEST_MEAL], (props) =>
+        notion.pages.update({ page_id: pageId, properties: props }),
+      );
+      if (party.supported) {
+        await syncGuestRow(notion, databaseId, party.rows, key, hostName, {
+          bringing: bringingPlusOne,
+          name: plusOneName,
+          mealLabel: guestMealLabel,
+        });
+      }
+    });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("[RSVP edit] update failed:", err?.message ?? err);
