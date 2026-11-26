@@ -27,7 +27,7 @@ function readRsvp(page: any, guestRow?: any) {
     plusOneMeal: labelToId(plus.mealLabel),
     dietary:     p["Dietary Restrictions"]?.rich_text?.[0]?.plain_text ?? "",
     message:     p.Message?.rich_text?.[0]?.plain_text ?? "",
-    noUpdates:   p[UPDATES_OPT_OUT]?.checkbox === true,
+    noUpdates:   p[UPDATES_OPT_OUT]?.checkbox === true || /^(yes|true)$/i.test(readChoice(p[UPDATES_OPT_OUT])),
   };
 }
 
