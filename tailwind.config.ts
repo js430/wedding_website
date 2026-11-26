@@ -24,6 +24,13 @@ const config: Config = {
         ivory: "#FEE8EC",
         bark: "#1E0008",
       },
+      // Small text runs a size larger than Tailwind's default, so it's easy to
+      // read for every guest (the pages have room for it).
+      fontSize: {
+        xs:   ["0.875rem", { lineHeight: "1.35rem" }],   // 14px (default 12px)
+        sm:   ["1rem", { lineHeight: "1.6rem" }],        // 16px (default 14px)
+        base: ["1.0625rem", { lineHeight: "1.7rem" }],   // 17px (default 16px)
+      },
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         sans: ["var(--font-lato)", "system-ui", "sans-serif"],

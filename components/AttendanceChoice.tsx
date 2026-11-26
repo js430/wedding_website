@@ -62,7 +62,7 @@ export default function AttendanceChoice({
             >
               <span className="block font-serif text-base leading-snug">{opt.label}</span>
               <span
-                className={`block mt-0.5 font-sans text-[11px] tracking-widest uppercase ${
+                className={`block mt-0.5 font-sans text-[13px] tracking-widest uppercase ${
                   on ? "text-ivory/80" : "text-bark/60"
                 }`}
               >

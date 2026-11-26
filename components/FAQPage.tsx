@@ -69,7 +69,7 @@ const faqs = [
       },
       {
         q: "Where should we eat, stay, or explore while in town?",
-        a: "We made you a guide! Check out the Charlottesville Guide page (in the menu above) for our favorite restaurants, other hotel options, wineries, hikes, and more.",
+        a: "We made you a guide! Check out the Guide to Charlottesville page (in the menu above) for our favorite restaurants, other hotel options, wineries, hikes, and more.",
       },
     ],
   },
@@ -112,7 +112,7 @@ const faqs = [
       },
       {
         q: "Will there be a shuttle or transportation?",
-        a: "No shuttle is needed — The Forum Hotel is the venue itself, so you're already there! If you're staying off-site, Uber and Lyft are readily available in Charlottesville.",
+        a: "No shuttle is needed — The Forum Hotel is the venue itself, so you're already there! If you're staying off-site, Uber and Lyft are readily available in Charlottesville. UVA's free bus system (University Transit Service) also has a stop near the hotel, handy for getting to and from the Corner and Central Grounds. Check routes and live arrivals in the TransLoc app, as weekend service is lighter.",
       },
       {
         q: "I have a question not answered here — who do I contact?",

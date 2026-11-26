@@ -43,7 +43,7 @@ const R_TABLE = 38;  // center circle radius
 
 function GuestCardStatic({ guest }: { guest: Guest }) {
   return (
-    <div className="bg-white border border-rose-soft shadow-xl text-xs px-2 py-1.5 w-36 pointer-events-none rounded-sm">
+    <div className="bg-white border border-rose-soft shadow-xl text-[12px] px-2 py-1.5 w-36 pointer-events-none rounded-sm">
       <p className="font-sans font-semibold text-bark truncate">{guest.name}</p>
       {guest.plusOne && guest.plusOneName && (
         <p className="font-sans text-bark/60 truncate">+1: {guest.plusOneName}</p>
@@ -76,14 +76,14 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
           isDragging ? "opacity-0" : ""
         }`}
       >
-        <p className="font-sans text-white text-xs leading-tight w-full truncate text-center font-medium">
+        <p className="font-sans text-white text-[12px] leading-tight w-full truncate text-center font-medium">
           {guest.name.split(" ")[0]}
         </p>
         {guest.plusOne && (
-          <p className="font-sans text-white/70 text-xs leading-none">+1</p>
+          <p className="font-sans text-white/70 text-[12px] leading-none">+1</p>
         )}
         {guest.dietary && (
-          <p className="font-sans text-white/60 text-xs leading-none truncate w-full text-center">•</p>
+          <p className="font-sans text-white/60 text-[12px] leading-none truncate w-full text-center">•</p>
         )}
       </div>
     );
@@ -99,12 +99,12 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
         isDragging ? "opacity-25" : ""
       }`}
     >
-      <p className="font-sans text-sm font-medium text-bark truncate">{guest.name}</p>
+      <p className="font-sans text-[14px] font-medium text-bark truncate">{guest.name}</p>
       {guest.plusOne && guest.plusOneName && (
-        <p className="font-sans text-bark/60 text-xs truncate">+1: {guest.plusOneName}</p>
+        <p className="font-sans text-bark/60 text-[12px] truncate">+1: {guest.plusOneName}</p>
       )}
       {guest.dietary && (
-        <p className="font-sans text-rose-deep text-xs truncate">{guest.dietary}</p>
+        <p className="font-sans text-rose-deep text-[12px] truncate">{guest.dietary}</p>
       )}
     </div>
   );
@@ -141,7 +141,7 @@ function DroppableSeat({
       {guest && !beingDragged ? (
         <DraggableGuest guest={guest} compact />
       ) : (
-        <span className="font-sans text-bark/30 text-xs select-none">{seatNum}</span>
+        <span className="font-sans text-bark/30 text-[12px] select-none">{seatNum}</span>
       )}
     </div>
   );
@@ -182,7 +182,7 @@ function CircularTable({
       <button
         onClick={onRemove}
         title="Remove table"
-        className="absolute top-0.5 right-0.5 z-10 text-bark/20 hover:text-rose-deep text-xs leading-none transition-colors"
+        className="absolute top-0.5 right-0.5 z-10 text-bark/20 hover:text-rose-deep text-[12px] leading-none transition-colors"
       >
         ✕
       </button>
@@ -245,19 +245,19 @@ function CircularTable({
                 if (e.key === "Enter")  { onRename(nameInput); setEditing(false); }
                 if (e.key === "Escape") { setNameInput(table.name); setEditing(false); }
               }}
-              className="w-14 text-center font-serif text-xs text-bark bg-transparent border-b border-rose-deep focus:outline-none"
+              className="w-14 text-center font-serif text-[12px] text-bark bg-transparent border-b border-rose-deep focus:outline-none"
             />
           ) : (
             <button
               onClick={() => setEditing(true)}
               title="Click to rename"
-              className="font-serif text-bark text-xs hover:text-rose-deep transition-colors leading-tight text-center px-1"
+              className="font-serif text-bark text-[12px] hover:text-rose-deep transition-colors leading-tight text-center px-1"
             >
               {table.name}
             </button>
           )}
           <p
-            className={`font-sans text-xs mt-0.5 ${over ? "text-red-600 font-semibold" : full ? "text-rose-deep" : "text-bark/60"}`}
+            className={`font-sans text-[12px] mt-0.5 ${over ? "text-red-600 font-semibold" : full ? "text-rose-deep" : "text-bark/60"}`}
             title={over ? "More people than places at this table" : "People seated / places"}
           >
             {seated}/
@@ -274,7 +274,7 @@ function CircularTable({
               }}
               onBlur={(e) => commitCap(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") commitCap((e.target as HTMLInputElement).value); }}
-              className="w-7 bg-transparent focus:outline-none text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-7 bg-transparent focus:outline-none text-[12px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label={`Places at ${table.name}`}
             />
           </p>
@@ -297,7 +297,7 @@ function UnassignedPanel({ guests }: { guests: Guest[] }) {
       }`}
     >
       <div className="px-4 pt-4 pb-3 border-b border-rose-soft/20">
-        <p className="font-sans text-xs tracking-widest uppercase text-bark/60 mb-0.5">Unassigned</p>
+        <p className="font-sans text-[12px] tracking-widest uppercase text-bark/60 mb-0.5">Unassigned</p>
         <p className="font-serif text-3xl text-bark leading-none">{guests.length}</p>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2" data-lenis-prevent>
@@ -305,7 +305,7 @@ function UnassignedPanel({ guests }: { guests: Guest[] }) {
           <DraggableGuest key={g.id} guest={g} />
         ))}
         {guests.length === 0 && (
-          <p className="font-sans text-bark/30 text-xs text-center pt-8">All guests seated 🎉</p>
+          <p className="font-sans text-bark/30 text-[12px] text-center pt-8">All guests seated 🎉</p>
         )}
       </div>
     </div>
@@ -538,7 +538,7 @@ export default function SeatingChart() {
   if (loadError) {
     return (
       <div className="min-h-screen bg-rose-blush flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p role="alert" className="font-sans text-sm text-bark/70">
+        <p role="alert" className="font-sans text-[14px] text-bark/70">
           Couldn&apos;t load the guest list or seats just now. Nothing has been changed.
         </p>
         <button type="button" onClick={() => window.location.reload()} className="btn-outline">
@@ -556,20 +556,20 @@ export default function SeatingChart() {
         <div className="bg-crimson-darkest text-rose-blush px-6 py-3 flex items-center justify-between shrink-0">
           <div>
             <h1 className="font-serif text-xl leading-none">Seating Chart</h1>
-            <p className="font-sans text-rose-soft/50 text-xs mt-0.5">Katie &amp; Jeffrey · March 27, 2027</p>
+            <p className="font-sans text-rose-soft/50 text-[12px] mt-0.5">Katie &amp; Jeffrey · March 27, 2027</p>
           </div>
           <div className="flex items-center gap-5">
-            {saving && <span className="font-sans text-rose-soft/50 text-xs animate-pulse">Saving…</span>}
-            <span className="font-sans text-rose-blush/60 text-sm">
+            {saving && <span className="font-sans text-rose-soft/50 text-[12px] animate-pulse">Saving…</span>}
+            <span className="font-sans text-rose-blush/60 text-[14px]">
               {seatedPeople} / {totalPeople} people seated
             </span>
             <button
               onClick={addTable}
-              className="border border-rose-soft/30 text-rose-blush/80 font-sans text-xs tracking-widest uppercase px-4 py-1.5 hover:bg-crimson-dark transition-colors"
+              className="border border-rose-soft/30 text-rose-blush/80 font-sans text-[12px] tracking-widest uppercase px-4 py-1.5 hover:bg-crimson-dark transition-colors"
             >
               + Table
             </button>
-            <a href="/" className="font-sans text-rose-soft/50 text-xs hover:text-rose-blush transition-colors">
+            <a href="/" className="font-sans text-rose-soft/50 text-[12px] hover:text-rose-blush transition-colors">
               ← Site
             </a>
           </div>
@@ -582,7 +582,7 @@ export default function SeatingChart() {
           <div className="flex-1 overflow-auto p-6" data-lenis-prevent>
             {tables.length === 0 ? (
               <div className="h-full flex items-center justify-center">
-                <p className="font-sans text-bark/30 text-sm">
+                <p className="font-sans text-bark/30 text-[14px]">
                   No tables yet — click <strong>+ Table</strong> to add one.
                 </p>
               </div>
