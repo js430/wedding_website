@@ -142,7 +142,7 @@ export default function Intro() {
               Katie &amp; Jeffrey
             </p>
             <div className="h-px w-16 bg-gold/60 my-2" />
-            <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-bark/60">
+            <p className="font-sans text-xs tracking-[0.3em] uppercase text-bark/60">
               March 27, 2027 · Charlottesville
             </p>
             <p className="font-serif italic text-gold text-sm mt-2">
@@ -218,7 +218,7 @@ export default function Intro() {
             Enter
           </motion.button>
         ) : (
-          <p className="font-sans text-[10px] tracking-[0.3em] uppercase text-rose-blush/60">
+          <p className="font-sans text-xs tracking-[0.3em] uppercase text-rose-blush/60">
             Click to skip ahead
           </p>
         )}

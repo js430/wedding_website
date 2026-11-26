@@ -282,13 +282,13 @@ function PlaceCard({
         }`}
       >
         {highlight && (
-          <span className="mb-2 w-fit font-sans text-[10px] tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
+          <span className="mb-2 w-fit font-sans text-[12px] tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
             ✦ {highlight}
           </span>
         )}
         <div className="flex items-start justify-between gap-3 mb-1">
           <p className="font-serif text-lg text-bark leading-snug">{name}</p>
-          <span className="shrink-0 font-sans text-[10px] tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 whitespace-nowrap">
+          <span className="shrink-0 font-sans text-[12px] tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 whitespace-nowrap">
             {meta}
           </span>
         </div>

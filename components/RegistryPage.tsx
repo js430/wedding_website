@@ -116,7 +116,7 @@ function ItemCard({
           {shown.price !== null && (
             <>
               ${shown.price.toFixed(2)}
-              <span className="ml-1 text-[10px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
+              <span className="ml-1 text-[12px] tracking-widest uppercase text-bark/60 font-normal">MSRP</span>
               {hasOptions && !singleSelectedId && (
                 <span className="text-bark/60 font-normal"> · {pickerOptions.length} options</span>
               )}
@@ -449,7 +449,7 @@ export default function RegistryPage() {
                 purchase links and our shipping address, no account needed.
               </p>
               <a href="#gifts" className="btn-outline inline-block mt-auto self-center">
-                Browse the registry ↓
+                Browse the registry ↓
               </a>
             </div>
             <div className="bg-white/60 border border-rose-soft/40 px-6 py-5 text-center flex flex-col">
