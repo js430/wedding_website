@@ -3,7 +3,7 @@ import { Client } from "@notionhq/client";
 import { verifyEditToken, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { isValidMeal, mealLabel, labelToId } from "@/lib/meals";
 import { UPDATES_OPT_OUT } from "@/lib/rsvp-updates";
-import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostKey, readPlusOne, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
+import { LEGACY_GUEST_MEAL, LEGACY_GUEST_NAME, findGuestRows, hostKey, readChoice, readPlusOne, syncGuestRow, writeTolerant } from "@/lib/rsvp-party";
 import { withLock } from "@/lib/input";
 import { cleanText, readJson } from "@/lib/input";
 
@@ -20,10 +20,10 @@ function readRsvp(page: any, guestRow?: any) {
   return {
     name:        p.Name?.title?.[0]?.plain_text ?? "",
     email:       p.Email?.email ?? "",
-    attending:   p.Attending?.select?.name === "Yes" ? "yes" : "no",
+    attending:   readChoice(p.Attending) === "Yes" ? "yes" : "no",
     plusOne:     plus.bringing ? "yes" : "no",
     plusOneName: plus.name,
-    meal:        labelToId(p.Meal?.select?.name ?? ""),
+    meal:        labelToId(readChoice(p.Meal)),
     plusOneMeal: labelToId(plus.mealLabel),
     dietary:     p["Dietary Restrictions"]?.rich_text?.[0]?.plain_text ?? "",
     message:     p.Message?.rich_text?.[0]?.plain_text ?? "",

@@ -47,11 +47,18 @@ if (pages.length && !("Guest Of" in (pages[0].properties ?? {}))) {
   process.exit(1);
 }
 
+// Meal / Attending may be Select or Text columns; read and write either.
+const choice = (prop) => (prop?.select?.name ?? prop?.status?.name ?? text(prop)).trim();
+const asType = (type, v) => type === "rich_text"
+  ? { rich_text: v ? [{ text: { content: v } }] : [] }
+  : { select: v ? { name: v } : null };
+const typeOf = (key) => pages.find((p) => p.properties?.[key])?.properties[key].type ?? "select";
+
 const guestOf = (p) => text(p.properties?.["Guest Of"]).trim().toLowerCase();
 const hasOwnRow = new Set(pages.map(guestOf).filter(Boolean));
 const todo = pages.filter((p) =>
   !guestOf(p) &&
-  p.properties?.["+1"]?.select?.name === "Yes" &&
+  choice(p.properties?.["+1"]) === "Yes" &&
   !hasOwnRow.has(String(p.properties?.Email?.email ?? "").trim().toLowerCase()),
 );
 
@@ -68,7 +75,7 @@ for (const host of todo) {
   }
   const firstName = hostName.trim().split(/\s+/)[0] || "Guest";
   const guestName = text(p["Guest Name"]).trim() || `${firstName}'s guest`;
-  const meal = p["Guest Meal"]?.select?.name ?? null;
+  const meal = choice(p["Guest Meal"]) || null;
   console.log(`  ${apply ? "✓" : "→"} ${guestName}${meal ? ` (${meal})` : " (no meal chosen)"}, guest of ${hostName} <${email}>`);
   if (!apply) continue;
 
@@ -76,8 +83,8 @@ for (const host of todo) {
     parent: { database_id: databaseId },
     properties: {
       Name:           { title:     [{ text: { content: guestName } }] },
-      Attending:      { select:    { name: p.Attending?.select?.name === "Yes" ? "Yes" : "No" } },
-      Meal:           { select:    meal ? { name: meal } : null },
+      Attending:      asType(typeOf("Attending"), choice(p.Attending) === "Yes" ? "Yes" : "No"),
+      Meal:           asType(typeOf("Meal"), meal),
       "Guest Of":     { rich_text: [{ text: { content: email } }] },
       "Submitted At": { date:      p["Submitted At"]?.date?.start ? { start: p["Submitted At"].date.start } : null },
       ...("Table" in p ? { Table: { rich_text: text(p.Table) ? [{ text: { content: text(p.Table) } }] : [] } } : {}),
@@ -88,7 +95,7 @@ for (const host of todo) {
     page_id: host.id,
     properties: {
       ...("Guest Name" in p ? { "Guest Name": { rich_text: [] } } : {}),
-      ...("Guest Meal" in p ? { "Guest Meal": { select: null } } : {}),
+      ...("Guest Meal" in p ? { "Guest Meal": asType(typeOf("Guest Meal"), null) } : {}),
     },
   });
   done++;

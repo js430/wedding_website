@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/admin-auth";
 import { Client } from "@notionhq/client";
 import { tallyMeals, RsvpRow } from "@/lib/meal-tally";
+import { readChoice } from "@/lib/rsvp-party";
 
 export const dynamic = "force-dynamic";
 
@@ -32,11 +33,11 @@ export async function GET(req: NextRequest) {
         const p = page.properties ?? {};
         rows.push({
           name:           (p.Name?.title ?? []).map((t: any) => t.plain_text ?? "").join("") || "Unknown",
-          attending:      p.Attending?.select?.name === "Yes",
-          plusOne:        p["+1"]?.select?.name === "Yes",
+          attending:      readChoice(p.Attending) === "Yes",
+          plusOne:        readChoice(p["+1"]) === "Yes",
           guestName:      text(p["Guest Name"]),
-          mealLabel:      p.Meal?.select?.name ?? "",
-          guestMealLabel: p["Guest Meal"]?.select?.name ?? "",
+          mealLabel:      readChoice(p.Meal),
+          guestMealLabel: readChoice(p["Guest Meal"]),
           dietary:        text(p["Dietary Restrictions"]),
           email:          String(p.Email?.email ?? "").trim().toLowerCase(),
           guestOf:        text(p["Guest Of"]).trim().toLowerCase(),
