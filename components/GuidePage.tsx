@@ -2,6 +2,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Reveal from "./Reveal";
 import SparkleTitle from "./SparkleTitle";
+import { HOTEL_BOOKING_URL } from "./HotelBlock";
 
 /* ── Content ──────────────────────────────────────────────────────────────
    Edit freely — every card is a row in these arrays. */
@@ -242,7 +243,7 @@ const gettingAround = [
 
 /* ── Building blocks ────────────────────────────────────────────────────── */
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+function SectionHeader({ title, subtitle, large = false }: { title: string; subtitle?: React.ReactNode; large?: boolean }) {
   return (
     <Reveal>
       <h3 className="font-serif text-3xl text-bark text-center mb-2">{title}</h3>
@@ -252,7 +253,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
         <span className="block h-px w-10 bg-gradient-to-l from-transparent to-gold" />
       </div>
       {subtitle && (
-        <p className="text-center font-sans text-bark/60 text-sm mb-8 max-w-xl mx-auto">
+        <p className={`text-center font-sans mb-8 max-w-xl mx-auto ${large ? "text-bark/70 text-base leading-relaxed" : "text-bark/60 text-sm"}`}>
           {subtitle}
         </p>
       )}
@@ -346,7 +347,22 @@ export default function GuidePage() {
           <section id="stay" className="scroll-mt-24 mb-20">
             <SectionHeader
               title="Where to Stay"
-              subtitle="The room block at The Forum Hotel (via the RSVP page) is the easiest option. If you'd like something else, those marked ✦ are near UVA or the Corner — easy to reach, with a quick ride to the venue."
+              large
+              subtitle={
+                <>
+                  The{" "}
+                  <a
+                    href={HOTEL_BOOKING_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-rose-deep underline decoration-rose-soft underline-offset-4 hover:text-crimson-dark transition-colors"
+                  >
+                    room block<span className="sr-only"> (opens the hotel&apos;s booking site in a new tab)</span>
+                  </a>{" "}
+                  at The Forum Hotel is the easiest option. If you&apos;d like something else, those marked ✦ are
+                  near UVA or the Corner — easy to reach, with a quick ride to the venue.
+                </>
+              }
             />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {hotels.map((h, i) => (

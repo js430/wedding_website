@@ -12,7 +12,7 @@ const primaryLinks = [
 
 const moreLinks = [
   { label: "Registry", href: "/registry" },
-  { label: "Guide",    href: "/guide" },
+  { label: "Guide to Charlottesville", href: "/guide" },
   { label: "FAQ",      href: "/faq" },
 ];
 
@@ -135,7 +135,7 @@ export default function Navbar() {
                       <a
                         href={resolveHref(l.href)}
                         onClick={() => setMoreOpen(false)}
-                        className="block px-5 py-2.5 font-sans text-sm tracking-widest uppercase text-bark/70 hover:text-rose-deep hover:bg-rose-soft/15 transition-colors"
+                        className="block px-5 py-2.5 font-sans text-sm tracking-widest uppercase whitespace-nowrap text-bark/70 hover:text-rose-deep hover:bg-rose-soft/15 transition-colors"
                       >
                         {l.label}
                       </a>
