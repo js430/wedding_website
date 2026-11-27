@@ -128,7 +128,7 @@ export default function Intro() {
         className="relative"
         style={{ perspective: 1200 }}
       >
-        <div className="relative w-[320px] h-[210px] md:w-[380px] md:h-[250px]">
+        <div className="relative w-[320px] h-[210px] md:w-[380px] md:h-[250px] [@media(max-height:700px)]:scale-[0.8] [@media(max-height:560px)]:scale-[0.62] [@media(max-height:560px)]:-translate-y-6">
           {/* Invitation card — rises out of the envelope */}
           {/* Centered via left calc — motion's transform would overwrite
               a -translate-x-1/2 class */}
@@ -201,7 +201,7 @@ export default function Intro() {
       </motion.div>
 
       {/* Enter button — appears once the card is out */}
-      <div className="absolute inset-x-0 bottom-14 flex justify-center">
+      <div className="absolute inset-x-0 bottom-14 [@media(max-height:700px)]:bottom-5 flex justify-center z-50">
         {cardUp ? (
           <motion.button
             ref={enterRef}
@@ -213,7 +213,7 @@ export default function Intro() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="border border-gold/60 text-gold font-sans text-sm tracking-[0.35em] uppercase px-12 py-3.5 transition-colors duration-300 hover:bg-gold hover:text-crimson-darkest"
+            className="border border-gold/60 bg-crimson-darkest text-gold font-sans text-sm tracking-[0.35em] uppercase px-12 py-3.5 transition-colors duration-300 hover:bg-gold hover:text-crimson-darkest"
           >
             Enter
           </motion.button>

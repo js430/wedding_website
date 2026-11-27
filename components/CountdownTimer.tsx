@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 
-const WEDDING = new Date("2027-03-27T17:00:00");
+// 5:00 PM in Charlottesville (EDT that day), whatever the viewer's time zone.
+const WEDDING = new Date("2027-03-27T17:00:00-04:00");
 
 function calcTimeLeft() {
   const diff = WEDDING.getTime() - Date.now();
@@ -33,24 +34,24 @@ export default function CountdownTimer() {
   ];
 
   return (
-    <div className="flex items-center gap-3 md:gap-6 mb-10">
+    <div className="flex flex-wrap justify-center items-center gap-y-2 gap-2 min-[360px]:gap-3 md:gap-6 mb-8 [@media(min-height:760px)]:mb-10 max-w-full">
       {units.map(({ label, value }, i) => (
-        <div key={label} className="flex items-center gap-3 md:gap-6">
+        <div key={label} className="flex items-center gap-2 min-[360px]:gap-3 md:gap-6">
           <div className="flex flex-col items-center">
             {/* Server-rendered time differs from hydration time by a tick —
                 suppress the text mismatch and let the client value win */}
             <span
               suppressHydrationWarning
-              className="font-serif text-2xl md:text-4xl text-bark leading-none tabular-nums"
+              className="font-serif text-xl min-[360px]:text-2xl md:text-4xl text-bark leading-none tabular-nums"
             >
               {String(value).padStart(2, "0")}
             </span>
-            <span className="font-sans text-xs tracking-widest uppercase text-bark/60 mt-1">
+            <span className="font-sans text-[13px] min-[360px]:text-xs tracking-normal min-[360px]:tracking-widest uppercase text-bark/60 mt-1">
               {label}
             </span>
           </div>
           {i < units.length - 1 && (
-            <span className="font-serif text-2xl text-gold/50 mb-3">·</span>
+            <span aria-hidden="true" className="font-serif text-2xl text-gold/50 mb-3">·</span>
           )}
         </div>
       ))}

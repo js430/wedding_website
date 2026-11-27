@@ -1,5 +1,7 @@
 "use client";
 
+import { onRadioKeyDown, radioTabIndex } from "@/lib/radio-keys";
+
 type YesNo = "yes" | "no" | "";
 
 type Choice = "solo" | "guest" | "no";
@@ -28,7 +30,7 @@ export default function AttendanceChoice({
 
   const options: { id: Choice; label: string; detail: string; wide?: boolean }[] = [
     { id: "solo",  label: "Joyfully accepts",     detail: "Just me" },
-    { id: "guest", label: "Joyfully accepts",     detail: "With a +1" },
+    { id: "guest", label: "Joyfully accepts",     detail: "With a\u00a0+1" },
     { id: "no",    label: "Regretfully declines", detail: "Can't make it", wide: true },
   ];
 
@@ -43,8 +45,8 @@ export default function AttendanceChoice({
       <legend className="block font-sans text-xs tracking-widest uppercase text-bark/60 mb-3">
         {legend}
       </legend>
-      <div role="radiogroup" aria-label={legend} className="grid grid-cols-2 gap-3">
-        {options.map((opt) => {
+      <div role="radiogroup" aria-label={legend} className="grid grid-cols-1 min-[340px]:grid-cols-2 gap-3">
+        {options.map((opt, i) => {
           const on = selected === opt.id;
           return (
             <button
@@ -52,9 +54,11 @@ export default function AttendanceChoice({
               type="button"
               role="radio"
               aria-checked={on}
+              tabIndex={radioTabIndex(on, i === 0, selected !== "")}
+              onKeyDown={onRadioKeyDown}
               disabled={disabled}
               onClick={() => pick(opt.id)}
-              className={`${opt.wide ? "col-span-2" : ""} px-3 py-3 border text-center transition-all disabled:opacity-50 disabled:cursor-default ${
+              className={`${opt.wide ? "min-[340px]:col-span-2" : ""} px-3 py-3 border text-center transition-all disabled:opacity-50 disabled:cursor-default ${
                 on
                   ? "bg-rose-deep text-ivory border-rose-deep"
                   : "border-rose-soft/60 text-bark/70 hover:border-rose-deep hover:text-rose-deep"
@@ -63,7 +67,7 @@ export default function AttendanceChoice({
               <span className="block font-serif text-base leading-snug">{opt.label}</span>
               <span
                 className={`block mt-0.5 font-sans text-[13px] tracking-widest uppercase ${
-                  on ? "text-ivory/80" : "text-bark/60"
+                  on ? "text-ivory" : "text-bark/60"
                 }`}
               >
                 {opt.detail}

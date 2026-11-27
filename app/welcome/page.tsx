@@ -30,7 +30,7 @@ export default async function Welcome() {
     "inline-flex items-center justify-center px-5 py-2.5 font-sans text-xs tracking-widest uppercase transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-deep focus-visible:ring-offset-2";
 
   return (
-    <main className="min-h-screen bg-rose-blush flex items-center justify-center px-4 py-12">
+    <main id="main" className="min-h-screen bg-rose-blush flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md text-center">
         <p className="text-gold text-xl mb-4" aria-hidden="true">✦</p>
         <h1 className="font-script text-6xl sm:text-7xl text-bark leading-tight break-words">

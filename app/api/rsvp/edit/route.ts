@@ -98,13 +98,16 @@ export async function POST(req: NextRequest) {
   try {
     const notion = notionClient();
     const databaseId = process.env.NOTION_DATABASE_ID!;
-    const host: any = await notion.pages.retrieve({ page_id: pageId });
-    const key = hostKey(host) || pageId;
-    const name = hostName(host);
+    const first: any = await notion.pages.retrieve({ page_id: pageId });
+    const key = hostKey(first) || pageId;
     const guestMealLabel = bringingPlusOne ? mealLabel(plusOneMeal) : null;
 
     // Same lock as the RSVP form, so an edit and a resubmission take turns.
     await withLock(`rsvp:${key}`, async () => {
+      // Read the row again now that we hold the lock: a resubmission that
+      // just finished may have changed the name the +1's row is linked by.
+      const host: any = await notion.pages.retrieve({ page_id: pageId });
+      const name = hostName(host);
       const party = await findGuestRows(notion, databaseId, hostRefs(name, hostKey(host)));
       const properties: Record<string, any> = {
         Attending:              { select:    { name: attendingYes ? "Yes" : "No" } },

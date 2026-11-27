@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { publicOrigin } from "@/lib/origin";
 import { Client } from "@notionhq/client";
 import { Resend } from "resend";
-import { buildEditUrl, formatDeadline } from "@/lib/rsvp-token";
+import { buildEditUrl, editingClosed, formatDeadline } from "@/lib/rsvp-token";
 import { allow } from "@/lib/rate-limit";
 import { clientKey } from "@/lib/invite-guard";
 import { cleanEmail, escapeHtml } from "@/lib/input";
@@ -22,10 +22,14 @@ const PER_EMAIL   = 3;   // a guest retrying is fine; a script hammering one add
 const PER_CLIENT  = 10;  // across all addresses from one IP
 
 function buildResendEmail(name: string, editUrl: string): { html: string; text: string } {
+  const closed = editingClosed();
+  const intro = closed
+    ? `Here's your personal link to view your RSVP. Changes closed at the end of <strong style="color:${C.darkest};">${escapeHtml(formatDeadline())}</strong>; if something needs fixing, just reply to this email.`
+    : `Here's your personal link to view or change your RSVP. You can make changes any time until <strong style="color:${C.darkest};">${escapeHtml(formatDeadline())}</strong>.`;
   const bodyHtml = [
     greeting(name),
-    para(`Here's your personal link to view or change your RSVP. You can make changes any time until <strong style="color:${C.darkest};">${escapeHtml(formatDeadline())}</strong>.`, { margin: "0 0 26px" }),
-    `<div style="text-align:center;">${button(editUrl, "Open my RSVP")}</div>`,
+    para(intro, { margin: "0 0 26px" }),
+    `<div style="text-align:center;">${button(editUrl, closed ? "View my RSVP" : "Open my RSVP")}</div>`,
     para("This link is just for you, so please don't forward it. If you didn't ask for it, you can safely ignore this email.", { size: 13, color: C.muted, align: "center", margin: "22px 0 0" }),
     signoff(),
   ].join("\n");
@@ -35,7 +39,9 @@ function buildResendEmail(name: string, editUrl: string): { html: string; text: 
     text: [
       `Hi ${first || "there"},`,
       "",
-      `Here's your personal link to view or change your RSVP. You can make changes until ${formatDeadline()}:`,
+      closed
+        ? `Here's your personal link to view your RSVP. Changes closed at the end of ${formatDeadline()}; if something needs fixing, just reply to this email:`
+        : `Here's your personal link to view or change your RSVP. You can make changes until ${formatDeadline()}:`,
       editUrl,
       "",
       "This link is just for you, so please don't forward it. If you didn't ask for it, you can ignore this email.",

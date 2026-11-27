@@ -7,6 +7,7 @@
  *   node --env-file=.env.invites scripts/send-invites.mjs                 # preview only (default)
  *   node --env-file=.env.invites scripts/send-invites.mjs --test you@x.com  # one sample to yourself
  *   node --env-file=.env.invites scripts/send-invites.mjs --send            # the real thing
+ *   node --env-file=.env.invites scripts/send-invites.mjs --resend guest@x.com  # send one guest's invite again
  *
  * Guest list: invites/guests.csv (copy invites/guests.example.csv). Columns:
  *   name   how to greet them: "Alex & Sam", "Aunt May", "the Lee family"
@@ -31,6 +32,10 @@
  *     sent, so you can send in batches or re-run after an error.
  *   - Each send carries an idempotency key, so a retried request can't
  *     deliver the same invite twice.
+ *   - --resend <email> sends that one address its invite again, right away
+ *     (even within 24 hours of the first). The greeting comes from the
+ *     guest list row that has the address, so it must be in guests.csv.
+ *     It asks you to type SEND, and notes the resend in sent.json.
  */
 
 import fs from "node:fs";
@@ -55,7 +60,7 @@ const value = (name) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const mode = flag("--send") ? "send" : value("--test") ? "test" : "preview";
+const mode = flag("--send") ? "send" : flag("--resend") ? "resend" : value("--test") ? "test" : "preview";
 const limit = Number(value("--limit") ?? 90);
 const guestsPath = value("--guests") ? path.resolve(value("--guests")) : GUESTS;
 
@@ -165,7 +170,7 @@ if (/onboarding@resend\.dev/.test(from)) fail("onboarding@resend.dev can only em
 const resend = new Resend(apiKey);
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function sendOne(to, name, { test = false } = {}) {
+async function sendOne(to, name, { test = false, resend: again = false } = {}) {
   const email = buildInviteEmail({ name, link, password, siteUrl });
   const { data, error } = await resend.emails.send(
     {
@@ -178,7 +183,15 @@ async function sendOne(to, name, { test = false } = {}) {
       tags: [{ name: "kind", value: test ? "invite-test" : "invite" }],
     },
     // Same key for the same household: a retried request isn't delivered twice.
-    test ? undefined : { idempotencyKey: `wedding-invite/${crypto.createHash("sha256").update(to.join(";")).digest("hex").slice(0, 32)}` },
+    // A deliberate resend gets a key of its own, or Resend would treat it as
+    // a repeat of the first send (it remembers keys for 24 hours).
+    test
+      ? undefined
+      : {
+          idempotencyKey: again
+            ? `wedding-invite-resend/${crypto.createHash("sha256").update(to.join(";")).digest("hex").slice(0, 24)}/${Date.now()}`
+            : `wedding-invite/${crypto.createHash("sha256").update(to.join(";")).digest("hex").slice(0, 32)}`,
+        },
   );
   if (error) throw new Error(error.message ?? JSON.stringify(error));
   return data?.id;
@@ -192,6 +205,33 @@ if (mode === "test") {
     console.log(`\n✓ Test sent to ${to} (Resend id ${id}). Check it on your phone and computer, and in the spam folder.\n`);
   } catch (err) {
     fail(`Test send failed: ${err.message}`);
+  }
+  process.exit(0);
+}
+
+if (mode === "resend") {
+  const to = (value("--resend") ?? "").trim().toLowerCase();
+  if (!EMAIL.test(to)) fail(`Give the address to resend to, e.g. --resend guest@example.com${to ? ` ("${to}" doesn't look like one)` : ""}.`);
+  const g = guests.find((x) => x.emails.includes(to));
+  if (!g) fail(`${to} isn't in ${path.relative(ROOT, guestsPath)}. Add it there (the greeting comes from its row), then run this again.`);
+  const before = sent[g.key];
+  console.log(`\nThis will email the invitation to ${to} again, greeting "Dear ${g.name},"${before ? ` (first sent ${before.at.slice(0, 10)})` : " (not sent before)"}.`);
+  if (g.emails.length > 1) console.log(`Only ${to} gets it; the other address on that row (${g.emails.filter((e) => e !== to).join(", ")}) does not.`);
+  if (!flag("--yes")) {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const answer = await rl.question("Type SEND to go ahead: ");
+    rl.close();
+    if (answer.trim() !== "SEND") fail("Cancelled; nothing was sent.");
+  }
+  try {
+    const id = await sendOne([to], g.name, { resend: true });
+    const entry = before ?? { name: g.name, to: g.emails, id, at: new Date().toISOString() };
+    entry.resent = [...(entry.resent ?? []), { to, id, at: new Date().toISOString() }];
+    sent[g.key] = entry;
+    fs.writeFileSync(SENT, JSON.stringify(sent, null, 2));
+    console.log(`\n✓ Resent to ${g.name} <${to}> (Resend id ${id}).\n`);
+  } catch (err) {
+    fail(`Resend failed: ${err.message}`);
   }
   process.exit(0);
 }

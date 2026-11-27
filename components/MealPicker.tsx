@@ -1,6 +1,7 @@
 "use client";
 
 import { MAIN_MEALS, SPECIAL_MEALS } from "@/lib/meals";
+import { onRadioKeyDown, radioTabIndex } from "@/lib/radio-keys";
 
 interface Props {
   legend:   string;
@@ -25,7 +26,7 @@ export default function MealPicker({ legend, value, onChange, disabled, idPrefix
         aria-label={legend}
         className="space-y-2"
       >
-        {MAIN_MEALS.map((m) => {
+        {MAIN_MEALS.map((m, i) => {
           const selected = value === m.id;
           return (
             <button
@@ -34,6 +35,8 @@ export default function MealPicker({ legend, value, onChange, disabled, idPrefix
               type="button"
               role="radio"
               aria-checked={selected}
+              tabIndex={radioTabIndex(selected, i === 0, value !== "")}
+              onKeyDown={onRadioKeyDown}
               disabled={disabled}
               onClick={() => onChange(m.id)}
               className={`block w-full text-left px-4 py-3 border font-sans transition-all disabled:opacity-50 ${
@@ -67,6 +70,8 @@ export default function MealPicker({ legend, value, onChange, disabled, idPrefix
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                tabIndex={radioTabIndex(selected, false, value !== "")}
+                onKeyDown={onRadioKeyDown}
                 disabled={disabled}
                 onClick={() => onChange(m.id)}
                 className={`px-3 py-2 border font-sans text-xs transition-all disabled:opacity-50 ${

@@ -8,7 +8,7 @@ import { HOTEL_BOOKING_URL } from "./HotelBlock";
    Edit freely — every card is a row in these arrays. */
 
 const mapUrl = (q: string) =>
-  `https://maps.google.com/?q=${encodeURIComponent(q + " Charlottesville VA")}`;
+  `https://maps.google.com/?q=${encodeURIComponent(/charlottesville/i.test(q) ? `${q} VA` : `${q} Charlottesville VA`)}`;
 
 const hotels = [
   {
@@ -246,7 +246,7 @@ const gettingAround = [
 function SectionHeader({ title, subtitle, large = false }: { title: string; subtitle?: React.ReactNode; large?: boolean }) {
   return (
     <Reveal>
-      <h3 className="font-serif text-3xl text-bark text-center mb-2">{title}</h3>
+      <h2 className="font-serif text-3xl text-bark text-center mb-2">{title}</h2>
       <div className="flex items-center justify-center gap-3 mb-3">
         <span className="block h-px w-10 bg-gradient-to-r from-transparent to-gold" />
         <span className="text-gold text-sm">✦</span>
@@ -277,18 +277,18 @@ function PlaceCard({
   return (
     <Reveal delay={delay} className="h-full">
       <div
-        className={`lift h-full bg-white/70 border p-5 flex flex-col ${
+        className={`lift h-full bg-white/70 border p-4 min-[360px]:p-5 flex flex-col ${
           highlight ? "border-gold/60" : "border-rose-soft/30 hover:border-rose-soft/60"
         }`}
       >
         {highlight && (
-          <span className="mb-2 w-fit font-sans text-[12px] tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
+          <span className="mb-2 w-fit font-sans text-[13px] tracking-widest uppercase text-gold-dark border border-gold/50 px-2 py-0.5">
             ✦ {highlight}
           </span>
         )}
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 mb-1">
           <p className="font-serif text-lg text-bark leading-snug min-w-0">{name}</p>
-          <span className="shrink-0 font-sans text-[12px] tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 whitespace-nowrap">
+          <span className="shrink-0 font-sans text-[13px] tracking-wider min-[360px]:tracking-widest uppercase text-rose-deep border border-rose-soft/50 px-2 py-0.5 max-w-full">
             {meta}
           </span>
         </div>
@@ -319,9 +319,9 @@ export default function GuidePage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-rose-blush pt-24 pb-20 px-6">
+      <main id="main" className="min-h-screen bg-rose-blush pt-24 pb-20 px-4 min-[360px]:px-6">
         <div className="max-w-5xl mx-auto">
-          <SparkleTitle as="h1" text="Charlottesville Guide" className="mt-8" />
+          <SparkleTitle as="h1" text="Guide to Charlottesville" className="mt-8" />
           <div className="section-divider">
             <span className="text-gold text-xl">✦</span>
           </div>
@@ -364,7 +364,7 @@ export default function GuidePage() {
                 </>
               }
             />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
               {hotels.map((h, i) => (
                 <PlaceCard
                   key={h.name}
@@ -391,7 +391,7 @@ export default function GuidePage() {
                     {group.group}
                   </p>
                 </Reveal>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
                   {group.items.map((r, i) => (
                     <PlaceCard
                       key={r.name}
@@ -412,7 +412,7 @@ export default function GuidePage() {
               title="See & Do"
               subtitle="Blue Ridge views, Jefferson's mountain, and the Grounds where we met."
             />
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
               {attractions.map((a, i) => (
                 <PlaceCard
                   key={a.name}
@@ -428,7 +428,7 @@ export default function GuidePage() {
           {/* Getting Around */}
           <section id="around" className="scroll-mt-24">
             <SectionHeader title="Getting Around" />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
               {gettingAround.map((g, i) => (
                 <Reveal key={g.title} delay={i * 100} className="h-full">
                   <div className="h-full bg-white/50 border border-gold/30 p-5 text-center">

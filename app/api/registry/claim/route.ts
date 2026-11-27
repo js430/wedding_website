@@ -251,7 +251,21 @@ export async function POST(req: NextRequest) {
     });
     if (taken.length) {
       return NextResponse.json(
-        { error: "already-claimed", items: taken.map((i) => (i.option ? `${i.name} (${i.option})` : i.name)), ids: taken.map((i) => i.id) },
+        {
+          error: "already-claimed",
+          items: taken.map((i) => (i.option ? `${i.name} (${i.option})` : i.name)),
+          ids: taken.map((i) => i.id),
+          // left 0: gone (or a one-of gift another option of which was chosen,
+          // named without the option); left > 0: fewer left than asked for.
+          details: taken.map((i) => {
+            const lock = lockedTo(i);
+            const gone = lock !== null && plainId(lock.id) !== plainId(i.id);
+            return {
+              label: gone ? i.name : i.option ? `${i.name} (${i.option})` : i.name,
+              left: gone ? 0 : remaining(i),
+            };
+          }),
+        },
         { status: 409 },
       );
     }

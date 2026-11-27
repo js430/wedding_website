@@ -69,14 +69,15 @@ html.lenis, html.lenis body { height: auto; }
   .section-title {
     @apply font-serif text-4xl md:text-5xl text-center mb-4 leading-tight;
     padding-bottom: 0.1em;
+    overflow-wrap: break-word;
     background: linear-gradient(
       105deg,
       #6f541a 0%,
-      #a08125 20%,
-      #e8d48a 38%,
-      #a08125 50%,
+      #8a6d1f 20%,
+      #a8892a 38%,
+      #8a6d1f 50%,
       #6f541a 66%,
-      #c9a838 84%,
+      #9d7f24 84%,
       #7d621c 100%
     );
     background-size: 180% auto;
@@ -148,7 +149,7 @@ html.lenis, html.lenis body { height: auto; }
 
   /* Gold shimmer text — deep antique gold base so it reads on blush/pink */
   .shimmer-text {
-    background: linear-gradient(90deg, #7d621c 0%, #c9a838 30%, #7d621c 55%, #c9a838 80%, #7d621c 100%);
+    background: linear-gradient(90deg, #7d621c 0%, #a8892a 30%, #7d621c 55%, #a8892a 80%, #7d621c 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
@@ -197,4 +198,20 @@ html.lenis, html.lenis body { height: auto; }
   .hero-enter {
     opacity: 1;
   }
+}
+
+/* Skip link: hidden until a keyboard user tabs to it. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 200;
+  padding: 0.6rem 1rem;
+  background: #1E0008;
+  color: #FEE8EC;
+  font-family: var(--font-lato), system-ui, sans-serif;
+  font-size: 0.95rem;
+}
+.skip-link:focus {
+  top: 1rem;
 }
