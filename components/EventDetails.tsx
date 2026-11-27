@@ -121,7 +121,7 @@ export default function EventDetails() {
         <Reveal delay={100} className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6 [&>*]:min-w-0">
           <div className="p-4 min-[360px]:p-6 border border-gold/30 bg-ivory/50 text-center">
             <p className="font-serif italic text-gold-dark text-sm mb-2">Dress Code</p>
-            <p className="font-serif text-xl text-bark mb-2">Business Formal</p>
+            <p className="font-serif text-xl text-bark mb-2">Formal or Cocktail</p>
             <p className="font-sans text-bark/60 text-sm leading-relaxed">
               We kindly ask that you avoid shades of white, red and pink.
             </p>
