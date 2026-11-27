@@ -79,7 +79,7 @@ const faqs = [
     questions: [
       {
         q: "What is the dress code?",
-        a: "Business Formal. We kindly ask that you avoid shades of white, red and pink.",
+        a: "Formal or cocktail attire. We kindly ask that you avoid shades of white, red and pink.",
       },
       {
         q: "Can I wear heels?",
