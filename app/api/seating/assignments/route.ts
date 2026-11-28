@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Client } from "@notionhq/client";
 import { SEATING_COOKIE, isSeatingAuthed } from "@/lib/seating-auth";
 import { cleanText, readJson, withLock } from "@/lib/input";
-import { findGuestRows, hostKey, hostName, hostRefs, readChoice } from "@/lib/rsvp-party";
+import { readChoice } from "@/lib/rsvp-party";
 
 export const dynamic = "force-dynamic";
 
@@ -24,17 +24,9 @@ async function syncToRSVP(
     Table: { rich_text: tableName ? [{ text: { content: tableName } }] : [] },
     Seat:  { number: seatNumber ?? null },
   };
-  const host: any = await notion.pages.update({
-    page_id: guestId, // guestId IS the RSVP Notion page ID
-    properties,
-  });
-  // Their +1's own row (if any) sits at the same table.
-  try {
-    const party = await findGuestRows(notion, RSVP_DB(), hostRefs(hostName(host), hostKey(host)));
-    await Promise.all(party.rows.map((p: any) => notion.pages.update({ page_id: p.id, properties })));
-  } catch (err: any) {
-    console.warn("[Seating] couldn't copy the table to a +1's row:", err?.message ?? err);
-  }
+  // guestId IS the RSVP Notion page ID. Each person, +1s included, is seated
+  // on their own, so only this row is updated.
+  await notion.pages.update({ page_id: guestId, properties });
 }
 
 export async function GET(req: NextRequest) {
