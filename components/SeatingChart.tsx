@@ -15,7 +15,9 @@ interface Guest {
   plusOne: boolean;
   plusOneName?: string;
   dietary?: string;
-  /** 2 when the guest brings a +1. */
+  /** A +1: the name of the guest who brought them. */
+  guestOf?: string;
+  /** 2 only for an older RSVP that keeps its +1 in the host's row. */
   seatCount?: number;
 }
 
@@ -45,6 +47,9 @@ function GuestCardStatic({ guest }: { guest: Guest }) {
   return (
     <div className="bg-white border border-rose-soft shadow-xl text-[12px] px-2 py-1.5 w-36 pointer-events-none rounded-sm">
       <p className="font-sans font-semibold text-bark truncate">{guest.name}</p>
+      {guest.guestOf && (
+        <p className="font-sans text-bark/60 truncate">Guest of {guest.guestOf}</p>
+      )}
       {guest.plusOne && guest.plusOneName && (
         <p className="font-sans text-bark/60 truncate">+1: {guest.plusOneName}</p>
       )}
@@ -79,8 +84,8 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
         <p className="font-sans text-white text-[12px] leading-tight w-full truncate text-center font-medium">
           {guest.name.split(" ")[0]}
         </p>
-        {guest.plusOne && (
-          <p className="font-sans text-white/70 text-[12px] leading-none">+1</p>
+        {(guest.plusOne || guest.guestOf) && (
+          <p className="font-sans text-white/70 text-[12px] leading-none">{guest.guestOf ? "guest" : "+1"}</p>
         )}
         {guest.dietary && (
           <p className="font-sans text-white/60 text-[12px] leading-none truncate w-full text-center">•</p>
@@ -100,6 +105,9 @@ function DraggableGuest({ guest, compact }: { guest: Guest; compact?: boolean })
       }`}
     >
       <p className="font-sans text-[14px] font-medium text-bark truncate">{guest.name}</p>
+      {guest.guestOf && (
+        <p className="font-sans text-bark/60 text-[12px] truncate">Guest of {guest.guestOf}</p>
+      )}
       {guest.plusOne && guest.plusOneName && (
         <p className="font-sans text-bark/60 text-[12px] truncate">+1: {guest.plusOneName}</p>
       )}
